@@ -73,6 +73,18 @@ html, body {
 }
 .screen.active {
   display: flex;
+  animation: screen-entrance 0.35s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+@keyframes screen-entrance {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ── ÁREA ROLÁVEL ── */

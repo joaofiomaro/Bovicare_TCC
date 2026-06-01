@@ -12,6 +12,11 @@
   border-radius: var(--r16);
   border: .5px solid rgba(28, 107, 58, .1);
   padding: 14px 15px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .1s ease;
+}
+.kpi-card:active {
+  transform: scale(0.98);
 }
 .kpi-card.accent {
   background: var(--brand);
@@ -64,11 +69,14 @@
   margin: 0 16px 8px;
   border: .5px solid rgba(15, 31, 22, .06);
   cursor: pointer;
-  transition: background .12s, border-color .12s;
+  transition: background .12s, border-color .12s, transform .1s ease;
 }
 .list-row:hover {
   background: var(--brand-pale);
   border-color: rgba(28, 107, 58, .18);
+}
+.list-row:active {
+  transform: scale(0.985);
 }
 .row-icon {
   width: 42px;

@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="css/components/utils.css">
   
   <!-- Features CSS -->
+  <link rel="stylesheet" href="css/features/splash.css">
   <link rel="stylesheet" href="css/features/login.css">
   <link rel="stylesheet" href="css/features/brete.css">
   <link rel="stylesheet" href="css/features/animal_profile.css">
@@ -41,8 +42,20 @@
     </div>
   </div>
 
+  <!-- ══════════════════ SPLASH SCREEN ══════════════════ -->
+  <div class="screen active" id="s-splash" style="background: var(--brand)">
+    <div class="splash-wrap">
+      <div class="splash-logo-container">
+        <img class="splash-logo" src="img/bovicare_logo.png" alt="BoviCare Logo">
+      </div>
+      <div class="splash-spinner-container">
+        <div class="splash-spinner"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ══════════════════ LOGIN ══════════════════ -->
-  <div class="screen active" id="s-login" style="background: var(--brand)">
+  <div class="screen" id="s-login" style="background: var(--brand)">
     <div class="login-wrap">
       <div class="login-brand">
         <div class="login-logo-container" style="width: 140px; height: 140px; background: #ffffff; border-radius: 20px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);">

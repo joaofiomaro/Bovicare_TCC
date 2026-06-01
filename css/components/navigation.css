@@ -156,7 +156,7 @@
 .nav-item i {
   font-size: 22px;
   color: var(--ghost);
-  transition: color .12s;
+  transition: color .12s, transform .15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .nav-item span {
   font-size: 9px;
@@ -166,7 +166,7 @@
   text-transform: uppercase;
   transition: color .12s;
 }
-.nav-item.active i   { color: var(--brand); }
+.nav-item.active i   { color: var(--brand); transform: scale(1.15); }
 .nav-item.active span { color: var(--brand); }
 /* Ícone de vaca na nav */
 .nav-cow {
@@ -175,11 +175,12 @@
   object-fit: contain;
   opacity: .4;
   filter: grayscale(1);
-  transition: opacity .12s, filter .12s;
+  transition: opacity .12s, filter .12s, transform .15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .nav-item.active .nav-cow {
   opacity: 1;
   filter: sepia(1) saturate(4) hue-rotate(88deg) brightness(.5);
+  transform: scale(1.15);
 }
 
 /* ══════════════════════════════════

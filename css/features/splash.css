@@ -1,0 +1,75 @@
+/* ══════════════════════════════════
+   TELA DE INICIALIZAÇÃO (SPLASH)
+   ══════════════════════════════════ */
+.splash-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* Container do logo com animação de entrada */
+.splash-logo-container {
+  width: 140px;
+  height: 140px;
+  background: #ffffff;
+  border-radius: var(--r20);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: splash-entrance 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+}
+
+.splash-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Spinner de carregamento */
+.splash-spinner-container {
+  margin-top: 48px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.splash-spinner {
+  width: 26px;
+  height: 26px;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Animação de fade-out suave da tela inteira */
+#s-splash.fade-out {
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
+}
+
+/* Keyframes */
+@keyframes splash-entrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
