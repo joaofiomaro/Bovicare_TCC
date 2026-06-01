@@ -1,0 +1,49 @@
+/* ═══════════════════════════════════════════════
+   BOVICARE — DESIGN SYSTEM TOKENS
+═══════════════════════════════════════════════ */
+
+:root {
+  /* Cores da marca */
+  --brand:        #1C6B3A;
+  --brand-deep:   #134D29;
+  --brand-mid:    #2A8A4E;
+  --brand-light:  #E8F5EE;
+  --brand-pale:   #F2FAF5;
+
+  /* Neutros */
+  --ink:          #0F1F16;
+  --ink2:         #2D4A38;
+  --ink3:         #4A6B55;
+  --muted:        #6B8070;
+  --ghost:        #B8CCBF;
+  --surface:      #FFFFFF;
+  --bg:           #F5F8F6;
+  --card:         #FFFFFF;
+
+  /* Semânticas */
+  --gold:         #B8860B;
+  --gold-bg:      #FEF9EC;
+  --danger:       #8B1A1A;
+  --danger-bg:    #FEF0F0;
+  --info-bg:      #E8F0FE;
+  --info:         #1A56A0;
+  --amber-bg:     #FEF3D7;
+  --amber:        #A07000;
+
+  /* Tipografia */
+  --ff: 'Plus Jakarta Sans', sans-serif;
+
+  /* Raios */
+  --r8:  8px;
+  --r10: 10px;
+  --r12: 12px;
+  --r14: 14px;
+  --r16: 16px;
+  --r20: 20px;
+  --r24: 24px;
+  --rfull: 9999px;
+
+  /* Layout do frame */
+  --notch-h: 50px;
+  --nav-h:   64px;
+}

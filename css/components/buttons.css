@@ -1,0 +1,150 @@
+/* ══════════════════════════════════
+   BOTÕES
+   REGRA: bg verde = texto branco
+           bg branco = texto PRETO (#0F1F16)
+══════════════════════════════════ */
+.btn-primary {
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: var(--r12);
+  padding: 14px 20px;
+  font-family: var(--ff);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background .12s;
+}
+.btn-primary:hover  { background: var(--brand-deep); }
+.btn-primary i      { color: #fff; }
+
+/* Outline — fundo branco, TEXTO E ÍCONE PRETOS */
+.btn-outline {
+  background: #fff;
+  color: var(--ink);
+  border: 1.5px solid rgba(15, 31, 22, .2);
+  border-radius: var(--r12);
+  padding: 12px 20px;
+  font-family: var(--ff);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: background .12s;
+}
+.btn-outline:hover { background: var(--brand-light); }
+.btn-outline i      { color: var(--ink); }
+
+/* Outline pequeno */
+.btn-outline-sm {
+  background: #fff;
+  color: var(--ink);
+  border: 1.5px solid rgba(15, 31, 22, .2);
+  border-radius: var(--r8);
+  padding: 7px 12px;
+  font-family: var(--ff);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .12s;
+}
+.btn-outline-sm:hover { background: var(--brand-light); }
+
+/* Danger — fundo branco, texto e ícone VERMELHOS */
+.btn-danger {
+  background: #fff;
+  color: var(--danger);
+  border: 1.5px solid rgba(180, 30, 30, .25);
+  border-radius: var(--r12);
+  padding: 12px 20px;
+  font-family: var(--ff);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.btn-danger i { color: var(--danger); }
+
+/* Grupo de botões empilhados */
+.btn-group {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 20px;
+}
+
+/* ══════════════════════════════════
+   FAB (Floating Action Button)
+══════════════════════════════════ */
+.fab {
+  position: absolute;
+  bottom: 72px;
+  right: 18px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--brand);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(28, 107, 58, .35);
+  transition: background .15s, transform .15s;
+  z-index: 10;
+}
+.fab:hover {
+  background: var(--brand-deep);
+  transform: scale(1.06);
+}
+.fab i { color: #fff; font-size: 22px; }
+
+/* ══════════════════════════════════
+   GRADE DE AÇÕES (ficha do animal)
+══════════════════════════════════ */
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 16px 14px;
+}
+/* bg branco → texto PRETO */
+.action-btn {
+  background: var(--card);
+  border: .5px solid rgba(15, 31, 22, .08);
+  border-radius: var(--r12);
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+.action-btn:hover {
+  background: var(--brand-light);
+  border-color: rgba(28, 107, 58, .2);
+}
+.action-btn i   { font-size: 22px; color: var(--brand); }
+.action-btn span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: center;
+}

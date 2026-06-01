@@ -1,0 +1,54 @@
+/* ══════════════════════════════════
+   FORMULÁRIOS
+══════════════════════════════════ */
+.form-group { margin: 0 16px 11px; }
+.form-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  display: block;
+  margin-bottom: 5px;
+}
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid rgba(15, 31, 22, .1);
+  border-radius: var(--r10);
+  font-family: var(--ff);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--surface);
+  outline: none;
+  transition: border-color .15s;
+  -webkit-appearance: none;
+}
+.form-input:focus,
+.form-select:focus {
+  border-color: var(--brand-mid);
+}
+
+/* Nota informativa em formulário */
+.form-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--brand-pale);
+  border: .5px solid rgba(28, 107, 58, .2);
+  border-radius: var(--r10);
+  padding: 11px 13px;
+  margin: 0 16px 13px;
+}
+.form-note i {
+  color: var(--brand);
+  font-size: 15px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.form-note p {
+  font-size: 12px;
+  color: var(--brand-deep);
+  line-height: 1.5;
+}

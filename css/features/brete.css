@@ -1,0 +1,107 @@
+/* ══════════════════════════════════
+   TELA DO BRETE — CONTROLE ESP32
+══════════════════════════════════ */
+.brete-hero {
+  margin: 14px 16px;
+  background: var(--brand-pale);
+  border: .5px solid rgba(28, 107, 58, .18);
+  border-radius: var(--r20);
+  padding: 20px 16px;
+  text-align: center;
+}
+.door-frame {
+  width: 76px;
+  height: 104px;
+  border: 2.5px solid var(--brand);
+  border-radius: var(--r8);
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brand-light);
+  transition: transform .4s, background .4s;
+}
+.door-frame.open {
+  transform: perspective(200px) rotateY(-38deg);
+  background: #fff;
+}
+.door-frame i { font-size: 28px; color: var(--brand); }
+.door-status-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--brand-deep);
+}
+.door-status-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.brete-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 16px 8px;
+}
+/* Botão brete — bg verde: branco; bg branco: PRETO */
+.brete-btn {
+  border: none;
+  border-radius: var(--r12);
+  padding: 13px 10px;
+  font-family: var(--ff);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  transition: opacity .12s, transform .12s;
+}
+.brete-btn i { font-size: 21px; }
+.brete-btn:hover { opacity: .88; transform: scale(.98); }
+.brete-btn.open  {
+  background: var(--brand);
+  color: #fff;
+}
+.brete-btn.open i { color: #fff; }
+.brete-btn.close {
+  background: #fff;
+  color: var(--ink);
+  border: 1.5px solid rgba(15, 31, 22, .15);
+}
+.brete-btn.close i { color: var(--ink); }
+.brete-btn.emergency {
+  background: #fff;
+  color: var(--danger);
+  border: 1.5px solid rgba(180, 30, 30, .2);
+}
+.brete-btn.emergency i { color: var(--danger); }
+
+/* Pílula de conexão BLE */
+.conn-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, .13);
+  border-radius: var(--rfull);
+  padding: 5px 11px;
+}
+.conn-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5DD88A;
+  animation: pulse 2.4s ease-in-out infinite;
+}
+.conn-text { font-size: 12px; color: #fff; font-weight: 600; }
+
+/* Sensor status row */
+.sensor-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+}
+.sensor-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.sensor-ok  { background: var(--brand-mid); }
+.sensor-row span { font-size: 13px; color: var(--ink); }

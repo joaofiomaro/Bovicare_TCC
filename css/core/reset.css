@@ -1,0 +1,88 @@
+/* ── RESET & BASE ── */
+html, body {
+  font-family: var(--ff);
+  font-size: 16px;
+  line-height: 1.5;
+  background: var(--ink); /* Fundo escuro para desktop */
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── FRAME (Responsivo mobile) ── */
+/* Adaptado para ocupar 100vw/100vh em celulares, e centralizar como app em desktop */
+.frame {
+  width: 100vw;
+  height: 100vh;
+  max-width: 450px;
+  background: var(--bg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, .5);
+}
+
+@media (max-width: 450px) {
+  .frame {
+    box-shadow: none;
+  }
+}
+
+/* ── STATUS BAR (notch) ── */
+.notch {
+  background: var(--brand);
+  height: var(--notch-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  flex-shrink: 0;
+}
+.notch-time {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.notch-icons {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.notch-icons i {
+  color: rgba(255, 255, 255, .9);
+  font-size: 13px;
+}
+
+/* ── TELAS ── */
+.screen {
+  display: none;
+  flex-direction: column;
+  flex: 1; /* Responsivo ao invés de calc() engessado */
+  overflow: hidden;
+}
+.screen.active {
+  display: flex;
+}
+
+/* ── ÁREA ROLÁVEL ── */
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.scroll::-webkit-scrollbar {
+  display: none;
+}

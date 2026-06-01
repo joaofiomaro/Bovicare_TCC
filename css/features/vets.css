@@ -1,0 +1,98 @@
+/* ══════════════════════════════════
+   VETERINÁRIOS E MAPAS
+══════════════════════════════════ */
+.vet-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  border: .5px solid rgba(15, 31, 22, .07);
+  border-radius: var(--r14);
+  margin: 0 16px 8px;
+  padding: 13px;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+.vet-card:hover {
+  background: var(--brand-pale);
+  border-color: rgba(28, 107, 58, .18);
+}
+.vet-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--brand-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(28, 107, 58, .15);
+}
+.vet-avatar i { font-size: 21px; color: var(--brand); }
+.vet-body strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  display: block;
+}
+.vet-body span {
+  font-size: 12px;
+  color: var(--muted);
+  display: block;
+  margin-top: 1px;
+}
+.vet-distance {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand);
+  margin-top: 3px;
+  display: block;
+}
+
+/* Mapa placeholder */
+.map-placeholder {
+  margin: 0 16px 10px;
+  border-radius: var(--r16);
+  height: 120px;
+  background: var(--brand-light);
+  border: .5px solid rgba(28, 107, 58, .2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+.map-grid {
+  position: absolute;
+  inset: 0;
+  opacity: .15;
+  background-image:
+    linear-gradient(rgba(28,107,58,.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(28,107,58,.4) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+.map-pin {
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.map-pin i { font-size: 26px; color: var(--brand); }
+.map-pin span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand-deep);
+  background: #fff;
+  border-radius: var(--rfull);
+  padding: 2px 8px;
+}
+/* Detalhes vet row */
+.vd-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+}
+.vd-row i  { font-size: 16px; color: var(--brand); }
+.vd-row span { font-size: 13px; color: var(--ink); }
