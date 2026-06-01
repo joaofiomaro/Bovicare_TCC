@@ -1,0 +1,95 @@
+/* ══════════════════════════════════
+   BOTTOM SHEET (MODAL DE CONFIRMAÇÃO)
+══════════════════════════════════ */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.sheet-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sheet-panel {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 100%);
+  width: 100%;
+  max-width: 450px;
+  background: var(--card, #fff);
+  border-radius: 20px 20px 0 0;
+  padding: 12px 20px 28px;
+  z-index: 1001;
+  transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.sheet-overlay.active + .sheet-panel,
+.sheet-panel.active {
+  transform: translate(-50%, 0);
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(15, 31, 22, 0.15);
+  margin: 0 auto 16px;
+}
+
+.sheet-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+}
+
+.sheet-icon.danger {
+  background: var(--danger-bg, #FEE2E2);
+}
+.sheet-icon.danger i {
+  color: var(--danger, #D94040);
+  font-size: 24px;
+}
+
+.sheet-icon.warning {
+  background: var(--gold-bg, #FEF3C7);
+}
+.sheet-icon.warning i {
+  color: var(--gold, #D4A017);
+  font-size: 24px;
+}
+
+.sheet-title {
+  font-family: var(--ff);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink, #0F1F16);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.sheet-message {
+  font-family: var(--ff);
+  font-size: 13px;
+  color: var(--muted, #6B7F75);
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.sheet-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

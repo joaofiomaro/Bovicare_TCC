@@ -83,7 +83,7 @@
   font-size: 11px;
   font-weight: 700;
   color: var(--brand-deep);
-  background: #fff;
+  background: var(--surface);
   border-radius: var(--rfull);
   padding: 2px 8px;
 }

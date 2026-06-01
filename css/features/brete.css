@@ -23,9 +23,24 @@
 }
 .door-frame.open {
   transform: perspective(200px) rotateY(-38deg);
-  background: #fff;
+  background: var(--card);
 }
-.door-frame i { font-size: 28px; color: var(--brand); }
+.door-frame.pulse {
+  animation: door-pulse 0.6s ease;
+}
+.door-frame i {
+  font-size: 28px;
+  color: var(--brand);
+  transition: transform 0.4s ease;
+}
+.door-frame.open i {
+  transform: scaleX(-1);
+}
+
+@keyframes door-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(28, 107, 58, 0.3); }
+  50% { box-shadow: 0 0 0 12px rgba(28, 107, 58, 0); }
+}
 .door-status-label {
   font-size: 15px;
   font-weight: 700;
@@ -65,13 +80,13 @@
 }
 .brete-btn.open i { color: #fff; }
 .brete-btn.close {
-  background: #fff;
+  background: var(--card);
   color: var(--ink);
   border: 1.5px solid rgba(15, 31, 22, .15);
 }
 .brete-btn.close i { color: var(--ink); }
 .brete-btn.emergency {
-  background: #fff;
+  background: var(--card);
   color: var(--danger);
   border: 1.5px solid rgba(180, 30, 30, .2);
 }

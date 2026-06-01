@@ -16,6 +16,12 @@
   <link rel="stylesheet" href="css/components/forms.css">
   <link rel="stylesheet" href="css/components/navigation.css">
   <link rel="stylesheet" href="css/components/utils.css">
+  <link rel="stylesheet" href="css/components/toast.css">
+  <link rel="stylesheet" href="css/components/badge-notification.css">
+  <link rel="stylesheet" href="css/components/bottom-sheet.css">
+  <link rel="stylesheet" href="css/components/skeleton.css">
+  <link rel="stylesheet" href="css/components/pull-refresh.css">
+  <link rel="stylesheet" href="css/components/toggle.css">
   
   <!-- Features CSS -->
   <link rel="stylesheet" href="css/features/splash.css">
@@ -63,17 +69,17 @@
         </div>
         <p class="login-tagline">Gestão inteligente do seu rebanho</p>
       </div>
-      <div class="login-panel">
+      <div class="login-panel" id="login-form">
         <h2>Bem-vindo de volta</h2>
         <div class="form-group">
           <label class="form-label">E-mail</label>
-          <input class="form-input" type="email" placeholder="seu@email.com.br" autocomplete="email">
+          <input class="form-input" type="email" placeholder="seu@email.com.br" autocomplete="email" required>
         </div>
         <div class="form-group" style="margin-bottom: 14px">
           <label class="form-label">Senha</label>
-          <input class="form-input" type="password" placeholder="••••••••" autocomplete="current-password">
+          <input class="form-input" type="password" placeholder="••••••••" autocomplete="current-password" required>
         </div>
-        <button class="btn-primary" onclick="go('s-dash')">
+        <button class="btn-primary" onclick="validateForm(document.getElementById('login-form'), function() { go('s-dash'); showToast('Login realizado com sucesso!', 'success'); })">
           <i class="ti ti-login" aria-hidden="true"></i>Entrar
         </button>
         <div class="divider"><div></div><span>ou</span><div></div></div>
@@ -96,7 +102,7 @@
         <div class="back-sub">Escolha seu perfil</div>
       </div>
     </div>
-    <div class="scroll">
+    <div class="scroll" id="cadastro-form">
       <div style="display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; padding: 14px 16px 10px">
         <div id="tp-prod" class="action-btn" style="background: var(--brand-pale); border-color: rgba(28,107,58,.35)" onclick="selPerfil('prod')">
           <i class="ti ti-tractor" aria-hidden="true"></i>
@@ -107,17 +113,17 @@
           <span>Veterinário</span>
         </div>
       </div>
-      <div class="form-group"><label class="form-label">Nome completo</label><input class="form-input" placeholder="João da Silva"></div>
-      <div class="form-group"><label class="form-label">E-mail</label><input class="form-input" type="email" placeholder="joao@fazenda.com.br"></div>
-      <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" type="tel" placeholder="(19) 99999-9999"></div>
-      <div class="form-group"><label class="form-label">Nome da propriedade</label><input class="form-input" placeholder="Fazenda Esperança"></div>
-      <div class="form-group" style="margin-bottom: 14px"><label class="form-label">Senha</label><input class="form-input" type="password" placeholder="Mínimo 8 caracteres"></div>
+      <div class="form-group"><label class="form-label">Nome completo</label><input class="form-input" placeholder="João da Silva" required></div>
+      <div class="form-group"><label class="form-label">E-mail</label><input class="form-input" type="email" placeholder="joao@fazenda.com.br" required></div>
+      <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" type="tel" placeholder="(19) 99999-9999" required></div>
+      <div class="form-group"><label class="form-label">Nome da propriedade</label><input class="form-input" placeholder="Fazenda Esperança" required></div>
+      <div class="form-group" style="margin-bottom: 14px"><label class="form-label">Senha</label><input class="form-input" type="password" placeholder="Mínimo 8 caracteres" required></div>
       <div class="form-note">
         <i class="ti ti-shield-lock" aria-hidden="true"></i>
         <p>Ao criar conta você concorda com os <strong style="color:var(--brand)">Termos de Uso</strong> e a <strong style="color:var(--brand)">Política de Privacidade (LGPD)</strong>.</p>
       </div>
       <div class="btn-group pb-20">
-        <button class="btn-primary" onclick="go('s-dash')">
+        <button class="btn-primary" onclick="validateForm(document.getElementById('cadastro-form'), function() { go('s-dash'); showToast('Conta criada com sucesso!', 'success'); })">
           <i class="ti ti-check" aria-hidden="true"></i>Criar minha conta
         </button>
       </div>
@@ -133,8 +139,9 @@
           <div class="hdr-title">João da Silva</div>
           <div class="hdr-sub"><i class="ti ti-map-pin" style="font-size:10px" aria-hidden="true"></i> Fazenda Esperança · Rio Claro, SP</div>
         </div>
-        <button class="avatar-btn" onclick="go('s-perfil')" aria-label="Perfil">
+        <button class="avatar-btn" onclick="go('s-perfil')" aria-label="Perfil" style="position: relative">
           <i class="ti ti-user" aria-hidden="true"></i>
+          <span class="notif-badge">5</span>
         </button>
       </div>
       <div class="sync-pill">
@@ -144,6 +151,11 @@
     </div>
     <div class="hdr-arc"></div>
     <div class="scroll">
+      <!-- Pull-to-refresh indicator -->
+      <div class="pull-indicator">
+        <div class="pull-spinner"></div>
+        <span>Atualizando...</span>
+      </div>
       <div class="alert-banner">
         <div class="alert-icon"><i class="ti ti-alert-triangle" aria-hidden="true"></i></div>
         <div class="alert-body">
@@ -154,24 +166,24 @@
       <div class="kpi-grid">
         <div class="kpi-card accent">
           <div class="kpi-label">Efetivo total</div>
-          <div class="kpi-value">127</div>
+          <div class="kpi-value" data-target="127">127</div>
           <div class="kpi-sub">animais ativos</div>
           <div class="kpi-trend"><i class="ti ti-trending-up" style="font-size:11px" aria-hidden="true"></i>+3 este mês</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Prenhas</div>
-          <div class="kpi-value">18</div>
+          <div class="kpi-value" data-target="18">18</div>
           <div class="kpi-sub">14% do rebanho</div>
           <div class="kpi-trend"><i class="ti ti-trending-up" style="font-size:11px" aria-hidden="true"></i>Saudável</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Alertas</div>
-          <div class="kpi-value" style="color: #B02020">5</div>
+          <div class="kpi-value" style="color: #B02020" data-target="5">5</div>
           <div class="kpi-sub">pendentes</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Vacinações</div>
-          <div class="kpi-value">12</div>
+          <div class="kpi-value" data-target="12">12</div>
           <div class="kpi-sub">próximos 30 dias</div>
         </div>
       </div>
@@ -236,32 +248,69 @@
       <div class="chip">Carência</div>
     </div>
     <div class="scroll">
-      <div class="list-row" onclick="go('s-animal')">
-        <div class="row-icon ri-green"><img class="cow-icon" alt="" style="filter: sepia(1) saturate(4) hue-rotate(88deg) brightness(.5)"></div>
-        <div class="row-body"><strong>Mimosa — #047</strong><span>Nelore · F · 3 anos · 384 kg</span></div>
-        <span class="badge badge-green">Prenha</span>
+      <!-- Pull-to-refresh indicator -->
+      <div class="pull-indicator">
+        <div class="pull-spinner"></div>
+        <span>Atualizando...</span>
       </div>
-      <div class="list-row" onclick="go('s-animal')">
-        <div class="row-icon ri-amber"><img class="cow-icon" alt="" style="filter: sepia(1) saturate(5) hue-rotate(10deg) brightness(.6)"></div>
-        <div class="row-body"><strong>Estrela — #031</strong><span>Gir · F · 5 anos · 410 kg</span></div>
-        <span class="badge badge-amber">Vacina</span>
+
+      <!-- Skeleton Loading -->
+      <div id="rebanho-skeleton" class="skeleton-container hidden">
+        <div class="skeleton-row">
+          <div class="skeleton-circle"></div>
+          <div class="skeleton-lines">
+            <div class="skeleton-line medium"></div>
+            <div class="skeleton-line short"></div>
+          </div>
+          <div class="skeleton-badge"></div>
+        </div>
+        <div class="skeleton-row">
+          <div class="skeleton-circle"></div>
+          <div class="skeleton-lines">
+            <div class="skeleton-line medium"></div>
+            <div class="skeleton-line short"></div>
+          </div>
+          <div class="skeleton-badge"></div>
+        </div>
+        <div class="skeleton-row">
+          <div class="skeleton-circle"></div>
+          <div class="skeleton-lines">
+            <div class="skeleton-line medium"></div>
+            <div class="skeleton-line short"></div>
+          </div>
+          <div class="skeleton-badge"></div>
+        </div>
       </div>
-      <div class="list-row" onclick="go('s-animal')">
-        <div class="row-icon ri-slate"><img class="cow-icon" alt="" style="filter: grayscale(1) brightness(.65)"></div>
-        <div class="row-body"><strong>Touro 01 — #003</strong><span>Nelore · M · 4 anos · 620 kg</span></div>
-        <span class="badge badge-blue">Ativo</span>
+
+      <!-- Real Content -->
+      <div id="rebanho-content">
+        <div class="list-row" onclick="go('s-animal')">
+          <div class="row-icon ri-green"><img class="cow-icon" alt="" style="filter: sepia(1) saturate(4) hue-rotate(88deg) brightness(.5)"></div>
+          <div class="row-body"><strong>Mimosa — #047</strong><span>Nelore · F · 3 anos · 384 kg</span></div>
+          <span class="badge badge-green">Prenha</span>
+        </div>
+        <div class="list-row" onclick="go('s-animal')">
+          <div class="row-icon ri-amber"><img class="cow-icon" alt="" style="filter: sepia(1) saturate(5) hue-rotate(10deg) brightness(.6)"></div>
+          <div class="row-body"><strong>Estrela — #031</strong><span>Gir · F · 5 anos · 410 kg</span></div>
+          <span class="badge badge-amber">Vacina</span>
+        </div>
+        <div class="list-row" onclick="go('s-animal')">
+          <div class="row-icon ri-slate"><img class="cow-icon" alt="" style="filter: grayscale(1) brightness(.65)"></div>
+          <div class="row-body"><strong>Touro 01 — #003</strong><span>Nelore · M · 4 anos · 620 kg</span></div>
+          <span class="badge badge-blue">Ativo</span>
+        </div>
+        <div class="list-row" onclick="go('s-animal')">
+          <div class="row-icon ri-red"><img class="cow-icon" alt="" style="filter: sepia(1) saturate(6) hue-rotate(300deg) brightness(.65)"></div>
+          <div class="row-body"><strong>Bela — #058</strong><span>Gir · F · 2 anos · 290 kg</span></div>
+          <span class="badge badge-red">Medicação</span>
+        </div>
+        <div class="list-row" onclick="go('s-animal')">
+          <div class="row-icon ri-green"><img class="cow-icon" alt="" style="filter: sepia(1) saturate(4) hue-rotate(88deg) brightness(.5)"></div>
+          <div class="row-body"><strong>Pintada — #072</strong><span>Nelore · F · 4 anos · 360 kg</span></div>
+          <span class="badge badge-blue">Ativa</span>
+        </div>
+        <div style="text-align: center; padding: 14px 16px 24px; font-size: 12px; color: var(--muted)">Exibindo 5 de 127 animais</div>
       </div>
-      <div class="list-row" onclick="go('s-animal')">
-        <div class="row-icon ri-red"><img class="cow-icon" alt="" style="filter: sepia(1) saturate(6) hue-rotate(300deg) brightness(.65)"></div>
-        <div class="row-body"><strong>Bela — #058</strong><span>Gir · F · 2 anos · 290 kg</span></div>
-        <span class="badge badge-red">Medicação</span>
-      </div>
-      <div class="list-row" onclick="go('s-animal')">
-        <div class="row-icon ri-green"><img class="cow-icon" alt="" style="filter: sepia(1) saturate(4) hue-rotate(88deg) brightness(.5)"></div>
-        <div class="row-body"><strong>Pintada — #072</strong><span>Nelore · F · 4 anos · 360 kg</span></div>
-        <span class="badge badge-blue">Ativa</span>
-      </div>
-      <div style="text-align: center; padding: 14px 16px 24px; font-size: 12px; color: var(--muted)">Exibindo 5 de 127 animais</div>
     </div>
     <button class="fab" onclick="go('s-animal-novo')" aria-label="Adicionar animal"><i class="ti ti-plus" aria-hidden="true"></i></button>
     <nav class="bottom-nav">
@@ -334,7 +383,7 @@
       <button class="back-btn" onclick="go('s-rebanho')" aria-label="Voltar"><i class="ti ti-arrow-left"></i></button>
       <div><div class="back-title">Novo animal</div><div class="back-sub">Preencha os dados</div></div>
     </div>
-    <div class="scroll">
+    <div class="scroll" id="animal-novo-form">
       <div style="margin: 14px 16px 10px">
         <div class="list-row" style="border: 1.5px dashed rgba(28,107,58,.35); background: var(--brand-pale); margin: 0">
           <div class="row-icon ri-green"><i class="ti ti-antenna" aria-hidden="true"></i></div>
@@ -342,13 +391,13 @@
           <i class="ti ti-scan" style="color:var(--brand);font-size:18px" aria-hidden="true"></i>
         </div>
       </div>
-      <div class="form-group"><label class="form-label">Brinco / ID</label><input class="form-input" placeholder="Ex: 047"></div>
+      <div class="form-group"><label class="form-label">Brinco / ID</label><input class="form-input" placeholder="Ex: 047" required></div>
       <div class="form-group"><label class="form-label">Nome</label><input class="form-input" placeholder="Opcional"></div>
-      <div class="form-group"><label class="form-label">Raça</label><select class="form-select"><option>Nelore</option><option>Gir</option><option>Angus</option><option>Simental</option><option>Outra</option></select></div>
-      <div class="form-group"><label class="form-label">Sexo</label><select class="form-select"><option>Fêmea</option><option>Macho</option></select></div>
-      <div class="form-group"><label class="form-label">Data de nascimento</label><input class="form-input" type="date"></div>
-      <div class="form-group" style="margin-bottom:20px"><label class="form-label">Peso atual (kg)</label><input class="form-input" type="number" placeholder="Ex: 380"></div>
-      <div class="btn-group pb-20"><button class="btn-primary" onclick="go('s-rebanho')"><i class="ti ti-check" aria-hidden="true"></i>Cadastrar animal</button></div>
+      <div class="form-group"><label class="form-label">Raça</label><select class="form-select" required><option>Nelore</option><option>Gir</option><option>Angus</option><option>Simental</option><option>Outra</option></select></div>
+      <div class="form-group"><label class="form-label">Sexo</label><select class="form-select" required><option>Fêmea</option><option>Macho</option></select></div>
+      <div class="form-group"><label class="form-label">Data de nascimento</label><input class="form-input" type="date" required></div>
+      <div class="form-group" style="margin-bottom:20px"><label class="form-label">Peso atual (kg)</label><input class="form-input" type="number" placeholder="Ex: 380" required></div>
+      <div class="btn-group pb-20"><button class="btn-primary" onclick="validateForm(document.getElementById('animal-novo-form'), function() { showToast('Animal cadastrado com sucesso!', 'success'); go('s-rebanho'); })"><i class="ti ti-check" aria-hidden="true"></i>Cadastrar animal</button></div>
     </div>
   </div>
 
@@ -358,7 +407,7 @@
       <button class="back-btn" onclick="go('s-animal')" aria-label="Voltar"><i class="ti ti-arrow-left"></i></button>
       <div><div class="back-title">Registrar vacinação</div><div class="back-sub">Mimosa — #047</div></div>
     </div>
-    <div class="scroll">
+    <div class="scroll" id="vacinacao-form">
       <div style="margin:14px 16px 10px">
         <div class="list-row" style="background:var(--brand-pale); border-color:rgba(28,107,58,.2); cursor:default; margin:0">
           <div class="row-icon ri-green"><img class="cow-icon" alt="" style="filter: sepia(1) saturate(4) hue-rotate(88deg) brightness(.5)"></div>
@@ -366,16 +415,16 @@
           <span class="badge badge-green">RFID</span>
         </div>
       </div>
-      <div class="form-group"><label class="form-label">Vacina</label><select class="form-select"><option>Febre Aftosa</option><option>Brucelose</option><option>Raiva</option><option>IBR / BVD</option><option>Carbúnculo</option><option>Outra</option></select></div>
-      <div class="form-group"><label class="form-label">Lote</label><input class="form-input" placeholder="Ex: 22B-2025"></div>
-      <div class="form-group"><label class="form-label">Dose</label><select class="form-select"><option>Dose única</option><option>1ª dose</option><option>2ª dose</option><option>Reforço anual</option></select></div>
-      <div class="form-group"><label class="form-label">Data de aplicação</label><input class="form-input" type="date" value="2025-01-20"></div>
+      <div class="form-group"><label class="form-label">Vacina</label><select class="form-select" required><option>Febre Aftosa</option><option>Brucelose</option><option>Raiva</option><option>IBR / BVD</option><option>Carbúnculo</option><option>Outra</option></select></div>
+      <div class="form-group"><label class="form-label">Lote</label><input class="form-input" placeholder="Ex: 22B-2025" required></div>
+      <div class="form-group"><label class="form-label">Dose</label><select class="form-select" required><option>Dose única</option><option>1ª dose</option><option>2ª dose</option><option>Reforço anual</option></select></div>
+      <div class="form-group"><label class="form-label">Data de aplicação</label><input class="form-input" type="date" value="2025-01-20" required></div>
       <div class="form-group" style="margin-bottom:8px"><label class="form-label">Veterinário responsável</label><select class="form-select"><option>Não informado</option><option>Dr. Carlos Lima — CRMV 12345</option><option>Dra. Ana Souza — CRMV 67890</option></select></div>
       <div class="form-note" style="margin-bottom:18px">
         <i class="ti ti-calendar-check" aria-hidden="true"></i>
         <p>Próxima dose calculada: <strong style="color:var(--brand)">20/01/2026</strong>. Alerta agendado automaticamente.</p>
       </div>
-      <div class="btn-group pb-20"><button class="btn-primary" onclick="go('s-animal')"><i class="ti ti-check" aria-hidden="true"></i>Registrar vacinação</button></div>
+      <div class="btn-group pb-20"><button class="btn-primary" onclick="validateForm(document.getElementById('vacinacao-form'), function() { showToast('Vacinação registrada com sucesso!', 'success'); go('s-animal'); })"><i class="ti ti-check" aria-hidden="true"></i>Registrar vacinação</button></div>
     </div>
   </div>
 
@@ -405,7 +454,7 @@
         </button>
       </div>
       <div style="padding: 0 16px 10px">
-        <button class="brete-btn emergency" style="width:100%; flex-direction:row; gap:8px; justify-content:center; padding:13px" onclick="doorEmergency()">
+        <button class="brete-btn emergency" style="width:100%; flex-direction:row; gap:8px; justify-content:center; padding:13px" onclick="openSheet({title:'Parada de emergência', message:'Isso travará o mecanismo imediatamente. Tem certeza?', icon:'ti ti-alert-octagon', iconType:'danger', confirmText:'Confirmar parada', confirmClass:'btn-danger', onConfirm:function(){doorEmergency(); showToast('Parada de emergência ativada!', 'error');}})">
           <i class="ti ti-alert-octagon" aria-hidden="true"></i>Parada de emergência
         </button>
       </div>
@@ -446,22 +495,46 @@
     <div class="scroll">
       <div class="map-placeholder"><div class="map-grid"></div><div class="map-pin"><i class="ti ti-map-pin" aria-hidden="true"></i><span>Sua região</span></div></div>
       <div class="section-header"><span>Mais próximos</span><a>Ver mapa</a></div>
-      <div class="vet-card" onclick="go('s-vet-det')">
-        <div class="vet-avatar"><i class="ti ti-stethoscope" aria-hidden="true"></i></div>
-        <div class="vet-body"><strong>Dr. Carlos Lima</strong><span>Clínica geral · Reprodução</span><span class="vet-distance"><i class="ti ti-map-pin" style="font-size:10px" aria-hidden="true"></i> 8 km · CRMV-SP 12345</span></div>
-        <span class="badge badge-green">Disponível</span>
+      
+      <!-- Skeleton Loading -->
+      <div id="vets-skeleton" class="skeleton-container hidden">
+        <div class="skeleton-row">
+          <div class="skeleton-circle"></div>
+          <div class="skeleton-lines">
+            <div class="skeleton-line medium"></div>
+            <div class="skeleton-line short"></div>
+          </div>
+          <div class="skeleton-badge"></div>
+        </div>
+        <div class="skeleton-row">
+          <div class="skeleton-circle"></div>
+          <div class="skeleton-lines">
+            <div class="skeleton-line medium"></div>
+            <div class="skeleton-line short"></div>
+          </div>
+          <div class="skeleton-badge"></div>
+        </div>
       </div>
-      <div class="vet-card" onclick="go('s-vet-det')">
-        <div class="vet-avatar"><i class="ti ti-stethoscope" aria-hidden="true"></i></div>
-        <div class="vet-body"><strong>Dra. Ana Souza</strong><span>Reprodução · Sanidade animal</span><span class="vet-distance"><i class="ti ti-map-pin" style="font-size:10px" aria-hidden="true"></i> 14 km · CRMV-SP 67890</span></div>
-        <span class="badge badge-green">Disponível</span>
+
+      <!-- Real Content -->
+      <div id="vets-content">
+        <div class="vet-card" onclick="go('s-vet-det')">
+          <div class="vet-avatar"><i class="ti ti-stethoscope" aria-hidden="true"></i></div>
+          <div class="vet-body"><strong>Dr. Carlos Lima</strong><span>Clínica geral · Reprodução</span><span class="vet-distance"><i class="ti ti-map-pin" style="font-size:10px" aria-hidden="true"></i> 8 km · CRMV-SP 12345</span></div>
+          <span class="badge badge-green">Disponível</span>
+        </div>
+        <div class="vet-card" onclick="go('s-vet-det')">
+          <div class="vet-avatar"><i class="ti ti-stethoscope" aria-hidden="true"></i></div>
+          <div class="vet-body"><strong>Dra. Ana Souza</strong><span>Reprodução · Sanidade animal</span><span class="vet-distance"><i class="ti ti-map-pin" style="font-size:10px" aria-hidden="true"></i> 14 km · CRMV-SP 67890</span></div>
+          <span class="badge badge-green">Disponível</span>
+        </div>
+        <div class="vet-card">
+          <div class="vet-avatar"><i class="ti ti-stethoscope" aria-hidden="true"></i></div>
+          <div class="vet-body"><strong>Dr. Roberto Neves</strong><span>Clínica geral · Cirurgia</span><span class="vet-distance"><i class="ti ti-map-pin" style="font-size:10px" aria-hidden="true"></i> 22 km · CRMV-SP 54321</span></div>
+          <span class="badge badge-amber">Ocupado</span>
+        </div>
+        <div style="height:20px"></div>
       </div>
-      <div class="vet-card">
-        <div class="vet-avatar"><i class="ti ti-stethoscope" aria-hidden="true"></i></div>
-        <div class="vet-body"><strong>Dr. Roberto Neves</strong><span>Clínica geral · Cirurgia</span><span class="vet-distance"><i class="ti ti-map-pin" style="font-size:10px" aria-hidden="true"></i> 22 km · CRMV-SP 54321</span></div>
-        <span class="badge badge-amber">Ocupado</span>
-      </div>
-      <div style="height:20px"></div>
     </div>
     <nav class="bottom-nav">
       <div class="nav-item" onclick="go('s-dash')"><i class="ti ti-home" aria-hidden="true"></i><span>Início</span></div>
@@ -544,18 +617,23 @@
       <div class="section-header"><span>Conta</span></div>
       <div class="list-row"><div class="row-icon ri-slate"><i class="ti ti-user-edit" aria-hidden="true"></i></div><div class="row-body"><strong>Editar dados</strong><span>Nome, e-mail, propriedade</span></div><i class="ti ti-chevron-right row-chevron" aria-hidden="true"></i></div>
       <div class="list-row"><div class="row-icon ri-slate"><i class="ti ti-bell" aria-hidden="true"></i></div><div class="row-body"><strong>Configurar alertas</strong><span>Antecedência e categorias</span></div><i class="ti ti-chevron-right row-chevron" aria-hidden="true"></i></div>
+      <div class="toggle-row">
+        <div class="row-icon ri-slate"><i class="ti ti-moon" aria-hidden="true"></i></div>
+        <div class="row-body"><strong>Modo escuro</strong><span>Ajusta cores para ambiente noturno</span></div>
+        <button class="toggle-switch" id="theme-toggle" onclick="toggleTheme()"><div class="toggle-knob"></div></button>
+      </div>
       <div class="section-header"><span>Privacidade — LGPD</span></div>
       <div class="list-row"><div class="row-icon ri-blue"><i class="ti ti-file-description" aria-hidden="true"></i></div><div class="row-body"><strong>Meus consentimentos</strong><span>Visualizar e revogar por finalidade</span></div><i class="ti ti-chevron-right row-chevron" aria-hidden="true"></i></div>
       <div class="list-row"><div class="row-icon ri-blue"><i class="ti ti-download" aria-hidden="true"></i></div><div class="row-body"><strong>Exportar meus dados</strong><span>Portabilidade — JSON e PDF</span></div><i class="ti ti-chevron-right row-chevron" aria-hidden="true"></i></div>
-      <div class="list-row"><div class="row-icon ri-red"><i class="ti ti-trash" aria-hidden="true"></i></div><div class="row-body"><strong>Excluir conta</strong><span>30 dias de carência para reverter</span></div><i class="ti ti-chevron-right row-chevron" aria-hidden="true"></i></div>
+      <div class="list-row" onclick="openSheet({title:'Excluir conta?', message:'Seus dados serão removidos permanentemente em 30 dias. Confirmar?', icon:'ti ti-trash', iconType:'danger', confirmText:'Excluir', confirmClass:'btn-danger', onConfirm:function(){go('s-login'); showToast('Solicitação de exclusão enviada', 'info');}})"><div class="row-icon ri-red"><i class="ti ti-trash" aria-hidden="true"></i></div><div class="row-body"><strong>Excluir conta</strong><span>30 dias de carência para reverter</span></div><i class="ti ti-chevron-right row-chevron" aria-hidden="true"></i></div>
       <div class="section-header"><span>Sincronização</span></div>
       <div class="sync-card">
         <div class="row-icon ri-green" style="flex-shrink:0"><i class="ti ti-refresh" aria-hidden="true"></i></div>
         <div style="flex:1"><div class="sync-card-title">Última sincronização</div><div class="sync-card-sub">Há 3 minutos · 0 pendentes</div></div>
-        <button class="btn-outline-sm">Sync</button>
+        <button class="btn-outline-sm" onclick="showToast('Dados sincronizados com sucesso!', 'success')">Sync</button>
       </div>
       <div style="padding: 0 16px 24px">
-        <button class="btn-danger" onclick="go('s-login')">
+        <button class="btn-danger" onclick="openSheet({title:'Sair da conta?', message:'Você precisará fazer login novamente para acessar o BoviCare.', icon:'ti ti-logout', iconType:'warning', confirmText:'Sair', confirmClass:'btn-danger', onConfirm:function(){go('s-login'); showToast('Você saiu da conta', 'info');}})">
           <i class="ti ti-logout" aria-hidden="true"></i>Sair da conta
         </button>
       </div>
@@ -569,9 +647,32 @@
     </nav>
   </div>
 
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Bottom Sheet Overlay & Panel -->
+  <div class="sheet-overlay" id="sheet-overlay" onclick="closeSheet()"></div>
+  <div class="sheet-panel" id="sheet-panel">
+    <div class="sheet-handle"></div>
+    <div class="sheet-icon danger"><i class="ti ti-alert-triangle"></i></div>
+    <div class="sheet-title">Confirmar ação</div>
+    <div class="sheet-message">Tem certeza?</div>
+    <div class="sheet-actions">
+      <button class="btn-danger" id="sheet-confirm" style="width:100%">Confirmar</button>
+      <button class="btn-outline" onclick="closeSheet()" style="width:100%">Cancelar</button>
+    </div>
+  </div>
+
 </div><!-- /frame -->
 
+<!-- Feature and Core Scripts -->
 <script src="js/features/assets.js"></script>
+<script src="js/features/toast.js"></script>
+<script src="js/features/counter.js"></script>
+<script src="js/features/bottom_sheet.js"></script>
+<script src="js/features/form_validation.js"></script>
+<script src="js/features/pull_refresh.js"></script>
+<script src="js/features/theme.js"></script>
 <script src="js/core/navigation.js"></script>
 <script src="js/features/ui_handlers.js"></script>
 <script src="js/features/brete.js"></script>

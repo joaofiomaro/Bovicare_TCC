@@ -34,7 +34,7 @@
 }
 /* Painel branco do login — TUDO preto */
 .login-panel {
-  background: #fff;
+  background: var(--card);
   border-radius: var(--r24);
   padding: 20px 18px 18px;
 }

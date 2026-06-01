@@ -29,6 +29,15 @@
 .form-select:focus {
   border-color: var(--brand-mid);
 }
+.form-input.input-error,
+.form-select.input-error {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}
+.form-input.input-success,
+.form-select.input-success {
+  border-color: var(--brand-mid);
+}
 
 /* Nota informativa em formulário */
 .form-note {

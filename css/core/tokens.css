@@ -47,3 +47,35 @@
   --notch-h: 50px;
   --nav-h:   64px;
 }
+
+/* ═══════════════════════════════════════════════
+   DARK MODE
+═══════════════════════════════════════════════ */
+[data-theme="dark"] {
+  /* Cores da marca (ajustadas para contraste em fundo escuro) */
+  --brand:        #2A8A4E;
+  --brand-deep:   #1C6B3A;
+  --brand-mid:    #3DA564;
+  --brand-light:  #1A2F22;
+  --brand-pale:   #162418;
+
+  /* Neutros (invertidos) */
+  --ink:          #E8ECE9;
+  --ink2:         #C0CCC4;
+  --ink3:         #98A89E;
+  --muted:        #7A8E82;
+  --ghost:        #4A5C50;
+  --surface:      #0F1A14;
+  --bg:           #0A1410;
+  --card:         #162018;
+
+  /* Semânticas (mantém visibilidade) */
+  --gold:         #E6A817;
+  --gold-bg:      #2A2210;
+  --danger:       #E25454;
+  --danger-bg:    #2A1414;
+  --info-bg:      #0F1A2A;
+  --info:         #5B9BD5;
+  --amber-bg:     #2A2010;
+  --amber:        #D4A020;
+}
