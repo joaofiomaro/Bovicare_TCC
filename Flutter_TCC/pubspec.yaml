@@ -1,0 +1,82 @@
+name: bovicare
+description: BoviCare — Gestão de rebanho bovino para produtores e veterinários.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # --- State Management & DI ---
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # --- Navegação ---
+  go_router: ^15.1.2
+
+  # --- Persistência Local ---
+  hive_flutter: ^1.1.0
+  shared_preferences: ^2.5.3
+
+  # --- Rede & IoT ---
+  dio: ^5.8.0
+  mqtt_client: ^10.7.0
+  connectivity_plus: ^6.1.4
+
+  # --- UI & Animações ---
+  flutter_animate: ^4.5.2
+  shimmer: ^3.0.0
+  material_symbols_icons: ^4.2787.1
+  google_fonts: ^6.2.1
+  cached_network_image: ^3.4.1
+  flutter_svg: ^2.0.17
+  lottie: ^3.3.1
+
+  # --- Mapas & Localização ---
+  flutter_map: ^8.1.1
+  latlong2: ^0.9.1
+  geolocator: ^13.0.4
+
+  # --- Formulários & Validação ---
+  formz: ^0.8.0
+
+  # --- Utilitários ---
+  intl: ^0.20.2
+  logger: ^2.5.0
+  flutter_dotenv: ^5.2.1
+  url_launcher: ^6.3.1
+  permission_handler: ^11.4.0
+  image_picker: ^1.1.2
+  equatable: ^2.0.7
+
+  # --- Code Gen (runtime) ---
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # --- Qualidade & Linting ---
+  very_good_analysis: ^7.0.0
+
+  # --- Code Generation ---
+  build_runner: ^2.4.15
+  freezed: ^2.5.8
+  json_serializable: ^6.9.5
+  riverpod_generator: ^2.6.3
+
+  # --- Testes ---
+  mocktail: ^1.0.5
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/animations/
+    - assets/icons/
+    - .env
