@@ -31,6 +31,11 @@ mixin _$AnimalModel {
   double? get weightKg => throw _privateConstructorUsedError;
   String? get rfid => throw _privateConstructorUsedError;
   String? get pregnancyDateIso => throw _privateConstructorUsedError;
+  String get exitType => throw _privateConstructorUsedError;
+  String? get exitDateIso => throw _privateConstructorUsedError;
+  String? get exitNotes => throw _privateConstructorUsedError;
+  String? get saleId => throw _privateConstructorUsedError;
+  String? get deathCause => throw _privateConstructorUsedError;
 
   /// Serializes this AnimalModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -60,6 +65,11 @@ abstract class $AnimalModelCopyWith<$Res> {
     double? weightKg,
     String? rfid,
     String? pregnancyDateIso,
+    String exitType,
+    String? exitDateIso,
+    String? exitNotes,
+    String? saleId,
+    String? deathCause,
   });
 }
 
@@ -88,6 +98,11 @@ class _$AnimalModelCopyWithImpl<$Res, $Val extends AnimalModel>
     Object? weightKg = freezed,
     Object? rfid = freezed,
     Object? pregnancyDateIso = freezed,
+    Object? exitType = null,
+    Object? exitDateIso = freezed,
+    Object? exitNotes = freezed,
+    Object? saleId = freezed,
+    Object? deathCause = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -131,6 +146,26 @@ class _$AnimalModelCopyWithImpl<$Res, $Val extends AnimalModel>
                 ? _value.pregnancyDateIso
                 : pregnancyDateIso // ignore: cast_nullable_to_non_nullable
                       as String?,
+            exitType: null == exitType
+                ? _value.exitType
+                : exitType // ignore: cast_nullable_to_non_nullable
+                      as String,
+            exitDateIso: freezed == exitDateIso
+                ? _value.exitDateIso
+                : exitDateIso // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            exitNotes: freezed == exitNotes
+                ? _value.exitNotes
+                : exitNotes // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            saleId: freezed == saleId
+                ? _value.saleId
+                : saleId // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            deathCause: freezed == deathCause
+                ? _value.deathCause
+                : deathCause // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -157,6 +192,11 @@ abstract class _$$AnimalModelImplCopyWith<$Res>
     double? weightKg,
     String? rfid,
     String? pregnancyDateIso,
+    String exitType,
+    String? exitDateIso,
+    String? exitNotes,
+    String? saleId,
+    String? deathCause,
   });
 }
 
@@ -184,6 +224,11 @@ class __$$AnimalModelImplCopyWithImpl<$Res>
     Object? weightKg = freezed,
     Object? rfid = freezed,
     Object? pregnancyDateIso = freezed,
+    Object? exitType = null,
+    Object? exitDateIso = freezed,
+    Object? exitNotes = freezed,
+    Object? saleId = freezed,
+    Object? deathCause = freezed,
   }) {
     return _then(
       _$AnimalModelImpl(
@@ -227,6 +272,26 @@ class __$$AnimalModelImplCopyWithImpl<$Res>
             ? _value.pregnancyDateIso
             : pregnancyDateIso // ignore: cast_nullable_to_non_nullable
                   as String?,
+        exitType: null == exitType
+            ? _value.exitType
+            : exitType // ignore: cast_nullable_to_non_nullable
+                  as String,
+        exitDateIso: freezed == exitDateIso
+            ? _value.exitDateIso
+            : exitDateIso // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        exitNotes: freezed == exitNotes
+            ? _value.exitNotes
+            : exitNotes // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        saleId: freezed == saleId
+            ? _value.saleId
+            : saleId // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        deathCause: freezed == deathCause
+            ? _value.deathCause
+            : deathCause // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -246,6 +311,11 @@ class _$AnimalModelImpl extends _AnimalModel {
     this.weightKg,
     this.rfid,
     this.pregnancyDateIso,
+    this.exitType = 'active',
+    this.exitDateIso,
+    this.exitNotes,
+    this.saleId,
+    this.deathCause,
   }) : super._();
 
   factory _$AnimalModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -271,10 +341,21 @@ class _$AnimalModelImpl extends _AnimalModel {
   final String? rfid;
   @override
   final String? pregnancyDateIso;
+  @override
+  @JsonKey()
+  final String exitType;
+  @override
+  final String? exitDateIso;
+  @override
+  final String? exitNotes;
+  @override
+  final String? saleId;
+  @override
+  final String? deathCause;
 
   @override
   String toString() {
-    return 'AnimalModel(id: $id, earTag: $earTag, breed: $breed, sex: $sex, status: $status, birthDateIso: $birthDateIso, name: $name, weightKg: $weightKg, rfid: $rfid, pregnancyDateIso: $pregnancyDateIso)';
+    return 'AnimalModel(id: $id, earTag: $earTag, breed: $breed, sex: $sex, status: $status, birthDateIso: $birthDateIso, name: $name, weightKg: $weightKg, rfid: $rfid, pregnancyDateIso: $pregnancyDateIso, exitType: $exitType, exitDateIso: $exitDateIso, exitNotes: $exitNotes, saleId: $saleId, deathCause: $deathCause)';
   }
 
   @override
@@ -294,7 +375,16 @@ class _$AnimalModelImpl extends _AnimalModel {
                 other.weightKg == weightKg) &&
             (identical(other.rfid, rfid) || other.rfid == rfid) &&
             (identical(other.pregnancyDateIso, pregnancyDateIso) ||
-                other.pregnancyDateIso == pregnancyDateIso));
+                other.pregnancyDateIso == pregnancyDateIso) &&
+            (identical(other.exitType, exitType) ||
+                other.exitType == exitType) &&
+            (identical(other.exitDateIso, exitDateIso) ||
+                other.exitDateIso == exitDateIso) &&
+            (identical(other.exitNotes, exitNotes) ||
+                other.exitNotes == exitNotes) &&
+            (identical(other.saleId, saleId) || other.saleId == saleId) &&
+            (identical(other.deathCause, deathCause) ||
+                other.deathCause == deathCause));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -311,6 +401,11 @@ class _$AnimalModelImpl extends _AnimalModel {
     weightKg,
     rfid,
     pregnancyDateIso,
+    exitType,
+    exitDateIso,
+    exitNotes,
+    saleId,
+    deathCause,
   );
 
   /// Create a copy of AnimalModel
@@ -339,6 +434,11 @@ abstract class _AnimalModel extends AnimalModel {
     final double? weightKg,
     final String? rfid,
     final String? pregnancyDateIso,
+    final String exitType,
+    final String? exitDateIso,
+    final String? exitNotes,
+    final String? saleId,
+    final String? deathCause,
   }) = _$AnimalModelImpl;
   const _AnimalModel._() : super._();
 
@@ -365,6 +465,16 @@ abstract class _AnimalModel extends AnimalModel {
   String? get rfid;
   @override
   String? get pregnancyDateIso;
+  @override
+  String get exitType;
+  @override
+  String? get exitDateIso;
+  @override
+  String? get exitNotes;
+  @override
+  String? get saleId;
+  @override
+  String? get deathCause;
 
   /// Create a copy of AnimalModel
   /// with the given fields replaced by the non-null parameter values.

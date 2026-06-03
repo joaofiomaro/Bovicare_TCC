@@ -27,27 +27,32 @@ class DashboardFirestoreDataSource with FirestoreErrorHandler {
         final now = DateTime.now();
         final in30Days = now.add(const Duration(days: 30));
 
-        // Contagens paralelas via aggregation — sem baixar documentos.
-        final results = await Future.wait([
-          _animalsCol.count().get(),
-          _animalsCol.where('status', isEqualTo: 'pregnant').count().get(),
-          _animalsCol
-              .where('status', whereIn: ['sick', 'attention'])
-              .count()
-              .get(),
-          _vaccinationsCol
-              .where('nextDoseDateIso',
-                  isGreaterThanOrEqualTo: now.toIso8601String())
-              .where('nextDoseDateIso',
-                  isLessThanOrEqualTo: in30Days.toIso8601String())
-              .count()
-              .get(),
-        ]);
+        // Conta apenas animais ATIVOS (exclui vendidos/óbito). Filtra em memória
+        // sobre o campo normalizado — docs antigos sem `exitType` contam como
+        // ativos, evitando o problema de `where` em campo ausente (ver §8.3).
+        final animalsSnap = await _animalsCol.get();
+        final active = animalsSnap.docs.where((d) {
+          final exitType = (d.data()['exitType'] as String?) ?? 'active';
+          return exitType == 'active';
+        }).toList();
 
-        final total    = results[0].count ?? 0;
-        final pregnant = results[1].count ?? 0;
-        final alerts   = results[2].count ?? 0;
-        final upcoming = results[3].count ?? 0;
+        final total    = active.length;
+        final pregnant =
+            active.where((d) => d.data()['status'] == 'pregnant').length;
+        final alerts = active.where((d) {
+          final status = d.data()['status'];
+          return status == 'sick' || status == 'attention';
+        }).length;
+
+        // Próximas vacinações continua via aggregation (não baixa documentos).
+        final upcomingSnap = await _vaccinationsCol
+            .where('nextDoseDateIso',
+                isGreaterThanOrEqualTo: now.toIso8601String())
+            .where('nextDoseDateIso',
+                isLessThanOrEqualTo: in30Days.toIso8601String())
+            .count()
+            .get();
+        final upcoming = upcomingSnap.count ?? 0;
 
         return DashboardStats(
           totalAnimals:         total,

@@ -28,7 +28,17 @@ mixin _$AnimalEntity {
   String? get rfid => throw _privateConstructorUsedError;
 
   /// Data de cobertura/inseminação — usada para calcular progresso da prenhez.
-  DateTime? get pregnancyDate => throw _privateConstructorUsedError;
+  DateTime? get pregnancyDate =>
+      throw _privateConstructorUsedError; // --- Baixa do rebanho (M2) ---
+  AnimalExitType get exitType => throw _privateConstructorUsedError;
+  DateTime? get exitDate => throw _privateConstructorUsedError;
+  String? get exitNotes => throw _privateConstructorUsedError;
+
+  /// Referência ao documento de venda (quando [exitType] == sold).
+  String? get saleId => throw _privateConstructorUsedError;
+
+  /// Causa do óbito (quando [exitType] == deceased).
+  String? get deathCause => throw _privateConstructorUsedError;
 
   /// Create a copy of AnimalEntity
   /// with the given fields replaced by the non-null parameter values.
@@ -55,6 +65,11 @@ abstract class $AnimalEntityCopyWith<$Res> {
     double? weightKg,
     String? rfid,
     DateTime? pregnancyDate,
+    AnimalExitType exitType,
+    DateTime? exitDate,
+    String? exitNotes,
+    String? saleId,
+    String? deathCause,
   });
 }
 
@@ -83,6 +98,11 @@ class _$AnimalEntityCopyWithImpl<$Res, $Val extends AnimalEntity>
     Object? weightKg = freezed,
     Object? rfid = freezed,
     Object? pregnancyDate = freezed,
+    Object? exitType = null,
+    Object? exitDate = freezed,
+    Object? exitNotes = freezed,
+    Object? saleId = freezed,
+    Object? deathCause = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -126,6 +146,26 @@ class _$AnimalEntityCopyWithImpl<$Res, $Val extends AnimalEntity>
                 ? _value.pregnancyDate
                 : pregnancyDate // ignore: cast_nullable_to_non_nullable
                       as DateTime?,
+            exitType: null == exitType
+                ? _value.exitType
+                : exitType // ignore: cast_nullable_to_non_nullable
+                      as AnimalExitType,
+            exitDate: freezed == exitDate
+                ? _value.exitDate
+                : exitDate // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            exitNotes: freezed == exitNotes
+                ? _value.exitNotes
+                : exitNotes // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            saleId: freezed == saleId
+                ? _value.saleId
+                : saleId // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            deathCause: freezed == deathCause
+                ? _value.deathCause
+                : deathCause // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -152,6 +192,11 @@ abstract class _$$AnimalEntityImplCopyWith<$Res>
     double? weightKg,
     String? rfid,
     DateTime? pregnancyDate,
+    AnimalExitType exitType,
+    DateTime? exitDate,
+    String? exitNotes,
+    String? saleId,
+    String? deathCause,
   });
 }
 
@@ -179,6 +224,11 @@ class __$$AnimalEntityImplCopyWithImpl<$Res>
     Object? weightKg = freezed,
     Object? rfid = freezed,
     Object? pregnancyDate = freezed,
+    Object? exitType = null,
+    Object? exitDate = freezed,
+    Object? exitNotes = freezed,
+    Object? saleId = freezed,
+    Object? deathCause = freezed,
   }) {
     return _then(
       _$AnimalEntityImpl(
@@ -222,6 +272,26 @@ class __$$AnimalEntityImplCopyWithImpl<$Res>
             ? _value.pregnancyDate
             : pregnancyDate // ignore: cast_nullable_to_non_nullable
                   as DateTime?,
+        exitType: null == exitType
+            ? _value.exitType
+            : exitType // ignore: cast_nullable_to_non_nullable
+                  as AnimalExitType,
+        exitDate: freezed == exitDate
+            ? _value.exitDate
+            : exitDate // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        exitNotes: freezed == exitNotes
+            ? _value.exitNotes
+            : exitNotes // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        saleId: freezed == saleId
+            ? _value.saleId
+            : saleId // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        deathCause: freezed == deathCause
+            ? _value.deathCause
+            : deathCause // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -241,6 +311,11 @@ class _$AnimalEntityImpl implements _AnimalEntity {
     this.weightKg,
     this.rfid,
     this.pregnancyDate,
+    this.exitType = AnimalExitType.active,
+    this.exitDate,
+    this.exitNotes,
+    this.saleId,
+    this.deathCause,
   });
 
   @override
@@ -265,10 +340,26 @@ class _$AnimalEntityImpl implements _AnimalEntity {
   /// Data de cobertura/inseminação — usada para calcular progresso da prenhez.
   @override
   final DateTime? pregnancyDate;
+  // --- Baixa do rebanho (M2) ---
+  @override
+  @JsonKey()
+  final AnimalExitType exitType;
+  @override
+  final DateTime? exitDate;
+  @override
+  final String? exitNotes;
+
+  /// Referência ao documento de venda (quando [exitType] == sold).
+  @override
+  final String? saleId;
+
+  /// Causa do óbito (quando [exitType] == deceased).
+  @override
+  final String? deathCause;
 
   @override
   String toString() {
-    return 'AnimalEntity(id: $id, earTag: $earTag, breed: $breed, sex: $sex, birthDate: $birthDate, status: $status, name: $name, weightKg: $weightKg, rfid: $rfid, pregnancyDate: $pregnancyDate)';
+    return 'AnimalEntity(id: $id, earTag: $earTag, breed: $breed, sex: $sex, birthDate: $birthDate, status: $status, name: $name, weightKg: $weightKg, rfid: $rfid, pregnancyDate: $pregnancyDate, exitType: $exitType, exitDate: $exitDate, exitNotes: $exitNotes, saleId: $saleId, deathCause: $deathCause)';
   }
 
   @override
@@ -288,7 +379,16 @@ class _$AnimalEntityImpl implements _AnimalEntity {
                 other.weightKg == weightKg) &&
             (identical(other.rfid, rfid) || other.rfid == rfid) &&
             (identical(other.pregnancyDate, pregnancyDate) ||
-                other.pregnancyDate == pregnancyDate));
+                other.pregnancyDate == pregnancyDate) &&
+            (identical(other.exitType, exitType) ||
+                other.exitType == exitType) &&
+            (identical(other.exitDate, exitDate) ||
+                other.exitDate == exitDate) &&
+            (identical(other.exitNotes, exitNotes) ||
+                other.exitNotes == exitNotes) &&
+            (identical(other.saleId, saleId) || other.saleId == saleId) &&
+            (identical(other.deathCause, deathCause) ||
+                other.deathCause == deathCause));
   }
 
   @override
@@ -304,6 +404,11 @@ class _$AnimalEntityImpl implements _AnimalEntity {
     weightKg,
     rfid,
     pregnancyDate,
+    exitType,
+    exitDate,
+    exitNotes,
+    saleId,
+    deathCause,
   );
 
   /// Create a copy of AnimalEntity
@@ -327,6 +432,11 @@ abstract class _AnimalEntity implements AnimalEntity {
     final double? weightKg,
     final String? rfid,
     final DateTime? pregnancyDate,
+    final AnimalExitType exitType,
+    final DateTime? exitDate,
+    final String? exitNotes,
+    final String? saleId,
+    final String? deathCause,
   }) = _$AnimalEntityImpl;
 
   @override
@@ -350,7 +460,21 @@ abstract class _AnimalEntity implements AnimalEntity {
 
   /// Data de cobertura/inseminação — usada para calcular progresso da prenhez.
   @override
-  DateTime? get pregnancyDate;
+  DateTime? get pregnancyDate; // --- Baixa do rebanho (M2) ---
+  @override
+  AnimalExitType get exitType;
+  @override
+  DateTime? get exitDate;
+  @override
+  String? get exitNotes;
+
+  /// Referência ao documento de venda (quando [exitType] == sold).
+  @override
+  String? get saleId;
+
+  /// Causa do óbito (quando [exitType] == deceased).
+  @override
+  String? get deathCause;
 
   /// Create a copy of AnimalEntity
   /// with the given fields replaced by the non-null parameter values.

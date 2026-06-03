@@ -10,9 +10,11 @@ import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/brete/presentation/screens/brete_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
+import '../../features/herd/domain/entities/animal_entity.dart';
+import '../../features/herd/presentation/screens/animal_form_screen.dart';
 import '../../features/herd/presentation/screens/animal_profile_screen.dart';
+import '../../features/herd/presentation/screens/archived_animals_screen.dart';
 import '../../features/herd/presentation/screens/herd_list_screen.dart';
-import '../../features/herd/presentation/screens/new_animal_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/reports/presentation/screens/reports_screen.dart';
 import '../../features/vaccination/presentation/screens/vaccination_screen.dart';
@@ -90,7 +92,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path:        'new',
                 name:        AppRoutes.newAnimal,
                 pageBuilder: (_, state) =>
-                    _slideTransition(state, const NewAnimalScreen()),
+                    _slideTransition(state, const AnimalFormScreen()),
+              ),
+              GoRoute(
+                path:        'archived',
+                name:        AppRoutes.archivedAnimals,
+                pageBuilder: (_, state) =>
+                    _slideTransition(state, const ArchivedAnimalsScreen()),
               ),
               GoRoute(
                 path: ':id',
@@ -102,6 +110,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   ),
                 ),
                 routes: [
+                  GoRoute(
+                    path: 'edit',
+                    name: AppRoutes.editAnimal,
+                    pageBuilder: (_, state) {
+                      final extra = state.extra;
+                      final id    = state.pathParameters['id']!;
+                      // Reusa o animal vindo por `extra` (sem refetch);
+                      // cai no loader por id em deep links sem `extra`.
+                      return _slideTransition(
+                        state,
+                        extra is AnimalEntity
+                            ? AnimalFormScreen(initial: extra)
+                            : AnimalEditLoader(animalId: id),
+                      );
+                    },
+                  ),
                   GoRoute(
                     path: 'vaccine',
                     name: AppRoutes.vaccination,

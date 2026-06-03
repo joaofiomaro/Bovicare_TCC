@@ -102,14 +102,27 @@ List<AnimalEntity> _applyHerdFilters(
       .toList();
 }
 
-/// Lista exibida na UI: reage a filtro/busca sem refetch (apenas reprocessa
-/// em memória a lista já carregada por [animalsProvider]).
+/// Lista exibida na UI: apenas animais **ativos** (sem baixa), com filtro/busca
+/// aplicados em memória — sem refetch a cada tecla.
 final filteredAnimalsProvider =
     Provider<AsyncValue<List<AnimalEntity>>>((ref) {
   final animals = ref.watch(animalsProvider);
   final filter  = ref.watch(herdFilterProvider);
   final query   = ref.watch(herdSearchProvider);
-  return animals.whenData((list) => _applyHerdFilters(list, filter, query));
+  return animals.whenData((list) {
+    final active = list.where((a) => !a.isArchived).toList();
+    return _applyHerdFilters(active, filter, query);
+  });
+});
+
+/// Animais arquivados (vendidos ou óbito) — derivado em memória da lista
+/// já carregada, evitando uma segunda consulta ao Firestore.
+final archivedAnimalsProvider =
+    Provider<AsyncValue<List<AnimalEntity>>>((ref) {
+  final animals = ref.watch(animalsProvider);
+  return animals.whenData(
+    (list) => list.where((a) => a.isArchived).toList(),
+  );
 });
 
 // --- Provider de detalhe (família por id) ---

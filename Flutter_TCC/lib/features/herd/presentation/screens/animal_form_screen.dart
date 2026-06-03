@@ -4,32 +4,59 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../domain/entities/animal_entity.dart';
 import '../providers/animals_provider.dart';
 
-class NewAnimalScreen extends ConsumerStatefulWidget {
-  const NewAnimalScreen({super.key});
+/// Formulário de animal reutilizável entre cadastro e edição.
+///
+/// - `initial == null` → modo **cadastro** (gera novo id).
+/// - `initial != null` → modo **edição** (preserva id, status e prenhez).
+class AnimalFormScreen extends ConsumerStatefulWidget {
+  const AnimalFormScreen({this.initial, super.key});
+
+  /// Animal a editar; nulo para um novo cadastro.
+  final AnimalEntity? initial;
+
+  bool get isEditing => initial != null;
 
   @override
-  ConsumerState<NewAnimalScreen> createState() => _NewAnimalScreenState();
+  ConsumerState<AnimalFormScreen> createState() => _AnimalFormScreenState();
 }
 
-class _NewAnimalScreenState extends ConsumerState<NewAnimalScreen> {
-  final _earTagController  = TextEditingController();
-  final _nameController    = TextEditingController();
-  final _weightController  = TextEditingController();
+class _AnimalFormScreenState extends ConsumerState<AnimalFormScreen> {
+  final _earTagController = TextEditingController();
+  final _nameController   = TextEditingController();
+  final _weightController = TextEditingController();
 
-  AnimalSex    _sex         = AnimalSex.female;
-  String       _breed       = 'Nelore';
-  DateTime?    _birthDate;
-  String?      _rfid;
-  bool         _isScanning  = false;
-  bool         _isSaving    = false;
+  AnimalSex _sex   = AnimalSex.female;
+  String    _breed = 'Nelore';
+  DateTime? _birthDate;
+  String?   _rfid;
+  bool      _isScanning = false;
+  bool      _isSaving   = false;
 
-  static const _breeds = ['Nelore', 'Gir', 'Angus', 'Girolando', 'Simental', 'Brahman', 'Outra'];
+  static const _breeds = [
+    'Nelore', 'Gir', 'Angus', 'Girolando', 'Simental', 'Brahman', 'Outra',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initial;
+    if (initial != null) {
+      _earTagController.text = initial.earTag;
+      _nameController.text   = initial.name ?? '';
+      _weightController.text = _formatWeight(initial.weightKg);
+      _sex       = initial.sex;
+      _breed     = _breeds.contains(initial.breed) ? initial.breed : 'Outra';
+      _birthDate = initial.birthDate;
+      _rfid      = initial.rfid;
+    }
+  }
 
   @override
   void dispose() {
@@ -39,12 +66,19 @@ class _NewAnimalScreenState extends ConsumerState<NewAnimalScreen> {
     super.dispose();
   }
 
+  /// Exibe peso sem `.0` desnecessário (ex.: 384 em vez de 384.0).
+  static String _formatWeight(double? kg) {
+    if (kg == null) return '';
+    return kg % 1 == 0 ? kg.toInt().toString() : kg.toString();
+  }
+
   // Simula leitura de RFID do brete — em produção integraria com MqttService.
   Future<void> _simulateRfid() async {
     setState(() => _isScanning = true);
     await Future<void>.delayed(const Duration(milliseconds: 1600));
     if (!mounted) return;
-    final tag = '9001150${DateTime.now().millisecondsSinceEpoch.toString().substring(6)}';
+    final tag =
+        '9001150${DateTime.now().millisecondsSinceEpoch.toString().substring(6)}';
     setState(() {
       _rfid       = tag;
       _isScanning = false;
@@ -55,7 +89,8 @@ class _NewAnimalScreenState extends ConsumerState<NewAnimalScreen> {
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context:     context,
-      initialDate: DateTime.now().subtract(const Duration(days: 365)),
+      initialDate: _birthDate ??
+          DateTime.now().subtract(const Duration(days: 365)),
       firstDate:   DateTime(2000),
       lastDate:    DateTime.now(),
       locale:      const Locale('pt', 'BR'),
@@ -80,6 +115,14 @@ class _NewAnimalScreenState extends ConsumerState<NewAnimalScreen> {
       AppToast.error(context, 'Informe a data de nascimento.');
       return false;
     }
+    final weightText = _weightController.text.trim();
+    if (weightText.isNotEmpty) {
+      final weight = double.tryParse(weightText);
+      if (weight == null || weight < 0) {
+        AppToast.error(context, 'Peso inválido.');
+        return false;
+      }
+    }
     return true;
   }
 
@@ -87,16 +130,28 @@ class _NewAnimalScreenState extends ConsumerState<NewAnimalScreen> {
     if (!_validate()) return;
     setState(() => _isSaving = true);
 
+    final base = widget.initial;
     final animal = AnimalEntity(
-      id:        DateTime.now().millisecondsSinceEpoch.toString(),
+      // Em edição preserva o id; em cadastro gera um novo.
+      id:        base?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       earTag:    _earTagController.text.trim(),
-      name:      _nameController.text.trim().isEmpty ? null : _nameController.text.trim(),
+      name:      _nameController.text.trim().isEmpty
+          ? null
+          : _nameController.text.trim(),
       breed:     _breed,
       sex:       _sex,
       birthDate: _birthDate!,
-      status:    AnimalStatus.healthy,
-      weightKg:  double.tryParse(_weightController.text),
-      rfid:      _rfid,
+      // Campos não editáveis neste form são preservados do animal original
+      // (status, prenhez e, sobretudo, a baixa — não "ressuscita" arquivados).
+      status:        base?.status ?? AnimalStatus.healthy,
+      pregnancyDate: base?.pregnancyDate,
+      weightKg:      double.tryParse(_weightController.text.trim()),
+      rfid:          _rfid,
+      exitType:      base?.exitType ?? AnimalExitType.active,
+      exitDate:      base?.exitDate,
+      exitNotes:     base?.exitNotes,
+      saleId:        base?.saleId,
+      deathCause:    base?.deathCause,
     );
 
     final ok = await ref.read(animalsProvider.notifier).save(animal);
@@ -104,10 +159,24 @@ class _NewAnimalScreenState extends ConsumerState<NewAnimalScreen> {
     if (!mounted) return;
     setState(() => _isSaving = false);
     if (ok) {
-      AppToast.success(context, 'Animal cadastrado com sucesso!');
+      // Garante que a ficha do animal reflita as alterações imediatamente.
+      if (widget.isEditing) {
+        ref.invalidate(animalDetailProvider(animal.id));
+      }
+      AppToast.success(
+        context,
+        widget.isEditing
+            ? 'Animal atualizado com sucesso!'
+            : 'Animal cadastrado com sucesso!',
+      );
       Navigator.of(context).pop();
     } else {
-      AppToast.error(context, 'Erro ao cadastrar. Tente novamente.');
+      AppToast.error(
+        context,
+        widget.isEditing
+            ? 'Erro ao atualizar. Tente novamente.'
+            : 'Erro ao cadastrar. Tente novamente.',
+      );
     }
   }
 
@@ -115,16 +184,16 @@ class _NewAnimalScreenState extends ConsumerState<NewAnimalScreen> {
   Widget build(BuildContext context) {
     final birthLabel = _birthDate != null
         ? '${_birthDate!.day.toString().padLeft(2, '0')}/'
-          '${_birthDate!.month.toString().padLeft(2, '0')}/'
-          '${_birthDate!.year}'
+            '${_birthDate!.month.toString().padLeft(2, '0')}/'
+            '${_birthDate!.year}'
         : 'Selecionar data';
 
     return Scaffold(
       body: Column(
         children: [
-          const AppHeader(
-            title:    'Novo animal',
-            subtitle: 'Preencha os dados',
+          AppHeader(
+            title:    widget.isEditing ? 'Editar animal' : 'Novo animal',
+            subtitle: widget.isEditing ? 'Atualize os dados' : 'Preencha os dados',
             showBack: true,
           ),
           Expanded(
@@ -133,47 +202,49 @@ class _NewAnimalScreenState extends ConsumerState<NewAnimalScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // RFID scanner
                   _RfidScanner(
-                    rfid:      _rfid,
-                    scanning:  _isScanning,
-                    onScan:    _simulateRfid,
+                    rfid:     _rfid,
+                    scanning: _isScanning,
+                    onScan:   _simulateRfid,
                   ),
                   const SizedBox(height: AppSpacing.base),
 
                   AppTextField(
-                    label:          'Brinco / ID *',
-                    controller:     _earTagController,
-                    prefixIcon:     Icons.label_outline_rounded,
+                    label:           'Brinco / ID *',
+                    controller:      _earTagController,
+                    prefixIcon:      Icons.label_outline_rounded,
                     textInputAction: TextInputAction.next,
-                    keyboardType:   TextInputType.number,
+                    keyboardType:    TextInputType.number,
                   ),
                   const SizedBox(height: AppSpacing.base),
 
                   AppTextField(
-                    label:      'Nome',
-                    controller: _nameController,
-                    prefixIcon: Icons.badge_outlined,
+                    label:           'Nome',
+                    controller:      _nameController,
+                    prefixIcon:      Icons.badge_outlined,
                     textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: AppSpacing.base),
 
-                  // Raça — DropdownButton direto (sem FormField) pois o estado é gerenciado localmente.
+                  // Raça — DropdownButton direto (estado gerenciado localmente).
                   _LabeledField(
                     label: 'Raça *',
                     child: Container(
                       padding:    const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color:        Theme.of(context).colorScheme.surfaceContainerHighest,
-                        borderRadius: const BorderRadius.all(Radius.circular(12)),
+                        color:
+                            Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(12)),
                       ),
                       child: DropdownButton<String>(
-                        value:       _breed,
-                        isExpanded:  true,
-                        underline:   const SizedBox.shrink(),
-                        onChanged:   (v) => setState(() => _breed = v!),
-                        items:       _breeds
-                            .map((b) => DropdownMenuItem(value: b, child: Text(b)))
+                        value:      _breed,
+                        isExpanded: true,
+                        underline:  const SizedBox.shrink(),
+                        onChanged:  (v) => setState(() => _breed = v!),
+                        items: _breeds
+                            .map((b) =>
+                                DropdownMenuItem(value: b, child: Text(b)))
                             .toList(),
                       ),
                     ),
@@ -188,7 +259,8 @@ class _NewAnimalScreenState extends ConsumerState<NewAnimalScreen> {
                         _SexChip(
                           label:    'Fêmea',
                           selected: _sex == AnimalSex.female,
-                          onTap:    () => setState(() => _sex = AnimalSex.female),
+                          onTap:    () =>
+                              setState(() => _sex = AnimalSex.female),
                         ),
                         const SizedBox(width: AppSpacing.sm),
                         _SexChip(
@@ -230,16 +302,19 @@ class _NewAnimalScreenState extends ConsumerState<NewAnimalScreen> {
                   const SizedBox(height: AppSpacing.base),
 
                   AppTextField(
-                    label:          'Peso atual (kg)',
-                    controller:     _weightController,
-                    prefixIcon:     Icons.monitor_weight_outlined,
-                    keyboardType:   const TextInputType.numberWithOptions(decimal: true),
+                    label:        'Peso atual (kg)',
+                    controller:   _weightController,
+                    prefixIcon:   Icons.monitor_weight_outlined,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     textInputAction: TextInputAction.done,
                   ),
                   const SizedBox(height: AppSpacing.x2l),
 
                   AppButton(
-                    label:     'Cadastrar animal',
+                    label: widget.isEditing
+                        ? 'Salvar alterações'
+                        : 'Cadastrar animal',
                     icon:      Icons.check_rounded,
                     onPressed: _save,
                     isLoading: _isSaving,
@@ -256,13 +331,59 @@ class _NewAnimalScreenState extends ConsumerState<NewAnimalScreen> {
 
   InputDecoration _inputDecoration(BuildContext context) {
     return InputDecoration(
-      filled:      true,
-      fillColor:   Theme.of(context).colorScheme.surfaceContainerHighest,
-      border:      const OutlineInputBorder(
+      filled:    true,
+      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+      border:    const OutlineInputBorder(
         borderRadius: BorderRadius.all(Radius.circular(12)),
         borderSide:   BorderSide.none,
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    );
+  }
+}
+
+/// Carrega o animal por id e abre o [AnimalFormScreen] em modo edição.
+/// Usado como fallback quando a rota de edição é acessada sem `extra`
+/// (ex.: deep link), evitando o refetch quando o `extra` já traz o animal.
+class AnimalEditLoader extends ConsumerWidget {
+  const AnimalEditLoader({required this.animalId, super.key});
+
+  final String animalId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final detail = ref.watch(animalDetailProvider(animalId));
+
+    return detail.when(
+      loading: () => const Scaffold(
+        body: Column(
+          children: [
+            AppHeader(title: 'Editar animal', showBack: true),
+            Expanded(child: Center(child: CircularProgressIndicator())),
+          ],
+        ),
+      ),
+      error: (e, _) => Scaffold(
+        body: AppEmptyState(
+          icon:        Icons.error_outline_rounded,
+          title:       'Não foi possível carregar',
+          subtitle:    e.toString(),
+          actionLabel: 'Voltar',
+          onAction:    () => Navigator.of(context).maybePop(),
+        ),
+      ),
+      data: (animal) => animal == null
+          ? Scaffold(
+              body: AppEmptyState(
+                icon:        Icons.pets_rounded,
+                title:       'Animal não encontrado',
+                subtitle:    'Este registro pode ter sido removido.',
+                actionLabel: 'Voltar',
+                onAction:    () => Navigator.of(context).maybePop(),
+              ),
+            )
+          : AnimalFormScreen(initial: animal),
     );
   }
 }
@@ -288,10 +409,12 @@ class _RfidScanner extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding:  const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color:        rfid != null ? AppColors.brandPale : Colors.transparent,
+          color: rfid != null ? AppColors.brandPale : Colors.transparent,
           borderRadius: const BorderRadius.all(Radius.circular(12)),
-          border:       Border.all(
-            color: rfid != null ? AppColors.brandGreen.withValues(alpha: 0.4) : AppColors.ghostGreen,
+          border: Border.all(
+            color: rfid != null
+                ? AppColors.brandGreen.withValues(alpha: 0.4)
+                : AppColors.ghostGreen,
             width: rfid != null ? 1.5 : 1,
           ),
         ),
@@ -307,12 +430,12 @@ class _RfidScanner extends StatelessWidget {
                   ? const Padding(
                       padding: EdgeInsets.all(10),
                       child: CircularProgressIndicator(
-                        color:      AppColors.brandGreen,
+                        color:       AppColors.brandGreen,
                         strokeWidth: 2,
                       ),
                     )
                   : const Icon(Icons.rss_feed_rounded,
-                        color: AppColors.brandGreen, size: 20),
+                      color: AppColors.brandGreen, size: 20),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -326,9 +449,7 @@ class _RfidScanner extends StatelessWidget {
                         ),
                   ),
                   Text(
-                    rfid != null
-                        ? rfid!
-                        : 'Aproxime a tag ao leitor do brete',
+                    rfid ?? 'Aproxime a tag ao leitor do brete',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.mutedGreen,
                         ),
@@ -358,7 +479,7 @@ class _LabeledField extends StatelessWidget {
         Text(label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.mutedGreen,
+                  color:      AppColors.mutedGreen,
                 )),
         const SizedBox(height: 6),
         child,
@@ -386,10 +507,14 @@ class _SexChip extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding:  const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color:        selected ? AppColors.brandLight : Theme.of(context).colorScheme.surfaceContainerHighest,
+            color: selected
+                ? AppColors.brandLight
+                : Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: const BorderRadius.all(Radius.circular(12)),
             border: Border.all(
-              color: selected ? AppColors.brandGreen : Theme.of(context).colorScheme.outlineVariant,
+              color: selected
+                  ? AppColors.brandGreen
+                  : Theme.of(context).colorScheme.outlineVariant,
               width: selected ? 2 : 1,
             ),
           ),
@@ -398,7 +523,7 @@ class _SexChip extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              color:      selected ? AppColors.brandGreen : AppColors.mutedGreen,
+              color: selected ? AppColors.brandGreen : AppColors.mutedGreen,
             ),
           ),
         ),

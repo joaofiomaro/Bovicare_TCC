@@ -10,7 +10,9 @@ import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_skeleton.dart';
 import '../../../../shared/widgets/app_toast.dart';
+import '../../domain/entities/animal_entity.dart';
 import '../providers/animals_provider.dart';
+import '../widgets/animal_exit_sheet.dart';
 import '../widgets/animal_list_tile.dart';
 
 class HerdListScreen extends ConsumerStatefulWidget {
@@ -23,10 +25,33 @@ class HerdListScreen extends ConsumerStatefulWidget {
 class _HerdListScreenState extends ConsumerState<HerdListScreen> {
   final _searchController = TextEditingController();
 
+  /// Ids dos animais selecionados para baixa em lote. Seleção vazia = modo
+  /// normal; não vazia = modo seleção.
+  final Set<String> _selected = {};
+
+  bool get _selectionMode => _selected.isNotEmpty;
+
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _toggle(String id) => setState(() {
+        if (!_selected.remove(id)) _selected.add(id);
+      });
+
+  void _clearSelection() => setState(_selected.clear);
+
+  Future<void> _baixaSelected() async {
+    final all = ref.read(animalsProvider).valueOrNull ?? const <AnimalEntity>[];
+    final selected = all
+        .where((a) => _selected.contains(a.id) && !a.isArchived)
+        .toList();
+    if (selected.isEmpty) return;
+
+    final done = await showAnimalExitSheet(context, animals: selected);
+    if ((done ?? false) && mounted) _clearSelection();
   }
 
   @override
@@ -38,18 +63,38 @@ class _HerdListScreenState extends ConsumerState<HerdListScreen> {
       body: Column(
         children: [
           AppHeader(
-            title:    'Rebanho',
-            subtitle: animals.maybeWhen(
-              data: (list) => '${list.length} ${list.length == 1 ? 'animal' : 'animais'}',
-              orElse: () => null,
-            ),
-            actions: [
-              IconButton(
-                onPressed: () => context.goNamed(AppRoutes.newAnimal),
-                icon: const Icon(Icons.add_rounded, color: Colors.white),
-                tooltip: 'Adicionar animal',
-              ),
-            ],
+            title: _selectionMode
+                ? '${_selected.length} selecionado${_selected.length == 1 ? '' : 's'}'
+                : 'Rebanho',
+            subtitle: _selectionMode
+                ? null
+                : animals.maybeWhen(
+                    data: (list) =>
+                        '${list.length} ${list.length == 1 ? 'animal' : 'animais'}',
+                    orElse: () => null,
+                  ),
+            actions: _selectionMode
+                ? [
+                    IconButton(
+                      onPressed: _clearSelection,
+                      icon: const Icon(Icons.close_rounded, color: Colors.white),
+                      tooltip: 'Cancelar seleção',
+                    ),
+                  ]
+                : [
+                    IconButton(
+                      onPressed: () =>
+                          context.goNamed(AppRoutes.archivedAnimals),
+                      icon: const Icon(Icons.inventory_2_outlined,
+                          color: Colors.white),
+                      tooltip: 'Arquivados',
+                    ),
+                    IconButton(
+                      onPressed: () => context.goNamed(AppRoutes.newAnimal),
+                      icon: const Icon(Icons.add_rounded, color: Colors.white),
+                      tooltip: 'Adicionar animal',
+                    ),
+                  ],
           ),
           // Barra de busca
           Padding(
@@ -133,6 +178,9 @@ class _HerdListScreenState extends ConsumerState<HerdListScreen> {
                     itemBuilder: (_, i) => AnimalListTile(
                       animal:         list[i],
                       animationIndex: i,
+                      selectionMode:  _selectionMode,
+                      selected:       _selected.contains(list[i].id),
+                      onSelectToggle: () => _toggle(list[i].id),
                       onTap:   () => context.goNamed(
                         AppRoutes.animal,
                         pathParameters: {'id': list[i].id},
@@ -158,13 +206,21 @@ class _HerdListScreenState extends ConsumerState<HerdListScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed:       () => context.goNamed(AppRoutes.newAnimal),
-        backgroundColor: AppColors.brandGreen,
-        foregroundColor: Colors.white,
-        tooltip:         'Adicionar animal',
-        child:           const Icon(Icons.add_rounded),
-      ),
+      floatingActionButton: _selectionMode
+          ? FloatingActionButton.extended(
+              onPressed:       _baixaSelected,
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+              icon:            const Icon(Icons.logout_rounded),
+              label:           Text('Dar baixa (${_selected.length})'),
+            )
+          : FloatingActionButton(
+              onPressed:       () => context.goNamed(AppRoutes.newAnimal),
+              backgroundColor: AppColors.brandGreen,
+              foregroundColor: Colors.white,
+              tooltip:         'Adicionar animal',
+              child:           const Icon(Icons.add_rounded),
+            ),
     );
   }
 }

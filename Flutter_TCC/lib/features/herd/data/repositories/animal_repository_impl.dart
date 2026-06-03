@@ -25,4 +25,18 @@ class AnimalRepositoryImpl implements AnimalRepository {
 
   @override
   Future<void> delete(String id) => _dataSource.delete(id);
+
+  @override
+  Future<void> recordDeath({
+    required List<String> animalIds,
+    required DateTime date,
+    String? cause,
+    String? notes,
+  }) =>
+      _dataSource.recordDeath(
+        animalIds: animalIds,
+        date: date,
+        cause: cause,
+        notes: notes,
+      );
 }

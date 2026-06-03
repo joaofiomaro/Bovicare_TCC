@@ -53,6 +53,27 @@ class AnimalFirestoreDataSource with FirestoreErrorHandler {
   Future<void> delete(String id) =>
       guardFirestore(() => _collection.doc(id).delete());
 
+  /// Registra óbito de [animalIds] num único batch (atômico).
+  Future<void> recordDeath({
+    required List<String> animalIds,
+    required DateTime date,
+    String? cause,
+    String? notes,
+  }) =>
+      guardFirestore(() async {
+        final batch = _firestore.batch();
+        for (final id in animalIds) {
+          batch.update(_collection.doc(id), {
+            'exitType':    'deceased',
+            'exitDateIso': date.toIso8601String(),
+            if (cause != null) 'deathCause': cause,
+            if (notes != null) 'exitNotes':  notes,
+            'updatedAt':   FieldValue.serverTimestamp(),
+          });
+        }
+        await batch.commit();
+      });
+
   // ---------------------------------------------------------------------------
 
   /// Popula a coleção com animais demonstrativos na primeira execução do usuário.

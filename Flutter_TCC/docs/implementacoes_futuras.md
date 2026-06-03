@@ -94,10 +94,16 @@ Extrair de `new_animal_screen.dart` um widget de formulário reutilizável:
 ### 3.7 Testes
 - Use case já coberto. Adicionar **widget test**: `AnimalFormScreen(initial: x)` renderiza campos pré-preenchidos; salvar chama o notifier.
 
-### 3.8 Critérios de aceite
-- [ ] Botão "Editar" na ficha abre o form pré-preenchido.
-- [ ] Salvar atualiza Firestore (mesmo `id`, `updatedAt` renovado) e a ficha reflete na hora.
-- [ ] `flutter analyze` 0 issues.
+### 3.8 Critérios de aceite — ✅ CONCLUÍDO (2026-06-03)
+- [x] Botão "Editar" na ficha abre o form pré-preenchido (`_AnimalHeader`, passa o animal por `extra`).
+- [x] Salvar atualiza Firestore (mesmo `id`, `updatedAt` renovado via upsert) e a ficha reflete na hora (`invalidate(animalDetailProvider)`).
+- [x] `flutter analyze` 0 issues · 111 testes passando.
+
+**O que foi implementado:**
+- `animal_form_screen.dart` — `AnimalFormScreen({AnimalEntity? initial})` reutilizável (cadastro/edição); preserva `status` e `pregnancyDate` ao editar; valida brinco/data/peso. `new_animal_screen.dart` removido.
+- `AnimalEditLoader` — fallback que carrega o animal por id em deep links sem `extra` (sem refetch no caminho normal).
+- Rotas `editAnimal` em `AppRoutes`/`AppPaths`; sub-rota `/herd/:id/edit` no router.
+- Widget test (`animal_form_screen_test.dart`): pré-preenchimento em edição, modo cadastro, e save preservando o `id`.
 
 ---
 
@@ -208,12 +214,21 @@ enum SaleType { individual, lote }
 - Extensão `SaleRecordX.valuePerHead`.
 - Filtro ativo/arquivado (função pura).
 
-### 4.9 Critérios de aceite
-- [ ] Baixa individual (venda e óbito) funcionando na ficha.
-- [ ] Modo seleção + baixa em lote (venda e óbito) na lista.
-- [ ] Animais com baixa somem do rebanho ativo e das contagens do dashboard.
-- [ ] Venda gravada atomicamente (doc de venda + updates) e visível em "Arquivados"/relatório.
-- [ ] `flutter analyze` 0 issues · testes verdes.
+### 4.9 Critérios de aceite — ✅ CONCLUÍDO (2026-06-03)
+- [x] Baixa individual (venda e óbito) na ficha (botão "Dar baixa" para ativos; banner para arquivados).
+- [x] Modo seleção (toggle por toque/long-press) + baixa em lote via FAB "Dar baixa (N)".
+- [x] Animais com baixa somem do rebanho ativo (`filteredAnimalsProvider`) e das contagens do dashboard (contagem de ativos em memória).
+- [x] Venda gravada atomicamente (doc `sales` + updates dos animais no mesmo `WriteBatch`) e visível em "Arquivados".
+- [x] `flutter analyze` 0 issues · 134 testes passando.
+
+**O que foi implementado:**
+- Domain: `AnimalExitType` + `AnimalExitTypeX.label`, `AnimalEntityX.isArchived`; campos de saída em `AnimalEntity`; `SaleRecord` + `SaleType` + `SaleRecordX.valuePerHead`; `SaleRepository`; `AnimalRepository.recordDeath`; use cases `RecordAnimalSaleUseCase`, `RecordAnimalDeathUseCase`, `GetSalesUseCase` (com validações: lista não vazia, sem duplicatas, headCount, valor ≥ 0).
+- Data: campos de saída em `AnimalModel` (default `active`, sem migração — §8.3); `SaleModel`; `SaleFirestoreDataSource.recordSale` (**batch atômico**: venda + baixa de N animais); `AnimalFirestoreDataSource.recordDeath` (batch); repos impl.
+- Presentation: `filteredAnimalsProvider` agora só ativos; `archivedAnimalsProvider` (derivado em memória); `salesProvider`; `AnimalExitNotifier` (recordSale/recordDeath, bool, invalida animals/sales/dashboard/detail); `AnimalExitSheet` (reutilizável individual/lote, toggle Venda/Óbito, sugere peso do lote, R$/cabeça); modo seleção em `HerdListScreen` + `AnimalListTile`; `ArchivedAnimalsScreen` (rota `/herd/archived`); banner de arquivado + bloqueio de edição na ficha.
+- Dashboard: contagens de total/prenhas/alertas passam a contar **apenas ativos** (em memória); "próximas vacinações" mantém `count()`.
+- Testes: use cases de venda/óbito, `SaleRecordX`, `isArchived`.
+
+> **Decisões de engenharia:** (1) `recordSale` vive em `SaleRepository`, mas seu data source atualiza a coleção de animais no mesmo batch — única forma de garantir atomicidade; documentado. (2) `archivedAnimalsProvider` deriva em memória de `animalsProvider` em vez de uma 2ª consulta (`getArchived()` foi dispensado para evitar dead code/refetch). (3) Dashboard troca `count()` por contagem em memória dos ativos — correto e alinhado ao §8.3 (sem `where` em campo possivelmente ausente); custo aceitável para o porte do rebanho.
 
 ---
 
@@ -253,10 +268,19 @@ class Weighing {
 - `WeighingsX.gmd`/`totalGain` (função pura, casos: 0/1/N pesagens, divisão por zero).
 - `RegisterWeighingUseCase` (mock repo).
 
-### 5.6 Critérios de aceite
-- [ ] Ação "Pesar" registra pesagem e atualiza peso atual.
-- [ ] Histórico de pesagens visível na ficha.
-- [ ] GMD calculado corretamente.
+### 5.6 Critérios de aceite — ✅ CONCLUÍDO (2026-06-03)
+- [x] Ação "Pesar" registra pesagem e atualiza peso atual (batch atômico: pesagem + `animal.weightKg`).
+- [x] Histórico de pesagens visível na ficha (`WeightEvolutionSection` na aba Resumo).
+- [x] GMD calculado corretamente (`WeighingsX.gmd`, testado para 0/1/N e divisão por zero).
+
+**O que foi implementado (feature `weighing`):**
+- Domain: `Weighing` (freezed) + `WeighingsX` (lastWeight/totalGain/periodDays/gmd, funções puras); `WeighingRepository`; `RegisterWeighingUseCase`, `GetAnimalWeighingsUseCase`.
+- Data: `WeighingModel` (freezed+json+firestore); `WeighingFirestoreDataSource` (`FirestoreErrorHandler`, **batch atômico** grava pesagem + atualiza peso do animal); `WeighingRepositoryImpl`.
+- Presentation: `animalWeighingsProvider(animalId)` (autoDispose family), `WeighingFormNotifier` (guard + bool); `WeighingFormSheet` (bottom sheet amigável, validação peso 0–1500 kg e data ≤ hoje); `WeightEvolutionSection` (resumo + histórico).
+- Ficha do animal: ação "Pesar" abre o sheet; seção de evolução com peso atual, ganho total e GMD; invalida `animalDetailProvider`/`animalsProvider` ao salvar (peso muda).
+- Testes: `WeighingsX` (8 casos) + use cases (mocktail).
+
+> **Decisão de engenharia:** `getByAnimal` usa `where('animalId', ==)` (índice automático) e **ordena em memória** por data — a lista por animal é pequena, mantendo o M3 autossuficiente sem depender do índice composto do módulo Transversal (§8.2). Para grandes volumes, migrar para `orderBy` + índice nesse módulo.
 
 ---
 
@@ -488,9 +512,9 @@ Meta: manter **0 issues** no analyze e **cobertura crescente** (cada módulo adi
 ## 10. Checklist de progresso e auditoria final
 
 ### Progresso por módulo
-- [ ] **M1 — Editar animal**: form reutilizável, rota, botão na ficha, invalidação de providers, widget test.
-- [ ] **M2 — Baixa de rebanho**: `exitType` no modelo, vendas (coleção + batch atômico), óbitos, baixa individual + lote (modo seleção), aba arquivados, use cases + testes.
-- [ ] **M3 — Pesagens**: coleção `weighings`, ação "Pesar", histórico/GMD, use cases + testes.
+- [x] **M1 — Editar animal** ✅ (2026-06-03): form reutilizável, rota `/herd/:id/edit`, botão na ficha, invalidação de providers, widget test. `flutter analyze` 0 issues · 111 testes.
+- [x] **M2 — Baixa de rebanho** ✅ (2026-06-03): `exitType` no modelo, vendas (coleção `sales` + batch atômico), óbitos, baixa individual + lote (modo seleção), tela de arquivados, use cases + testes. `flutter analyze` 0 issues · 134 testes.
+- [x] **M3 — Pesagens** ✅ (2026-06-03): coleção `weighings`, ação "Pesar" (batch atômico), histórico/GMD na ficha, use cases + testes. `flutter analyze` 0 issues · 121 testes.
 - [ ] **M4 — Vet + Chamados**: coleção `serviceCalls`, shell/dashboard por papel, fluxo abrir→aceitar→concluir, regras de segurança versionadas, testes.
 - [ ] **M5 — Relatórios**: relatório de vendas + ganho de peso, totais, `NumX.toBrl`, testes.
 - [ ] **Transversal**: `firestore.rules` versionado e publicado, índices deployados, migração de `exitType` tratada.

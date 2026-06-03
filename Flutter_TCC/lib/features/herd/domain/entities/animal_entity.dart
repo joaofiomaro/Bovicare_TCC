@@ -7,6 +7,10 @@ part 'animal_entity.freezed.dart';
 enum AnimalStatus { healthy, pregnant, attention, sick }
 enum AnimalSex    { female, male }
 
+/// Situação do animal no ciclo de vida do rebanho (dimensão separada do
+/// status sanitário): ativo, vendido ou óbito ("baixa" do rebanho).
+enum AnimalExitType { active, sold, deceased }
+
 /// Rótulos de exibição de [AnimalStatus] — fonte única de verdade.
 /// Centralizado aqui (domínio) para evitar divergência de textos entre telas.
 extension AnimalStatusX on AnimalStatus {
@@ -15,6 +19,15 @@ extension AnimalStatusX on AnimalStatus {
         AnimalStatus.pregnant  => 'Prenha',
         AnimalStatus.attention => 'Alerta',
         AnimalStatus.sick      => 'Medicação',
+      };
+}
+
+/// Rótulos de exibição de [AnimalExitType].
+extension AnimalExitTypeX on AnimalExitType {
+  String get label => switch (this) {
+        AnimalExitType.active   => 'Ativo',
+        AnimalExitType.sold     => 'Vendido',
+        AnimalExitType.deceased => 'Óbito',
       };
 }
 
@@ -32,6 +45,14 @@ class AnimalEntity with _$AnimalEntity {
     String?  rfid,
     /// Data de cobertura/inseminação — usada para calcular progresso da prenhez.
     DateTime? pregnancyDate,
+    // --- Baixa do rebanho (M2) ---
+    @Default(AnimalExitType.active) AnimalExitType exitType,
+    DateTime? exitDate,
+    String?   exitNotes,
+    /// Referência ao documento de venda (quando [exitType] == sold).
+    String?   saleId,
+    /// Causa do óbito (quando [exitType] == deceased).
+    String?   deathCause,
   }) = _AnimalEntity;
 }
 
@@ -39,6 +60,9 @@ class AnimalEntity with _$AnimalEntity {
 extension AnimalEntityX on AnimalEntity {
   int get ageInYears  => birthDate.ageInYears;
   int get ageInMonths => birthDate.ageInMonths;
+
+  /// `true` se o animal recebeu baixa (venda ou óbito) e saiu do rebanho ativo.
+  bool get isArchived => exitType != AnimalExitType.active;
 
   /// Nome formatado: "Mimosa — #047" ou "#047" se sem nome.
   String get displayName =>

@@ -7,13 +7,17 @@ import '../../domain/entities/animal_entity.dart';
 import '../extensions/animal_status_visuals.dart';
 
 /// Tile de um animal na lista do rebanho.
-/// Swipe para esquerda revela ação de exclusão com confirmação.
+/// - Modo normal: swipe para a esquerda revela exclusão com confirmação.
+/// - Modo seleção: toque alterna a seleção (para baixa em lote), sem swipe.
 class AnimalListTile extends StatelessWidget {
   const AnimalListTile({
     required this.animal,
     required this.onTap,
     required this.onDelete,
     this.animationIndex = 0,
+    this.selectionMode = false,
+    this.selected = false,
+    this.onSelectToggle,
     super.key,
   });
 
@@ -21,22 +25,27 @@ class AnimalListTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onDelete;
   final int animationIndex;
+  final bool selectionMode;
+  final bool selected;
+  final VoidCallback? onSelectToggle;
 
   @override
   Widget build(BuildContext context) {
-    return Dismissible(
-      key: ValueKey(animal.id),
-      direction: DismissDirection.endToStart,
-      background: _DeleteBackground(),
-      confirmDismiss: (_) => _confirmDelete(context),
-      onDismissed: (_) => onDelete(),
-      child: InkWell(
-        onTap: onTap,
+    final content = InkWell(
+      onTap: selectionMode ? onSelectToggle : onTap,
+      onLongPress: selectionMode ? null : onSelectToggle,
+      child: ColoredBox(
+        color: selected
+            ? AppColors.brandPale
+            : Colors.transparent,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
-              _StatusIcon(status: animal.status),
+              if (selectionMode)
+                _SelectIndicator(selected: selected)
+              else
+                _StatusIcon(status: animal.status),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -67,7 +76,21 @@ class AnimalListTile extends StatelessWidget {
           ),
         ),
       ),
-    )
+    );
+
+    // Em modo seleção não há swipe-to-delete (evita ações conflitantes).
+    final tile = selectionMode
+        ? content
+        : Dismissible(
+            key: ValueKey(animal.id),
+            direction: DismissDirection.endToStart,
+            background: _DeleteBackground(),
+            confirmDismiss: (_) => _confirmDelete(context),
+            onDismissed: (_) => onDelete(),
+            child: content,
+          );
+
+    return tile
         .animate(delay: Duration(milliseconds: animationIndex * 40))
         .fadeIn(duration: 300.ms)
         .slideX(begin: 0.05, duration: 300.ms, curve: Curves.easeOut);
@@ -120,6 +143,30 @@ class _StatusIcon extends StatelessWidget {
       height: 44,
       decoration: BoxDecoration(color: bg, borderRadius: const BorderRadius.all(Radius.circular(12))),
       child: Icon(Icons.pets_rounded, color: color, size: 22),
+    );
+  }
+}
+
+class _SelectIndicator extends StatelessWidget {
+  const _SelectIndicator({required this.selected});
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width:  44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: selected ? AppColors.brandGreen : Colors.transparent,
+        borderRadius: const BorderRadius.all(Radius.circular(12)),
+        border: Border.all(
+          color: selected ? AppColors.brandGreen : AppColors.mutedGreen,
+          width: 2,
+        ),
+      ),
+      child: selected
+          ? const Icon(Icons.check_rounded, color: AppColors.white, size: 22)
+          : null,
     );
   }
 }

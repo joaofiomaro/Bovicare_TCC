@@ -10,9 +10,11 @@ abstract final class AppRoutes {
   static const String dashboard = 'dashboard';
 
   // Herd
-  static const String herd      = 'herd';
-  static const String animal    = 'animal';
-  static const String newAnimal = 'new-animal';
+  static const String herd       = 'herd';
+  static const String animal     = 'animal';
+  static const String newAnimal       = 'new-animal';
+  static const String editAnimal       = 'edit-animal';
+  static const String archivedAnimals = 'archived-animals';
 
   // Vaccination
   static const String vaccination = 'vaccination';
@@ -38,9 +40,11 @@ abstract final class AppPaths {
   static const String register = '/register';
 
   static const String dashboard = '/dashboard';
-  static const String herd      = '/herd';
-  static const String newAnimal = '/herd/new';
+  static const String herd            = '/herd';
+  static const String newAnimal       = '/herd/new';
+  static const String archivedAnimals = '/herd/archived';
   static String animal(String id) => '/herd/$id';
+  static String editAnimal(String id) => '/herd/$id/edit';
   static String vaccination(String animalId) => '/herd/$animalId/vaccine';
 
   static const String brete    = '/brete';

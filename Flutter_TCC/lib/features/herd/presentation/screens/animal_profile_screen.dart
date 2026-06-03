@@ -7,6 +7,7 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_badge.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_progress_bar.dart';
 import '../../../../shared/widgets/app_skeleton.dart';
@@ -15,9 +16,12 @@ import '../../../dashboard/domain/entities/activity_item.dart';
 import '../../../dashboard/presentation/widgets/activity_timeline.dart';
 import '../../../vaccination/domain/entities/vaccination_record.dart';
 import '../../../vaccination/presentation/providers/vaccinations_provider.dart';
+import '../../../weighing/presentation/widgets/weighing_form_sheet.dart';
+import '../../../weighing/presentation/widgets/weight_evolution_section.dart';
 import '../../domain/entities/animal_entity.dart';
 import '../extensions/animal_status_visuals.dart';
 import '../providers/animals_provider.dart';
+import '../widgets/animal_exit_sheet.dart';
 
 class AnimalProfileScreen extends ConsumerWidget {
   const AnimalProfileScreen({required this.animalId, super.key});
@@ -123,9 +127,28 @@ class _AnimalHeader extends StatelessWidget {
                                     color: Colors.white, size: 20),
                     visualDensity: VisualDensity.compact,
                   ),
-                  AppBadge(
-                    label: animal.status.label,
-                    type:  animal.status.badge,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppBadge(
+                        label: animal.status.label,
+                        type:  animal.status.badge,
+                      ),
+                      if (!animal.isArchived) ...[
+                        const SizedBox(width: 4),
+                        IconButton(
+                          onPressed: () => context.goNamed(
+                            AppRoutes.editAnimal,
+                            pathParameters: {'id': animal.id},
+                            extra: animal,
+                          ),
+                          icon: const Icon(Icons.edit_outlined,
+                              color: Colors.white, size: 20),
+                          visualDensity: VisualDensity.compact,
+                          tooltip: 'Editar animal',
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
@@ -252,14 +275,23 @@ class _ResumoTab extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (animal.isArchived) ...[
+            const SizedBox(height: AppSpacing.base),
+            _ArchivedBanner(animal: animal),
+          ],
           if (animal.status == AnimalStatus.pregnant) ...[
             const SizedBox(height: AppSpacing.base),
             _PregnancyCard(animal: animal),
           ],
-          const SizedBox(height: AppSpacing.base),
-          const _SectionLabel('Registrar manejo'),
-          const SizedBox(height: AppSpacing.sm),
-          _ActionGrid(animal: animal),
+          if (!animal.isArchived) ...[
+            const SizedBox(height: AppSpacing.base),
+            const _SectionLabel('Registrar manejo'),
+            const SizedBox(height: AppSpacing.sm),
+            _ActionGrid(animal: animal),
+            const SizedBox(height: AppSpacing.base),
+            _DarBaixaButton(animal: animal),
+          ],
+          WeightEvolutionSection(animalId: animal.id),
           const SizedBox(height: AppSpacing.xl),
           const _SectionLabel('Histórico recente'),
           const SizedBox(height: AppSpacing.sm),
@@ -362,7 +394,7 @@ class _ActionGrid extends StatelessWidget {
       _ActionItem(icon: Icons.medication_liquid_outlined, label: 'Vermifugação', onTap: () => AppToast.info(context, 'Em breve')),
       _ActionItem(icon: Icons.medication_outlined,        label: 'Medicação',    onTap: () => AppToast.info(context, 'Em breve')),
       _ActionItem(icon: Icons.edit_note_rounded,         label: 'Observação',   onTap: () => AppToast.info(context, 'Em breve')),
-      _ActionItem(icon: Icons.monitor_weight_outlined,   label: 'Pesar',        onTap: () => AppToast.info(context, 'Em breve')),
+      _ActionItem(icon: Icons.monitor_weight_outlined,   label: 'Pesar',        onTap: () => showWeighingSheet(context, animalId: animal.id, currentWeight: animal.weightKg)),
       _ActionItem(icon: Icons.favorite_border_rounded,   label: 'Prenhez',      onTap: () => AppToast.info(context, 'Em breve')),
     ];
 
@@ -645,6 +677,77 @@ class _HistoricoTab extends ConsumerWidget {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+class _DarBaixaButton extends StatelessWidget {
+  const _DarBaixaButton({required this.animal});
+  final AnimalEntity animal;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
+      child: AppButton(
+        label:     'Dar baixa do rebanho',
+        icon:      Icons.logout_rounded,
+        variant:   AppButtonVariant.outline,
+        onPressed: () => showAnimalExitSheet(context, animals: [animal]),
+      ),
+    );
+  }
+}
+
+class _ArchivedBanner extends StatelessWidget {
+  const _ArchivedBanner({required this.animal});
+  final AnimalEntity animal;
+
+  @override
+  Widget build(BuildContext context) {
+    final dateStr = animal.exitDate?.toBrDate ?? '—';
+    final detail = animal.exitType == AnimalExitType.deceased
+        ? animal.deathCause
+        : animal.exitNotes;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.base),
+        decoration: const BoxDecoration(
+          color:        AppColors.dangerLight,
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.archive_outlined, color: AppColors.danger),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${animal.exitType.label} · $dateStr',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color:      AppColors.danger,
+                        ),
+                  ),
+                  if (detail != null && detail.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      detail,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.danger,
+                          ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _SectionLabel extends StatelessWidget {
   const _SectionLabel(this.title);

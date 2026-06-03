@@ -19,6 +19,11 @@ class AnimalModel with _$AnimalModel {
     double? weightKg,
     String? rfid,
     String? pregnancyDateIso,
+    @Default('active') String exitType,
+    String? exitDateIso,
+    String? exitNotes,
+    String? saleId,
+    String? deathCause,
   }) = _AnimalModel;
 
   // Freezed exige o construtor privado para permitir métodos customizados.
@@ -43,6 +48,12 @@ class AnimalModel with _$AnimalModel {
       weightKg:         (d['weightKg'] as num?)?.toDouble(),
       rfid:             d['rfid'] as String?,
       pregnancyDateIso: d['pregnancyDateIso'] as String?,
+      // Documentos antigos sem o campo são tratados como ativos (sem migração).
+      exitType:         (d['exitType'] as String?) ?? 'active',
+      exitDateIso:      d['exitDateIso'] as String?,
+      exitNotes:        d['exitNotes'] as String?,
+      saleId:           d['saleId'] as String?,
+      deathCause:       d['deathCause'] as String?,
     );
   }
 
@@ -57,6 +68,11 @@ class AnimalModel with _$AnimalModel {
         weightKg:         e.weightKg,
         rfid:             e.rfid,
         pregnancyDateIso: e.pregnancyDate?.toIso8601String(),
+        exitType:         e.exitType.name,
+        exitDateIso:      e.exitDate?.toIso8601String(),
+        exitNotes:        e.exitNotes,
+        saleId:           e.saleId,
+        deathCause:       e.deathCause,
       );
 
   Map<String, dynamic> toFirestore() => {
@@ -65,10 +81,15 @@ class AnimalModel with _$AnimalModel {
         'sex':          sex,
         'status':       status,
         'birthDateIso': birthDateIso,
+        'exitType':     exitType,
         if (name != null)             'name':             name,
         if (weightKg != null)         'weightKg':         weightKg,
         if (rfid != null)             'rfid':             rfid,
         if (pregnancyDateIso != null) 'pregnancyDateIso': pregnancyDateIso,
+        if (exitDateIso != null)      'exitDateIso':      exitDateIso,
+        if (exitNotes != null)        'exitNotes':        exitNotes,
+        if (saleId != null)           'saleId':           saleId,
+        if (deathCause != null)       'deathCause':       deathCause,
       };
 
   AnimalEntity toEntity() => AnimalEntity(
@@ -84,5 +105,13 @@ class AnimalModel with _$AnimalModel {
         pregnancyDate:  pregnancyDateIso != null
             ? DateTime.parse(pregnancyDateIso!)
             : null,
+        exitType:       AnimalExitType.values
+            .asNameMap()[exitType] ?? AnimalExitType.active,
+        exitDate:       exitDateIso != null
+            ? DateTime.parse(exitDateIso!)
+            : null,
+        exitNotes:      exitNotes,
+        saleId:         saleId,
+        deathCause:     deathCause,
       );
 }

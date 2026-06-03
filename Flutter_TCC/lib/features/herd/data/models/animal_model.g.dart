@@ -18,6 +18,11 @@ _$AnimalModelImpl _$$AnimalModelImplFromJson(Map<String, dynamic> json) =>
       weightKg: (json['weightKg'] as num?)?.toDouble(),
       rfid: json['rfid'] as String?,
       pregnancyDateIso: json['pregnancyDateIso'] as String?,
+      exitType: json['exitType'] as String? ?? 'active',
+      exitDateIso: json['exitDateIso'] as String?,
+      exitNotes: json['exitNotes'] as String?,
+      saleId: json['saleId'] as String?,
+      deathCause: json['deathCause'] as String?,
     );
 
 Map<String, dynamic> _$$AnimalModelImplToJson(_$AnimalModelImpl instance) =>
@@ -32,4 +37,9 @@ Map<String, dynamic> _$$AnimalModelImplToJson(_$AnimalModelImpl instance) =>
       'weightKg': instance.weightKg,
       'rfid': instance.rfid,
       'pregnancyDateIso': instance.pregnancyDateIso,
+      'exitType': instance.exitType,
+      'exitDateIso': instance.exitDateIso,
+      'exitNotes': instance.exitNotes,
+      'saleId': instance.saleId,
+      'deathCause': instance.deathCause,
     };
