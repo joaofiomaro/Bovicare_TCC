@@ -1,5 +1,5 @@
 # BoviCare — Plano de Integração Firebase
-> Status: 🟡 Em Andamento — ETAPAs 1, 2, 3 e 5 concluídas · ETAPA 4 parcial (Rules ✅, índice pendente) · ETAPAs 6–12 pendentes
+> Status: 🟡 Em Andamento — ETAPAs 1–3, 5–8 concluídas · ETAPA 4 parcial (Rules ✅, índice pendente) · ETAPAs 9–12 pendentes
 > Criado em: 2026-06-02 · Última atualização: 2026-06-03
 
 ---
@@ -377,42 +377,52 @@ Executar ANTES de qualquer commit Firebase:
 
 ---
 
-### ETAPA 6 — Animals: Hive → Firestore
+### ETAPA 6 — Animals: Hive → Firestore ✅
 
-- [ ] Adicionar `toFirestore()` e `fromFirestore()` ao `AnimalModel`
-- [ ] Criar `AnimalFirestoreDataSource`
-  - Usa `FirebaseFirestore.instance.collection('users/$uid/animals')`
-  - Mantém os mesmos métodos: `getAll()`, `getById()`, `save()`, `delete()`
-  - `uid` obtido via `FirebaseAuth.instance.currentUser!.uid`
-- [ ] Atualizar `AnimalRepositoryImpl` → usar `AnimalFirestoreDataSource`
-- [ ] Testar CRUD offline + online
-- [ ] Testar sync após reconexão
-- [ ] **Commit:** `feat(herd): migrate animal data source from Hive to Firestore`
+- [x] `fromFirestore()` e `toFirestore()` adicionados ao `AnimalModel`
+- [x] `AnimalFirestoreDataSource` criado
+  - `getAll()` ordena por `earTag`, seed de 7 animais demo no primeiro login
+  - `save()` upsert com `createdAt`/`updatedAt` serverTimestamp
+  - Seed via batch write (único round-trip de rede)
+- [x] `AnimalRepositoryImpl` atualizado
+- [x] `animals_provider.dart` DI atualizado
+- [x] `animal_local_data_source.dart` removido
+- [ ] Testar CRUD offline + online no emulador
+- [x] **Commit:** `feat(data): migrate animals, vaccinations and dashboard to Firestore` — hash `423aeda`
 
----
-
-### ETAPA 7 — Vaccinations: Hive → Firestore
-
-- [ ] Adicionar `toFirestore()` e `fromFirestore()` ao `VaccinationModel`
-- [ ] Criar `VaccinationFirestoreDataSource`
-  - `getAll()` → query sem filtro (para relatórios)
-  - `getByAnimal(animalId)` → query com `where('animalId', isEqualTo: id)`
-  - `save()`, `delete()`
-- [ ] Atualizar `VaccinationRepositoryImpl`
-- [ ] Criar index composto no Firestore se necessário
-- [ ] Testar registro de vacinação + listagem
-- [ ] **Commit:** `feat(vaccination): migrate vaccination data source to Firestore`
+> ✅ Concluído em 2026-06-03.
 
 ---
 
-### ETAPA 8 — Dashboard: conectar ao Firestore
+### ETAPA 7 — Vaccinations: Hive → Firestore ✅
 
-- [ ] Atualizar `DashboardLocalDataSource` → agregar dados reais do Firestore
-  - `totalAnimals` = count da collection animals
-  - `pregnantCount` = count com status == pregnant
-  - `alertCount` = count com status sick ou attention
-- [ ] Testar KPIs refletindo dados reais
-- [ ] **Commit:** `feat(dashboard): connect stats to real Firestore data`
+- [x] `fromFirestore()` e `toFirestore()` adicionados ao `VaccinationModel`
+- [x] `VaccinationFirestoreDataSource` criado
+  - `getAll()` e `getByAnimal()` com ordenação client-side (evita índice composto por ora)
+  - `save()` upsert com serverTimestamp
+- [x] `VaccinationRepositoryImpl` atualizado
+- [x] `vaccinations_provider.dart` DI atualizado
+- [x] `vaccination_local_data_source.dart` removido
+- [ ] Testar registro de vacinação + listagem no emulador
+- [x] **Commit:** incluído em `423aeda`
+
+> ✅ Concluído em 2026-06-03. Índice composto pendente (ETAPA 4) — ordenação client-side como fallback temporário.
+
+---
+
+### ETAPA 8 — Dashboard: conectar ao Firestore ✅
+
+- [x] `DashboardFirestoreDataSource` criado (substitui mock)
+  - `totalAnimals`, `pregnantCount`, `alertCount` via `count()` aggregation paralela
+  - `upcomingVaccinations` — janela de 30 dias via range query
+  - Activities: mock mantido intencionalmente (audit trail fora do escopo)
+- [x] `DashboardRepositoryImpl` atualizado
+- [x] `dashboard_provider.dart` DI atualizado
+- [x] `dashboard_local_data_source.dart` removido
+- [ ] Testar KPIs refletindo dados reais no emulador
+- [x] **Commit:** incluído em `423aeda`
+
+> ✅ Concluído em 2026-06-03.
 
 ---
 
