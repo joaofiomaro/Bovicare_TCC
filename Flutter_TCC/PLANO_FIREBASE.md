@@ -1,5 +1,5 @@
 # BoviCare — Plano de Integração Firebase
-> Status: 🟡 Em Andamento — ETAPAs 1, 2 e 3 concluídas · ETAPA 4 pendente (manual)
+> Status: 🟡 Em Andamento — ETAPAs 1, 2, 3 e 5 concluídas · ETAPA 4 pendente (manual) · ETAPAs 6–12 pendentes
 > Criado em: 2026-06-02 · Última atualização: 2026-06-03
 
 ---
@@ -350,22 +350,28 @@ Executar ANTES de qualquer commit Firebase:
 
 ---
 
-### ETAPA 5 — Auth: Firebase + Google Sign-In
+### ETAPA 5 — Auth: Firebase + Google Sign-In ✅
 
-- [ ] Criar `AuthFirebaseDataSource` (substitui `AuthLocalDataSource`)
-  - `loginWithGoogle()` → GoogleSignIn + Firebase credential
-  - `loginWithEmail()` → `signInWithEmailAndPassword`
-  - `register()` → `createUserWithEmailAndPassword` + salvar user doc no Firestore
-  - `logout()` → `FirebaseAuth.signOut()` + GoogleSignIn.signOut()
-  - `getCurrentUser()` → `FirebaseAuth.currentUser`
-  - `updateProfile()` → atualizar doc `/users/{uid}`
-  - `deleteAccount()` → deletar subcoleções + `user.delete()`
-- [ ] Atualizar `AuthRepositoryImpl` → usar `AuthFirebaseDataSource`
-- [ ] Atualizar `SplashScreen` → `FirebaseAuth.currentUser` (síncrono, sem `Future.delayed`)
-- [ ] Atualizar `LoginScreen` → adicionar botão Google Sign-In
-- [ ] Atualizar `RegisterScreen` → usar Firebase Auth
-- [ ] Testar fluxo completo: Google → Dashboard → Logout → Login
-- [ ] **Commit:** `feat(auth): replace mock auth with Firebase Auth and Google Sign-In`
+- [x] Criar `AuthFirebaseDataSource` (substitui `AuthLocalDataSource`)
+  - `loginWithEmail()` → `signInWithEmailAndPassword` + mapeamento de erros PT-BR
+  - `loginWithGoogle()` → GoogleSignIn OAuth + Firebase credential (null = cancelado)
+  - `register()` → `createUserWithEmailAndPassword` + doc `/users/{uid}` no Firestore
+  - `logout()` → `FirebaseAuth.signOut()` + `GoogleSignIn.signOut()` em paralelo
+  - `getCurrentUser()` → `FirebaseAuth.currentUser` + fetch Firestore profile
+  - `updateProfile()` → `update` doc `/users/{uid}` com `updatedAt` serverTimestamp
+  - `deleteAccount()` → batch-delete `/animals` + `/vaccinations` + `user.delete()` (LGPD)
+- [x] `LoginWithGoogleUseCase` adicionado ao domain layer
+- [x] `loginWithGoogle()` adicionado à interface `AuthRepository`
+- [x] `fromFirestore()` e `toFirestore()` adicionados ao `UserModel`
+- [x] `AuthRepositoryImpl` atualizado — remove dependência Hive
+- [x] `AuthNotifier.loginWithGoogle()` — distingue cancelamento de erro
+- [x] `SplashScreen` → `FirebaseAuth.instance.currentUser` (síncrono, sem chamada de rede)
+- [x] `LoginScreen` → botão "Continuar com Google" com divider
+- [x] `auth_local_data_source.dart` removido
+- [ ] Testar fluxo completo no emulador (pendente ETAPA 4 — Console)
+- [x] **Commit:** `feat(auth): replace mock auth with Firebase Auth and Google Sign-In` — hash `a9d299f`
+
+> ✅ Concluído em 2026-06-03. `flutter analyze` → 0 issues. Teste funcional aguarda habilitação de Authentication no Console (ETAPA 4).
 
 ---
 
