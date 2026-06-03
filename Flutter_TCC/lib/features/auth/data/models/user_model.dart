@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../domain/entities/user_entity.dart';
@@ -29,6 +30,26 @@ class UserModel with _$UserModel {
         role:     entity.role.name,
         farmName: entity.farmName,
       );
+
+  factory UserModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final data = doc.data()!;
+    return UserModel(
+      id:       doc.id,
+      name:     data['name'] as String,
+      email:    data['email'] as String,
+      role:     data['role'] as String,
+      farmName: data['farmName'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toFirestore() => {
+        'name':  name,
+        'email': email,
+        'role':  role,
+        if (farmName != null) 'farmName': farmName,
+      };
 
   UserEntity toEntity() => UserEntity(
         id:       id,

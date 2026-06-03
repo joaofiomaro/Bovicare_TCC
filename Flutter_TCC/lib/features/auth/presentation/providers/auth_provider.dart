@@ -1,20 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/datasources/auth_local_data_source.dart';
+import '../../data/datasources/auth_firebase_data_source.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/delete_account_use_case.dart';
 import '../../domain/usecases/get_current_user_use_case.dart';
 import '../../domain/usecases/login_use_case.dart';
+import '../../domain/usecases/login_with_google_use_case.dart';
 import '../../domain/usecases/logout_use_case.dart';
 import '../../domain/usecases/register_use_case.dart';
 import '../../domain/usecases/update_profile_use_case.dart';
 
 // --- DI ---
 
-final _authDataSourceProvider = Provider<AuthLocalDataSource>(
-  (_) => AuthLocalDataSource(),
+final _authDataSourceProvider = Provider<AuthFirebaseDataSource>(
+  (_) => AuthFirebaseDataSource(),
 );
 
 final authRepositoryProvider = Provider<AuthRepository>(
@@ -23,6 +24,10 @@ final authRepositoryProvider = Provider<AuthRepository>(
 
 final _loginUseCaseProvider = Provider<LoginUseCase>(
   (ref) => LoginUseCase(ref.watch(authRepositoryProvider)),
+);
+
+final _loginWithGoogleUseCaseProvider = Provider<LoginWithGoogleUseCase>(
+  (ref) => LoginWithGoogleUseCase(ref.watch(authRepositoryProvider)),
 );
 
 final _registerUseCaseProvider = Provider<RegisterUseCase>(
@@ -53,6 +58,20 @@ class AuthNotifier extends AsyncNotifier<UserEntity?> {
           ),
     );
     return state.hasValue && state.value != null;
+  }
+
+  /// Retorna false tanto em erro quanto em cancelamento.
+  /// Só mostra toast de erro se `state.hasError` for true.
+  Future<bool> loginWithGoogle() async {
+    state = const AsyncLoading();
+    try {
+      final user = await ref.read(_loginWithGoogleUseCaseProvider).call();
+      state = AsyncData(user);
+      return user != null;
+    } on Exception catch (e, st) {
+      state = AsyncError(e, st);
+      return false;
+    }
   }
 
   Future<bool> register({

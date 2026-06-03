@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -35,8 +36,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final emailVal = EmailInput.dirty(_emailController.text);
     final passVal  = PasswordInput.dirty(_passwordController.text);
     setState(() {
-      _emailError    = emailVal.isValid    ? null : 'Informe um e-mail válido.';
-      _passwordError = passVal.isValid ? null : 'Senha deve ter ao menos 8 caracteres.';
+      _emailError    = emailVal.isValid ? null : 'Informe um e-mail válido.';
+      _passwordError = passVal.isValid  ? null : 'Senha deve ter ao menos 8 caracteres.';
     });
     return emailVal.isValid && passVal.isValid;
   }
@@ -52,7 +53,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       context.goNamed(AppRoutes.dashboard);
     } else {
       final error = ref.read(authProvider).error;
-      AppToast.error(context, error?.toString() ?? 'Erro ao fazer login.');
+      final msg = error is Failure
+          ? error.message
+          : 'Erro ao fazer login.';
+      AppToast.error(context, msg);
+    }
+  }
+
+  Future<void> _onLoginWithGoogle() async {
+    final ok = await ref.read(authProvider.notifier).loginWithGoogle();
+    if (!mounted) return;
+    if (ok) {
+      context.goNamed(AppRoutes.dashboard);
+    } else {
+      // Exibe erro apenas se houve falha real (não cancelamento).
+      final error = ref.read(authProvider).error;
+      if (error != null) {
+        final msg = error is Failure
+            ? error.message
+            : 'Erro ao fazer login com Google.';
+        AppToast.error(context, msg);
+      }
     }
   }
 
@@ -69,7 +90,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.x3l),
               child: Column(
                 children: [
-                  Image.asset('assets/images/bovicare_logo.png', width: 80, height: 80),
+                  Image.asset(
+                    'assets/images/bovicare_logo.png',
+                    width: 80,
+                    height: 80,
+                  ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
                     'BoviCare',
@@ -87,13 +112,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 padding: const EdgeInsets.all(AppSpacing.xl),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(24)),
                 ),
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Entrar', style: Theme.of(context).textTheme.headlineSmall),
+                      Text(
+                        'Entrar',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
                         'Acesse sua conta para continuar',
@@ -127,6 +156,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         isLoading: isLoading,
                       ),
                       const SizedBox(height: AppSpacing.base),
+                      const _Divider(),
+                      const SizedBox(height: AppSpacing.base),
+                      _GoogleSignInButton(
+                        onPressed: _onLoginWithGoogle,
+                        isLoading: isLoading,
+                      ),
+                      const SizedBox(height: AppSpacing.x2l),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -138,10 +174,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             onTap: () => context.goNamed(AppRoutes.register),
                             child: Text(
                               'Cadastrar',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.brandGreen,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              style:
+                                  Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        color: AppColors.brandGreen,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                             ),
                           ),
                         ],
@@ -152,6 +189,103 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+
+class _Divider extends StatelessWidget {
+  const _Divider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(child: Divider()),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+          child: Text(
+            'ou',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.mutedGreen,
+                ),
+          ),
+        ),
+        const Expanded(child: Divider()),
+      ],
+    );
+  }
+}
+
+class _GoogleSignInButton extends StatelessWidget {
+  const _GoogleSignInButton({
+    required this.onPressed,
+    required this.isLoading,
+  });
+
+  final VoidCallback onPressed;
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: OutlinedButton(
+        onPressed: isLoading ? null : onPressed,
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: AppColors.ghostGreen),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
+        ),
+        child: isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const _GoogleIcon(),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Continuar com Google',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+class _GoogleIcon extends StatelessWidget {
+  const _GoogleIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 22,
+      height: 22,
+      decoration: const BoxDecoration(
+        color: Color(0xFF4285F4),
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: const Text(
+        'G',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+          height: 1,
         ),
       ),
     );

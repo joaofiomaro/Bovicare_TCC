@@ -1,21 +1,25 @@
-import 'package:hive_flutter/hive_flutter.dart';
-
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../datasources/auth_local_data_source.dart';
+import '../datasources/auth_firebase_data_source.dart';
 import '../models/user_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   const AuthRepositoryImpl(this._dataSource);
-  final AuthLocalDataSource _dataSource;
+  final AuthFirebaseDataSource _dataSource;
 
   @override
   Future<UserEntity> login({
     required String email,
     required String password,
   }) async {
-    final model = await _dataSource.login(email, password);
+    final model = await _dataSource.loginWithEmail(email, password);
     return model.toEntity();
+  }
+
+  @override
+  Future<UserEntity?> loginWithGoogle() async {
+    final model = await _dataSource.loginWithGoogle();
+    return model?.toEntity();
   }
 
   @override
@@ -48,13 +52,5 @@ class AuthRepositoryImpl implements AuthRepository {
       _dataSource.updateProfile(UserModel.fromEntity(updated));
 
   @override
-  Future<void> deleteAccount() async {
-    // Limpa todos os boxes Hive da aplicação antes de apagar as credenciais.
-    for (final name in ['animals', 'vaccinations', 'vets']) {
-      if (Hive.isBoxOpen(name)) {
-        await Hive.box<String>(name).clear();
-      }
-    }
-    await _dataSource.deleteAccount();
-  }
+  Future<void> deleteAccount() => _dataSource.deleteAccount();
 }

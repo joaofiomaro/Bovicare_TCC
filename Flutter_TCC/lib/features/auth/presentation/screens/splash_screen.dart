@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,7 +6,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/router/app_routes.dart';
-import '../providers/auth_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -22,11 +22,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _redirect() async {
+    // Aguarda a animação de entrada antes de redirecionar.
     await Future<void>.delayed(const Duration(milliseconds: 1800));
     if (!mounted) return;
-    final auth = await ref.read(authProvider.future);
+
+    // FirebaseAuth.currentUser é síncrono — usa o cache local sem rede.
+    final isLoggedIn = FirebaseAuth.instance.currentUser != null;
     if (!mounted) return;
-    if (auth != null) {
+
+    if (isLoggedIn) {
       context.goNamed(AppRoutes.dashboard);
     } else {
       context.goNamed(AppRoutes.login);
@@ -44,7 +48,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             Image.asset('assets/images/bovicare_logo.png', width: 120, height: 120)
                 .animate()
                 .fadeIn(duration: 600.ms)
-                .scale(begin: const Offset(0.8, 0.8), duration: 600.ms, curve: Curves.easeOutBack),
+                .scale(
+                  begin: const Offset(0.8, 0.8),
+                  duration: 600.ms,
+                  curve: Curves.easeOutBack,
+                ),
             const SizedBox(height: 24),
             Text(
               'BoviCare',
@@ -64,7 +72,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             const SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2.5,
+              ),
             ).animate().fadeIn(delay: 800.ms),
           ],
         ),
