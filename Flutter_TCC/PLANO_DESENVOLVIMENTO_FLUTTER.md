@@ -1,5 +1,5 @@
 # BoviCare — Plano de Desenvolvimento Flutter
-> Projeto: `Flutter_TCC/` | Status: 🟡 Em Desenvolvimento — Fases 0–5 concluídas · `flutter analyze` 0 issues
+> Projeto: `Flutter_TCC/` | Status: 🟡 Em Desenvolvimento — Fases 0–6 e 8 concluídas · Fase 7 adiada (hardware) · `flutter analyze` 0 issues
 > Última atualização: 2026-06-02
 
 ---
@@ -302,10 +302,10 @@ fast   = 200ms    normal = 350ms    slow = 500ms    verySlow = 800ms
 | 05 | Rebanho | `/herd` | herd | ✅ Completo — CRUD Hive, filtros, busca live, skeleton, FAB |
 | 06 | Ficha Animal | `/herd/:id` | animal | ✅ Completo — 4 tabs, prenhez, grade de ações, histórico |
 | 07 | Novo Animal | `/herd/new` | animal | ✅ Completo — formulário, RFID simulado, date picker |
-| 08 | Registrar Vacinação | `/herd/:id/vaccine` | vaccination | 🟡 Placeholder — rota funcional, tela em branco |
-| 09 | Painel Brete | `/brete` | brete | 🟡 Placeholder — rota funcional, tela em branco |
-| 10 | Veterinários | `/vets` | vets | 🟡 Placeholder — rota funcional, tela em branco |
-| 11 | Detalhe Veterinário | `/vets/:id` | vets | 🟡 Placeholder — rota funcional, tela em branco |
+| 08 | Registrar Vacinação | `/herd/:id/vaccine` | vaccination | ✅ Completo — formulário, QuarantineCalculator, salva no Hive |
+| 09 | Painel Brete | `/brete` | brete | ⏸️ Adiado — aguarda hardware ESP32 (placeholder funcional) |
+| 10 | Veterinários | `/vets` | vets | ✅ Completo — mapa OSM, filtros, busca, lista com distância |
+| 11 | Detalhe Veterinário | `/vets/:id` | vets | ✅ Completo — perfil, especialidades, ContactButtons funcionais |
 | 12 | Relatórios | `/reports` | reports | 🟡 Placeholder — rota funcional, tela em branco |
 | 13 | Perfil | `/profile` | profile | 🟡 Parcial — toggle dark/light funcional; avatar/logout pendentes |
 
@@ -541,7 +541,7 @@ fast   = 200ms    normal = 350ms    slow = 500ms    verySlow = 800ms
 
 ---
 
-### FASE 8 — Feature: Vets (Veterinários + Detalhe)
+### FASE 8 — Feature: Vets (Veterinários + Detalhe) ✅
 > Objetivo: busca e contato de veterinários com mapa real.
 
 **Tarefas:**
@@ -741,20 +741,31 @@ fast   = 200ms    normal = 350ms    slow = 500ms    verySlow = 800ms
 - [x] `_SanitarioTab`, `_HistoricoTab`, `_ResumoTab` integradas com dados reais do Hive
 - [x] `flutter analyze` → 0 issues
 
-### FASE 7 — Brete 🔴
+### FASE 7 — Brete ⏸️ Adiado
+> Aguarda programação do hardware ESP32. A arquitetura MQTT será implementada
+> quando o hardware estiver disponível. Apenas o data source precisará ser
+> criado — domain e presentation permanecerão inalterados.
 - [ ] `BreteStatus` entity, `BreteRepository`
-- [ ] `MqttService`, `BreteRemoteDataSource`, `BreteRepositoryImpl`
+- [ ] `MqttService`, `BreteRemoteDataSource` ou `BreteSimulatedDataSource`
 - [ ] `breteStatusProvider` (StreamProvider), `breteControllerProvider`
 - [x] `BreteScreen` — placeholder (rota funcional)
-- [ ] Animação 3D porta, sensores, pedais, botão emergência
+- [ ] Animação porta, sensores, pedais, botão emergência
 
-### FASE 8 — Vets 🔴
-- [ ] `VetEntity` (freezed), `VetRepository`, `CalculateDistanceUseCase`
-- [ ] `VetModel`, `VetLocalDataSource`, `LocationService`, `VetRepositoryImpl`
-- [ ] `vetsProvider`, `userLocationProvider`
-- [x] `VetsListScreen` — placeholder (rota funcional)
-- [x] `VetDetailScreen` — placeholder com vetId via rota
-- [ ] Mapa flutter_map, VetCard, ContactButtons
+### FASE 8 — Vets ✅
+- [x] `VetEntity` (freezed) — id, name, crmv, specialties, phone, city, lat/lng, isAvailable, coverageRadiusKm, distanceKm (runtime)
+- [x] `VetRepository`, `GetVetsUseCase`, `GetVetByIdUseCase`
+- [x] `CalculateDistanceUseCase` — Haversine, pura
+- [x] `VetModel` (freezed + json_serializable), `VetLocalDataSource` (seed 4 vets), `VetRepositoryImpl`
+- [x] `LocationService` — geolocator com fallback Rio Claro, SP
+- [x] `vetsProvider` — AsyncNotifier com filtro disponibilidade + busca + distância calculada
+- [x] `userLocationProvider` — FutureProvider com fallback seguro
+- [x] `vetDetailProvider` — FutureProvider.autoDispose.family
+- [x] `VetsListScreen` — busca, filtro disponibilidade, mapa recolhível, lista animada
+- [x] `VetsMap` — flutter_map + OSM + marcadores coloridos por disponibilidade
+- [x] `VetCard` — avatar, especialidades, distância, badge
+- [x] `VetDetailScreen` — SliverAppBar, especialidades, localização, contato
+- [x] `ContactButtons` — tel:, wa.me, mailto: via url_launcher
+- [x] AndroidManifest + main.dart atualizados (permissões GPS + Box vets)
 
 ### FASE 9 — Reports 🔴
 - [ ] `ReportType` enum, `ReportFilter`, `GenerateReportUseCase`
