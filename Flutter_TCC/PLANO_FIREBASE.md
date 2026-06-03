@@ -1,5 +1,5 @@
 # BoviCare — Plano de Integração Firebase
-> Status: 🟡 Em Andamento — ETAPAs 1, 2, 3 e 5 concluídas · ETAPA 4 pendente (manual) · ETAPAs 6–12 pendentes
+> Status: 🟡 Em Andamento — ETAPAs 1, 2, 3 e 5 concluídas · ETAPA 4 parcial (Rules ✅, índice pendente) · ETAPAs 6–12 pendentes
 > Criado em: 2026-06-02 · Última atualização: 2026-06-03
 
 ---
@@ -286,7 +286,7 @@ Executar ANTES de qualquer commit Firebase:
 - [x] `GoogleService-Info.plist` adicionado ao `Flutter_TCC/.gitignore` (iOS)
 - [x] `git status` confirmado — nenhum arquivo sensível no staging (commit `2676dd6`)
 - [x] Firestore em **Production Mode** (não Test Mode) — confirmado, região `southamerica-east1`
-- [ ] Security Rules publicadas ANTES de qualquer dado ser salvo — pendente ETAPA 4
+- [x] Security Rules publicadas ANTES de qualquer dado ser salvo — publicadas em 2026-06-03
 - [x] SHA-1 do app registrado no Firebase — `CF:52:EC:10:F6:88:7D:54:96:90:68:7B:EB:FB:3E:A1:D3:88:16:91`
 - [x] Nenhuma API key de servidor hardcoded — `firebase_options.dart` contém apenas chaves de cliente (seguras para commitar)
 - [x] `.env` continua no `.gitignore`
@@ -341,12 +341,14 @@ Executar ANTES de qualquer commit Firebase:
 
 ---
 
-### ETAPA 4 — Publicar Security Rules e Index
+### ETAPA 4 — Publicar Security Rules e Index 🟡 Parcial
 
-- [ ] Publicar Firestore Security Rules no Console
-- [ ] Criar index composto: `vaccinations → animalId ASC, dateIso DESC`
-- [ ] Verificar que regras bloqueiam acesso não autenticado
+- [x] Publicar Firestore Security Rules no Console — isolamento por `uid`, vets somente leitura
+- [ ] Criar index composto: `vaccinations → animalId ASC, dateIso DESC` — pendente, necessário antes dos relatórios sanitários
+- [ ] Verificar que regras bloqueiam acesso não autenticado — pendente (testar após ETAPA 6)
 - [ ] **Nenhum commit** (configuração no console)
+
+> 🟡 Concluído parcialmente em 2026-06-03. Security Rules publicadas. Índice composto adiado — criar antes de implementar ETAPA 9 (Relatórios).
 
 ---
 
