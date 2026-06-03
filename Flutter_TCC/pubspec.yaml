@@ -24,7 +24,6 @@ dependencies:
   google_sign_in: ^6.2.1
 
   # --- Persistência Local ---
-  hive_flutter: ^1.1.0
   shared_preferences: ^2.5.3
 
   # --- Rede & IoT ---

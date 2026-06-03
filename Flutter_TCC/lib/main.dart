@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/router/app_router.dart';
@@ -15,26 +14,17 @@ import 'firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Carrega variáveis de ambiente
   await dotenv.load();
 
-  // Inicializa Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Firestore com persistência offline nativa
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
 
-  // Inicializa Hive apenas para vets (dados locais que não vão para a nuvem)
-  await Hive.initFlutter();
-  await Hive.openBox<String>('vets');
-
-  // Formatos de data em pt-BR
   await initializeDateFormatting('pt_BR');
 
-  // Força orientação portrait
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -61,9 +51,9 @@ class BovicareApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'BoviCare',
       debugShowCheckedModeBanner: false,
-      theme:       AppTheme.light,
-      darkTheme:   AppTheme.dark,
-      themeMode:   themeMode,
+      theme:        AppTheme.light,
+      darkTheme:    AppTheme.dark,
+      themeMode:    themeMode,
       routerConfig: router,
       locale: const Locale('pt', 'BR'),
     );

@@ -3,7 +3,7 @@ import '../../../herd/domain/repositories/animal_repository.dart';
 import '../../../vaccination/domain/repositories/vaccination_repository.dart';
 import '../entities/report_data.dart';
 
-/// Agrega dados do Hive (animais + vacinações) e devolve um [ReportData].
+/// Agrega dados do Firestore (animais + vacinações) e devolve um [ReportData].
 class GenerateReportUseCase {
   const GenerateReportUseCase({
     required this._animals,

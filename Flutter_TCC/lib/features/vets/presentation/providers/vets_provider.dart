@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/datasources/vet_local_data_source.dart';
+import '../../data/datasources/vet_in_memory_data_source.dart';
 import '../../data/repositories/vet_repository_impl.dart';
 import '../../data/services/location_service.dart';
 import '../../domain/entities/vet_entity.dart';
@@ -11,8 +11,8 @@ import '../../domain/usecases/get_vets_use_case.dart';
 
 // --- DI ---
 
-final _vetDataSourceProvider = Provider<VetLocalDataSource>(
-  (_) => VetLocalDataSource(),
+final _vetDataSourceProvider = Provider<VetInMemoryDataSource>(
+  (_) => VetInMemoryDataSource(),
 );
 
 final vetRepositoryProvider = Provider<VetRepository>(
