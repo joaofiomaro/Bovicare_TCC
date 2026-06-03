@@ -8,6 +8,12 @@ class VaccinationRepositoryImpl implements VaccinationRepository {
   final VaccinationLocalDataSource _dataSource;
 
   @override
+  Future<List<VaccinationRecord>> getAll() async {
+    final models = await _dataSource.getAll();
+    return models.map((m) => m.toEntity()).toList();
+  }
+
+  @override
   Future<List<VaccinationRecord>> getByAnimal(String animalId) async {
     final models = await _dataSource.getByAnimal(animalId);
     return models.map((m) => m.toEntity()).toList();

@@ -9,6 +9,14 @@ class VaccinationLocalDataSource {
 
   Box<String> get _box => Hive.box<String>(_boxName);
 
+  Future<List<VaccinationModel>> getAll() async {
+    return _box.values
+        .map((raw) =>
+            VaccinationModel.fromJson(jsonDecode(raw) as Map<String, dynamic>))
+        .toList()
+      ..sort((a, b) => b.dateIso.compareTo(a.dateIso));
+  }
+
   Future<List<VaccinationModel>> getByAnimal(String animalId) async {
     final records = _box.values
         .map((raw) =>
