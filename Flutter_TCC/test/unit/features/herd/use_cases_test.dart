@@ -1,12 +1,11 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
-
 import 'package:bovicare/features/herd/domain/entities/animal_entity.dart';
 import 'package:bovicare/features/herd/domain/repositories/animal_repository.dart';
 import 'package:bovicare/features/herd/domain/usecases/delete_animal_use_case.dart';
 import 'package:bovicare/features/herd/domain/usecases/get_animal_by_id_use_case.dart';
 import 'package:bovicare/features/herd/domain/usecases/get_animals_use_case.dart';
 import 'package:bovicare/features/herd/domain/usecases/save_animal_use_case.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 
 class MockAnimalRepository extends Mock implements AnimalRepository {}
 

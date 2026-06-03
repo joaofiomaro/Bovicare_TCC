@@ -220,3 +220,53 @@ Na pasta: `PLANO_DESENVOLVIMENTO_FLUTTER.md` (848 linhas) + `PLANO_FIREBASE.md` 
 ---
 
 *Relatório gerado por análise estática do código-fonte. Recomenda-se validação com `flutter analyze`, `flutter test` e `dart run build_runner build` após aplicar as correções.*
+
+---
+
+## 8. ✅ Auditoria de implementação (03/06/2026)
+
+Todas as 14 ações do relatório foram aplicadas e verificadas. Diferente da
+análise original, **o Flutter SDK 3.44.1 estava disponível**, permitindo
+validação completa com `flutter analyze` e `flutter test`.
+
+### Resultado da verificação
+
+| Verificação | Resultado |
+|-------------|-----------|
+| `flutter analyze` | ✅ **No issues found!** (antes: imports incorretos mascarados) |
+| `flutter test` | ✅ **108 testes passando** (era 64; +11 novos casos) |
+| Compilação | ✅ Sem erros (C2 confirmado e corrigido) |
+| Dead code / refs órfãs | ✅ Nenhuma (`features/animal/`, `_mockVets`, `AppRoutes.shell`, helpers de status) |
+
+### Itens resolvidos
+
+| # | Item | Status | O que foi feito |
+|---|------|--------|-----------------|
+| C1 | Router usa stubs | ✅ | Imports do router → `features/herd/`; pasta `features/animal/` removida do git |
+| C2 | `GenerateReportUseCase` params privados | ✅ | Construtor convertido para posicional `(this._animals, this._vaccinations)`; call-site corrigido |
+| R1 | `AnimalStatus → label/badge` duplicado | ✅ | `AnimalStatusX.label` (domínio, fonte única) + `AnimalStatusVisuals.badge` (apresentação). Eliminadas 3 cópias de label + 2 de badge, fim da divergência de textos. Layering preservado (domínio não importa UI) |
+| R2 | `_fmt` duplica `toBrDate` | ✅ | Todas as chamadas trocadas por `.toBrDate`; helper `_fmt` removido |
+| R3 | `Failure` morto + erro inconsistente | ✅ | `Failure.toString()` → mensagem amigável; `firestore_error_mapper.dart` + mixin `FirestoreErrorHandler` aplicado nos 3 data sources (animal/vaccination/dashboard); tipos mortos `CacheFailure`/`ValidationFailure` removidos |
+| R4 | 7 deps sem uso | ✅ | Removidos `dio`, `connectivity_plus`, `image_picker`, `permission_handler`, `flutter_svg`, `lottie`. `mqtt_client` mantido com comentário (roadmap Fase 7/Brete) |
+| M1 | Busca refaz fetch por tecla | ✅ | `animalsProvider` faz fetch único; novo `filteredAnimalsProvider` aplica filtro/busca em memória. Sem refetch nem flicker |
+| M2 | Mock de vets em produção | ✅ | `vaccination_screen` consome `vetOptionsProvider` (VetRepository real); `_mockVets` removido |
+| M3 | Tratamento de erro não uniforme | ✅ | `save`/`delete` do `AnimalsNotifier` retornam `bool` com captura de erro; UI exibe toast e não trava em loading |
+| M4 | `firebase_options.dart` versionado | ✅ | Confirmado aceitável (chave de cliente restrita por Security Rules); `.env`/`google-services.json` no `.gitignore` |
+| B1 | `AppRoutes.shell` não usado | ✅ | Removido |
+| B2 | Lint frouxo | ✅ | `directives_ordering` reativado; todos os imports reordenados (lib + testes) |
+| B3 | Lacunas de teste | ✅ | `authRedirect` extraído como função pura + 5 testes; `GenerateReportUseCase` + 6 testes (sanitário/reprodutivo/financeiro/inventário) |
+| B4 | Docs poluindo a raiz | ✅ | `PLANO_*.md` e `RELATORIO_ANALISE.md` movidos para `docs/`; `README.md` permanece como entrada |
+
+### Decisões de engenharia (refinamentos sobre o relatório)
+
+- **R1 com layering correto:** em vez de colocar `BadgeType get badge` no
+  `animal_entity.dart` (o que acoplaria domínio → apresentação), o `label` ficou
+  no domínio e o `badge` numa extensão de apresentação
+  (`animal_status_visuals.dart`). Mesma fonte única, sem violar Clean Architecture.
+- **R3 enxuto:** adotado o padrão `Failure` onde há I/O real (Firestore) e
+  removidos os tipos sem aplicação nesta arquitetura (cache transparente do
+  Firestore; validação via Formz), em vez de manter código morto.
+- **B3 testável por design:** o redirect de auth foi extraído para função pura,
+  evitando a necessidade de mockar Firebase/BuildContext.
+
+*Auditoria concluída — projeto em estado profissional: 0 issues de análise, 108 testes verdes, sem dead code.*

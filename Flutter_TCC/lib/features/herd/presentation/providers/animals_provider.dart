@@ -29,56 +29,39 @@ final animalRepositoryProvider = Provider<AnimalRepository>(
   (ref) => AnimalRepositoryImpl(ref.watch(_animalDataSourceProvider)),
 );
 
-// --- Providers de lista (com filtro reativo) ---
+// --- Provider de lista (fetch único, sem refetch por filtro/busca) ---
 
 class AnimalsNotifier extends AsyncNotifier<List<AnimalEntity>> {
+  /// Busca a lista no Firestore uma única vez. Filtro e busca são aplicados
+  /// em memória por [filteredAnimalsProvider] — sem refetch por tecla digitada.
   @override
-  Future<List<AnimalEntity>> build() async {
-    // Rebuilds automaticamente quando filtro ou busca mudam.
-    final filter = ref.watch(herdFilterProvider);
-    final query  = ref.watch(herdSearchProvider);
-    final repo   = ref.read(animalRepositoryProvider);
-    final all    = await GetAnimalsUseCase(repo).call();
-    return _apply(all, filter, query);
-  }
-
-  List<AnimalEntity> _apply(
-    List<AnimalEntity> list,
-    HerdFilter filter,
-    String query,
-  ) {
-    final q = query.trim().toLowerCase();
-
-    final filtered = switch (filter) {
-      HerdFilter.all      => list,
-      HerdFilter.females  => list.where((a) => a.sex == AnimalSex.female).toList(),
-      HerdFilter.males    => list.where((a) => a.sex == AnimalSex.male).toList(),
-      HerdFilter.pregnant => list.where((a) => a.status == AnimalStatus.pregnant).toList(),
-      HerdFilter.alerts   => list
-          .where((a) => a.status == AnimalStatus.sick || a.status == AnimalStatus.attention)
-          .toList(),
-    };
-
-    if (q.isEmpty) return filtered;
-    return filtered
-        .where((a) =>
-            a.earTag.toLowerCase().contains(q) ||
-            (a.name?.toLowerCase().contains(q) ?? false) ||
-            a.breed.toLowerCase().contains(q) ||
-            (a.rfid?.toLowerCase().contains(q) ?? false))
-        .toList();
-  }
-
-  Future<void> save(AnimalEntity animal) async {
+  Future<List<AnimalEntity>> build() {
     final repo = ref.read(animalRepositoryProvider);
-    await SaveAnimalUseCase(repo).call(animal);
-    ref.invalidateSelf();
+    return GetAnimalsUseCase(repo).call();
   }
 
-  Future<void> delete(String id) async {
-    final repo = ref.read(animalRepositoryProvider);
-    await DeleteAnimalUseCase(repo).call(id);
-    ref.invalidateSelf();
+  /// Salva o animal e recarrega a lista. Retorna `false` em caso de falha.
+  Future<bool> save(AnimalEntity animal) async {
+    try {
+      final repo = ref.read(animalRepositoryProvider);
+      await SaveAnimalUseCase(repo).call(animal);
+      ref.invalidateSelf();
+      return true;
+    } on Exception {
+      return false;
+    }
+  }
+
+  /// Remove o animal e recarrega a lista. Retorna `false` em caso de falha.
+  Future<bool> delete(String id) async {
+    try {
+      final repo = ref.read(animalRepositoryProvider);
+      await DeleteAnimalUseCase(repo).call(id);
+      ref.invalidateSelf();
+      return true;
+    } on Exception {
+      return false;
+    }
   }
 }
 
@@ -86,6 +69,48 @@ final animalsProvider =
     AsyncNotifierProvider<AnimalsNotifier, List<AnimalEntity>>(
   AnimalsNotifier.new,
 );
+
+// --- Lista derivada: filtro + busca aplicados em memória ---
+
+/// Aplica [filter] e [query] sobre a lista carregada, sem tocar no Firestore.
+List<AnimalEntity> _applyHerdFilters(
+  List<AnimalEntity> list,
+  HerdFilter filter,
+  String query,
+) {
+  final filtered = switch (filter) {
+    HerdFilter.all      => list,
+    HerdFilter.females  => list.where((a) => a.sex == AnimalSex.female).toList(),
+    HerdFilter.males    => list.where((a) => a.sex == AnimalSex.male).toList(),
+    HerdFilter.pregnant =>
+      list.where((a) => a.status == AnimalStatus.pregnant).toList(),
+    HerdFilter.alerts => list
+        .where((a) =>
+            a.status == AnimalStatus.sick ||
+            a.status == AnimalStatus.attention)
+        .toList(),
+  };
+
+  final q = query.trim().toLowerCase();
+  if (q.isEmpty) return filtered;
+  return filtered
+      .where((a) =>
+          a.earTag.toLowerCase().contains(q) ||
+          (a.name?.toLowerCase().contains(q) ?? false) ||
+          a.breed.toLowerCase().contains(q) ||
+          (a.rfid?.toLowerCase().contains(q) ?? false))
+      .toList();
+}
+
+/// Lista exibida na UI: reage a filtro/busca sem refetch (apenas reprocessa
+/// em memória a lista já carregada por [animalsProvider]).
+final filteredAnimalsProvider =
+    Provider<AsyncValue<List<AnimalEntity>>>((ref) {
+  final animals = ref.watch(animalsProvider);
+  final filter  = ref.watch(herdFilterProvider);
+  final query   = ref.watch(herdSearchProvider);
+  return animals.whenData((list) => _applyHerdFilters(list, filter, query));
+});
 
 // --- Provider de detalhe (família por id) ---
 

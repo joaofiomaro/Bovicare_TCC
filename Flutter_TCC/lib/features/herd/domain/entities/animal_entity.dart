@@ -7,6 +7,17 @@ part 'animal_entity.freezed.dart';
 enum AnimalStatus { healthy, pregnant, attention, sick }
 enum AnimalSex    { female, male }
 
+/// Rótulos de exibição de [AnimalStatus] — fonte única de verdade.
+/// Centralizado aqui (domínio) para evitar divergência de textos entre telas.
+extension AnimalStatusX on AnimalStatus {
+  String get label => switch (this) {
+        AnimalStatus.healthy   => 'Saudável',
+        AnimalStatus.pregnant  => 'Prenha',
+        AnimalStatus.attention => 'Alerta',
+        AnimalStatus.sick      => 'Medicação',
+      };
+}
+
 @freezed
 class AnimalEntity with _$AnimalEntity {
   const factory AnimalEntity({

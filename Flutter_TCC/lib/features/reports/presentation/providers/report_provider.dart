@@ -20,8 +20,8 @@ class ReportNotifier extends AsyncNotifier<ReportData?> {
     final filter = ref.read(reportFilterProvider);
     state = await AsyncValue.guard(() async {
       final useCase = GenerateReportUseCase(
-        animals:      ref.read(animalRepositoryProvider),
-        vaccinations: ref.read(vaccinationRepositoryProvider),
+        ref.read(animalRepositoryProvider),
+        ref.read(vaccinationRepositoryProvider),
       );
       return useCase.call(type, filter);
     });

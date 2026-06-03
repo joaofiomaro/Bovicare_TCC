@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../../../core/errors/firestore_error_mapper.dart';
 import '../models/animal_model.dart';
 
-class AnimalFirestoreDataSource {
+class AnimalFirestoreDataSource with FirestoreErrorHandler {
   AnimalFirestoreDataSource({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
@@ -18,37 +19,39 @@ class AnimalFirestoreDataSource {
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('users/$_uid/animals');
 
-  Future<List<AnimalModel>> getAll() async {
-    var snapshot = await _collection.orderBy('earTag').get();
-    if (snapshot.docs.isEmpty) {
-      await _seed();
-      snapshot = await _collection.orderBy('earTag').get();
-    }
-    return snapshot.docs.map(AnimalModel.fromFirestore).toList();
-  }
-
-  Future<AnimalModel?> getById(String id) async {
-    final doc = await _collection.doc(id).get();
-    if (!doc.exists) return null;
-    return AnimalModel.fromFirestore(doc);
-  }
-
-  Future<void> save(AnimalModel model) async {
-    final ref = _collection.doc(model.id);
-    final exists = (await ref.get()).exists;
-    final data = model.toFirestore();
-    if (exists) {
-      await ref.update({...data, 'updatedAt': FieldValue.serverTimestamp()});
-    } else {
-      await ref.set({
-        ...data,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
+  Future<List<AnimalModel>> getAll() => guardFirestore(() async {
+        var snapshot = await _collection.orderBy('earTag').get();
+        if (snapshot.docs.isEmpty) {
+          await _seed();
+          snapshot = await _collection.orderBy('earTag').get();
+        }
+        return snapshot.docs.map(AnimalModel.fromFirestore).toList();
       });
-    }
-  }
 
-  Future<void> delete(String id) => _collection.doc(id).delete();
+  Future<AnimalModel?> getById(String id) => guardFirestore(() async {
+        final doc = await _collection.doc(id).get();
+        if (!doc.exists) return null;
+        return AnimalModel.fromFirestore(doc);
+      });
+
+  Future<void> save(AnimalModel model) => guardFirestore(() async {
+        final ref = _collection.doc(model.id);
+        final exists = (await ref.get()).exists;
+        final data = model.toFirestore();
+        if (exists) {
+          await ref
+              .update({...data, 'updatedAt': FieldValue.serverTimestamp()});
+        } else {
+          await ref.set({
+            ...data,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      });
+
+  Future<void> delete(String id) =>
+      guardFirestore(() => _collection.doc(id).delete());
 
   // ---------------------------------------------------------------------------
 

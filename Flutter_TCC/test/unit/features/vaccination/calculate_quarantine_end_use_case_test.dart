@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:bovicare/features/vaccination/domain/usecases/calculate_quarantine_end_use_case.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   const useCase = CalculateQuarantineEndUseCase();

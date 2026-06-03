@@ -99,12 +99,15 @@ class _NewAnimalScreenState extends ConsumerState<NewAnimalScreen> {
       rfid:      _rfid,
     );
 
-    await ref.read(animalsProvider.notifier).save(animal);
+    final ok = await ref.read(animalsProvider.notifier).save(animal);
 
-    if (mounted) {
-      setState(() => _isSaving = false);
+    if (!mounted) return;
+    setState(() => _isSaving = false);
+    if (ok) {
       AppToast.success(context, 'Animal cadastrado com sucesso!');
       Navigator.of(context).pop();
+    } else {
+      AppToast.error(context, 'Erro ao cadastrar. Tente novamente.');
     }
   }
 

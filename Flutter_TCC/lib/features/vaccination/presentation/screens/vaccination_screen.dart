@@ -9,6 +9,7 @@ import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../herd/domain/entities/animal_entity.dart';
 import '../../../herd/presentation/providers/animals_provider.dart';
+import '../../../vets/presentation/providers/vets_provider.dart';
 import '../../domain/entities/vaccination_record.dart';
 import '../../domain/entities/vaccine_info.dart';
 import '../providers/vaccinations_provider.dart';
@@ -30,13 +31,6 @@ class _VaccinationScreenState extends ConsumerState<VaccinationScreen> {
   String   _dose        = VaccineInfo.doses.first;
   DateTime _date        = DateTime.now();
   String?  _vetName;
-
-  // Vets mock — Fase 8 substituirá pela lista real do VetRepository.
-  static const _mockVets = [
-    'Não informado',
-    'Dr. Carlos Lima — CRMV 12345',
-    'Dra. Ana Souza — CRMV 67890',
-  ];
 
   @override
   void dispose() {
@@ -97,6 +91,8 @@ class _VaccinationScreenState extends ConsumerState<VaccinationScreen> {
   Widget build(BuildContext context) {
     final animalAsync  = ref.watch(animalDetailProvider(widget.animalId));
     final isSubmitting = ref.watch(vaccinationFormProvider).isLoading;
+    final vetOptions   = ref.watch(vetOptionsProvider).valueOrNull ??
+        const ['Não informado'];
 
     return Scaffold(
       body: animalAsync.when(
@@ -112,7 +108,7 @@ class _VaccinationScreenState extends ConsumerState<VaccinationScreen> {
                 dose:         _dose,
                 date:         _date,
                 vetName:      _vetName,
-                mockVets:     _mockVets,
+                vetOptions:   vetOptions,
                 onVaccineChanged: (v) => setState(() => _vaccineName = v),
                 onDoseChanged:    (v) => setState(() => _dose = v),
                 onPickDate:       _pickDate,
@@ -136,7 +132,7 @@ class _Form extends StatelessWidget {
     required this.dose,
     required this.date,
     required this.vetName,
-    required this.mockVets,
+    required this.vetOptions,
     required this.onVaccineChanged,
     required this.onDoseChanged,
     required this.onPickDate,
@@ -151,7 +147,7 @@ class _Form extends StatelessWidget {
   final String             dose;
   final DateTime           date;
   final String?            vetName;
-  final List<String>       mockVets;
+  final List<String>       vetOptions;
   final void Function(String) onVaccineChanged;
   final void Function(String) onDoseChanged;
   final VoidCallback       onPickDate;
@@ -234,8 +230,8 @@ class _Form extends StatelessWidget {
                 _LabeledField(
                   label: 'Veterinário responsável',
                   child: _Dropdown(
-                    value:     vetName ?? mockVets.first,
-                    items:     mockVets,
+                    value:     vetName ?? vetOptions.first,
+                    items:     vetOptions,
                     onChanged: onVetChanged,
                   ),
                 ),

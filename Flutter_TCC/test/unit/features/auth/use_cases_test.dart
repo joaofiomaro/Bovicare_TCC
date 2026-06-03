@@ -1,12 +1,11 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
-
 import 'package:bovicare/features/auth/domain/entities/user_entity.dart';
 import 'package:bovicare/features/auth/domain/repositories/auth_repository.dart';
 import 'package:bovicare/features/auth/domain/usecases/get_current_user_use_case.dart';
 import 'package:bovicare/features/auth/domain/usecases/login_use_case.dart';
 import 'package:bovicare/features/auth/domain/usecases/logout_use_case.dart';
 import 'package:bovicare/features/auth/domain/usecases/register_use_case.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 

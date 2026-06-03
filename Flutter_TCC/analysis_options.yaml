@@ -18,5 +18,5 @@ linter:
     always_use_package_imports: false
     sort_pub_dependencies: false
     flutter_style_todos: false
-    directives_ordering: false
-    # inference_failure_on_instance_creation: false  # não é regra de lint
+    # directives_ordering reativado (B2): padroniza a ordem dos imports e evita
+    # que imports incorretos (ver C1) passem despercebidos.

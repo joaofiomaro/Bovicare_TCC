@@ -1,6 +1,6 @@
+import 'package:bovicare/core/extensions/datetime_ext.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:bovicare/core/extensions/datetime_ext.dart';
 
 void main() {
   setUpAll(() async => initializeDateFormatting('pt_BR'));

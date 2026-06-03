@@ -5,14 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/animal/presentation/screens/animal_profile_screen.dart';
-import '../../features/animal/presentation/screens/new_animal_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/brete/presentation/screens/brete_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
+import '../../features/herd/presentation/screens/animal_profile_screen.dart';
 import '../../features/herd/presentation/screens/herd_list_screen.dart';
+import '../../features/herd/presentation/screens/new_animal_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/reports/presentation/screens/reports_screen.dart';
 import '../../features/vaccination/presentation/screens/vaccination_screen.dart';
@@ -20,6 +20,7 @@ import '../../features/vets/presentation/screens/vet_detail_screen.dart';
 import '../../features/vets/presentation/screens/vets_list_screen.dart';
 import '../../shared/widgets/app_shell.dart';
 import 'app_routes.dart';
+import 'auth_redirect.dart';
 
 /// Listenable que notifica o GoRouter sempre que o estado de auth muda.
 class _AuthChangeListenable extends ChangeNotifier {
@@ -39,24 +40,11 @@ class _AuthChangeListenable extends ChangeNotifier {
 }
 
 /// Redirect global — chamado em cada navegação e ao mudar estado de auth.
-String? _authRedirect(BuildContext context, GoRouterState state) {
-  final isLoggedIn = FirebaseAuth.instance.currentUser != null;
-  final location   = state.matchedLocation;
-
-  // Splash gerencia seu próprio redirect — não interferir.
-  if (location == AppPaths.splash) return null;
-
-  final isAuthRoute = location == AppPaths.login ||
-      location == AppPaths.register;
-
-  // Não autenticado tentando acessar rota protegida → login.
-  if (!isLoggedIn && !isAuthRoute) return AppPaths.login;
-
-  // Autenticado tentando acessar login/cadastro → dashboard.
-  if (isLoggedIn && isAuthRoute) return AppPaths.dashboard;
-
-  return null;
-}
+/// Delega à função pura [authRedirect] (testável isoladamente).
+String? _authRedirect(BuildContext context, GoRouterState state) => authRedirect(
+      isLoggedIn: FirebaseAuth.instance.currentUser != null,
+      location: state.matchedLocation,
+    );
 
 /// Provider do GoRouter — criado uma única vez via Riverpod.
 final appRouterProvider = Provider<GoRouter>((ref) {

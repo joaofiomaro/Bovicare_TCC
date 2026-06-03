@@ -6,9 +6,6 @@ abstract final class AppRoutes {
   static const String login    = 'login';
   static const String register = 'register';
 
-  // Shell (bottom nav)
-  static const String shell = 'shell';
-
   // Dashboard
   static const String dashboard = 'dashboard';
 

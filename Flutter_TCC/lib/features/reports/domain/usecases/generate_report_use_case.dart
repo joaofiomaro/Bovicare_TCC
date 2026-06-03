@@ -1,3 +1,4 @@
+import '../../../../core/extensions/datetime_ext.dart';
 import '../../../herd/domain/entities/animal_entity.dart';
 import '../../../herd/domain/repositories/animal_repository.dart';
 import '../../../vaccination/domain/repositories/vaccination_repository.dart';
@@ -5,10 +6,7 @@ import '../entities/report_data.dart';
 
 /// Agrega dados do Firestore (animais + vacinações) e devolve um [ReportData].
 class GenerateReportUseCase {
-  const GenerateReportUseCase({
-    required this._animals,
-    required this._vaccinations,
-  });
+  const GenerateReportUseCase(this._animals, this._vaccinations);
 
   final AnimalRepository      _animals;
   final VaccinationRepository _vaccinations;
@@ -40,13 +38,13 @@ class GenerateReportUseCase {
         .map((v) {
           final a        = animalMap[v.animalId];
           final carencia = v.quarantineDays > 0
-              ? _fmt(v.date.add(Duration(days: v.quarantineDays)))
+              ? v.date.add(Duration(days: v.quarantineDays)).toBrDate
               : '—';
           return [
             a?.displayName ?? v.animalId,
             v.vaccineName,
             v.dose,
-            _fmt(v.date),
+            v.date.toBrDate,
             carencia,
             v.lot ?? '—',
           ];
@@ -77,9 +75,9 @@ class GenerateReportUseCase {
           final expected = a.expectedBirthDate;
           return [
             a.displayName,
-            _statusLabel(a.status),
-            if (a.pregnancyDate != null) _fmt(a.pregnancyDate!) else '—',
-            if (expected != null) _fmt(expected) else '—',
+            a.status.label,
+            if (a.pregnancyDate != null) a.pregnancyDate!.toBrDate else '—',
+            if (expected != null) expected.toBrDate else '—',
             if (days > 0) '$days dias' else '—',
           ];
         })
@@ -108,7 +106,7 @@ class GenerateReportUseCase {
               a.breed,
               if (a.sex == AnimalSex.female) 'F' else 'M',
               '${a.weightKg!.toStringAsFixed(0)} kg',
-              _statusLabel(a.status),
+              a.status.label,
             ])
         .toList();
 
@@ -138,7 +136,7 @@ class GenerateReportUseCase {
               else
                 '${a.ageInMonths} meses',
               if (a.weightKg != null) '${a.weightKg!.toStringAsFixed(0)} kg' else '—',
-              _statusLabel(a.status),
+              a.status.label,
             ])
         .toList();
 
@@ -151,18 +149,4 @@ class GenerateReportUseCase {
       periodEnd:   end,
     );
   }
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  String _fmt(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}/'
-      '${d.month.toString().padLeft(2, '0')}/'
-      '${d.year}';
-
-  String _statusLabel(AnimalStatus s) => switch (s) {
-    AnimalStatus.healthy   => 'Saudável',
-    AnimalStatus.pregnant  => 'Prenha',
-    AnimalStatus.attention => 'Alerta',
-    AnimalStatus.sick      => 'Medicação',
-  };
 }

@@ -16,6 +16,7 @@ import '../../../dashboard/presentation/widgets/activity_timeline.dart';
 import '../../../vaccination/domain/entities/vaccination_record.dart';
 import '../../../vaccination/presentation/providers/vaccinations_provider.dart';
 import '../../domain/entities/animal_entity.dart';
+import '../extensions/animal_status_visuals.dart';
 import '../providers/animals_provider.dart';
 
 class AnimalProfileScreen extends ConsumerWidget {
@@ -123,8 +124,8 @@ class _AnimalHeader extends StatelessWidget {
                     visualDensity: VisualDensity.compact,
                   ),
                   AppBadge(
-                    label: _statusLabel(animal.status),
-                    type:  _statusBadge(animal.status),
+                    label: animal.status.label,
+                    type:  animal.status.badge,
                   ),
                 ],
               ),
@@ -199,20 +200,6 @@ class _AnimalHeader extends StatelessWidget {
         : '';
     return '$breed · $sex · Nasc. $birth$weight';
   }
-
-  String _statusLabel(AnimalStatus s) => switch (s) {
-    AnimalStatus.healthy   => 'Ativo',
-    AnimalStatus.pregnant  => 'Prenha',
-    AnimalStatus.attention => 'Alerta',
-    AnimalStatus.sick      => 'Medicação',
-  };
-
-  BadgeType _statusBadge(AnimalStatus s) => switch (s) {
-    AnimalStatus.healthy   => BadgeType.info,
-    AnimalStatus.pregnant  => BadgeType.success,
-    AnimalStatus.attention => BadgeType.warning,
-    AnimalStatus.sick      => BadgeType.danger,
-  };
 }
 
 // ── Tab bar ───────────────────────────────────────────────────────────────────

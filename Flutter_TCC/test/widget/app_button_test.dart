@@ -1,6 +1,6 @@
+import 'package:bovicare/shared/widgets/app_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:bovicare/shared/widgets/app_button.dart';
 
 Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 

@@ -93,3 +93,16 @@ final vetDetailProvider =
   final repo = ref.read(vetRepositoryProvider);
   return GetVetByIdUseCase(repo).call(id);
 });
+
+// --- Opções de vets para seleção em formulários ---
+
+/// Lista de vets formatada (`Nome — CRMV xxxxx`) para dropdowns, sempre com
+/// "Não informado" como primeira opção. Não depende de localização/distância.
+final vetOptionsProvider = FutureProvider<List<String>>((ref) async {
+  final repo = ref.read(vetRepositoryProvider);
+  final vets = await GetVetsUseCase(repo).call();
+  return [
+    'Não informado',
+    for (final v in vets) '${v.name} — CRMV ${v.crmv}',
+  ];
+});

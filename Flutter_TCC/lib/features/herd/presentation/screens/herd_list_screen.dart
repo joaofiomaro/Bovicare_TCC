@@ -5,9 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../shared/widgets/app_chip_filter.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
-import '../../../../shared/widgets/app_chip_filter.dart';
 import '../../../../shared/widgets/app_skeleton.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../providers/animals_provider.dart';
@@ -31,7 +31,7 @@ class _HerdListScreenState extends ConsumerState<HerdListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final animals       = ref.watch(animalsProvider);
+    final animals       = ref.watch(filteredAnimalsProvider);
     final currentFilter = ref.watch(herdFilterProvider);
 
     return Scaffold(
@@ -138,9 +138,16 @@ class _HerdListScreenState extends ConsumerState<HerdListScreen> {
                         pathParameters: {'id': list[i].id},
                       ),
                       onDelete: () async {
-                        await ref.read(animalsProvider.notifier).delete(list[i].id);
+                        final ok = await ref
+                            .read(animalsProvider.notifier)
+                            .delete(list[i].id);
                         if (context.mounted) {
-                          AppToast.success(context, 'Animal removido.');
+                          if (ok) {
+                            AppToast.success(context, 'Animal removido.');
+                          } else {
+                            AppToast.error(
+                                context, 'Erro ao remover. Tente novamente.');
+                          }
                         }
                       },
                     ),

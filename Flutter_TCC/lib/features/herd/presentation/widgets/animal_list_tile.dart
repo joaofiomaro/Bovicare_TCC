@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../domain/entities/animal_entity.dart';
+import '../extensions/animal_status_visuals.dart';
 
 /// Tile de um animal na lista do rebanho.
 /// Swipe para esquerda revela ação de exclusão com confirmação.
@@ -59,8 +60,8 @@ class AnimalListTile extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               AppBadge(
-                label: _badgeLabel(animal.status),
-                type:  _badgeType(animal.status),
+                label: animal.status.label,
+                type:  animal.status.badge,
               ),
             ],
           ),
@@ -100,20 +101,6 @@ class AnimalListTile extends StatelessWidget {
     final weight = a.weightKg != null ? ' · ${a.weightKg!.toStringAsFixed(0)} kg' : '';
     return '${a.breed} · ${a.sexLabel} · $age$weight';
   }
-
-  String _badgeLabel(AnimalStatus s) => switch (s) {
-    AnimalStatus.healthy   => 'Ativo',
-    AnimalStatus.pregnant  => 'Prenha',
-    AnimalStatus.attention => 'Vacina',
-    AnimalStatus.sick      => 'Medicação',
-  };
-
-  BadgeType _badgeType(AnimalStatus s) => switch (s) {
-    AnimalStatus.healthy   => BadgeType.info,
-    AnimalStatus.pregnant  => BadgeType.success,
-    AnimalStatus.attention => BadgeType.warning,
-    AnimalStatus.sick      => BadgeType.danger,
-  };
 }
 
 class _StatusIcon extends StatelessWidget {

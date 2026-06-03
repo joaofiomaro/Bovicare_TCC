@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:bovicare/core/utils/validators.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   // ---------------------------------------------------------------------------
