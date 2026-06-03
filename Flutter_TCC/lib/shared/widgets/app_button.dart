@@ -25,11 +25,18 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Cor do indicator deve contrastar com o fundo de cada variante.
+    final loadingColor = switch (variant) {
+      AppButtonVariant.primary || AppButtonVariant.danger => AppColors.white,
+      AppButtonVariant.outline                            => AppColors.brandGreen,
+      AppButtonVariant.ghost                             => AppColors.mutedGreen,
+    };
+
     final Widget child = isLoading
-        ? const SizedBox(
+        ? SizedBox(
             height: 20,
             width: 20,
-            child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.white),
+            child: CircularProgressIndicator(strokeWidth: 2.5, color: loadingColor),
           )
         : Row(
             mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,

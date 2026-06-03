@@ -41,33 +41,25 @@ class AppCard extends StatelessWidget {
         ),
     };
 
-    final content = Container(
-      margin: margin,
-      decoration: decoration,
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: padding ?? const EdgeInsets.all(16),
-        child: child,
-      ),
-    );
-
-    if (onTap == null) return content;
-
     return Container(
       margin: margin,
       decoration: decoration,
       clipBehavior: Clip.antiAlias,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: AppRadius.lgAll,
-          child: Padding(
-            padding: padding ?? const EdgeInsets.all(16),
-            child: child,
-          ),
-        ),
-      ),
+      child: onTap != null
+          ? Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
+                child: Padding(
+                  padding: padding ?? const EdgeInsets.all(16),
+                  child: child,
+                ),
+              ),
+            )
+          : Padding(
+              padding: padding ?? const EdgeInsets.all(16),
+              child: child,
+            ),
     );
   }
 }
