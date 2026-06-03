@@ -19,18 +19,19 @@ class VaccinationFirestoreDataSource {
       _firestore.collection('users/$_uid/vaccinations');
 
   Future<List<VaccinationModel>> getAll() async {
-    final snapshot = await _collection.get();
-    return snapshot.docs.map(VaccinationModel.fromFirestore).toList()
-      ..sort((a, b) => b.dateIso.compareTo(a.dateIso));
+    final snapshot = await _collection
+        .orderBy('dateIso', descending: true)
+        .get();
+    return snapshot.docs.map(VaccinationModel.fromFirestore).toList();
   }
 
-  /// Ordenação client-side — evita índice composto até ETAPA 4 ser completada.
+  /// Usa índice composto: vaccinations → animalId ASC, dateIso DESC.
   Future<List<VaccinationModel>> getByAnimal(String animalId) async {
     final snapshot = await _collection
         .where('animalId', isEqualTo: animalId)
+        .orderBy('dateIso', descending: true)
         .get();
-    return snapshot.docs.map(VaccinationModel.fromFirestore).toList()
-      ..sort((a, b) => b.dateIso.compareTo(a.dateIso));
+    return snapshot.docs.map(VaccinationModel.fromFirestore).toList();
   }
 
   Future<void> save(VaccinationModel model) async {

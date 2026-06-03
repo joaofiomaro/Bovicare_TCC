@@ -1,5 +1,5 @@
 # BoviCare — Plano de Integração Firebase
-> Status: ✅ Integração Firebase Completa — todas as ETAPAs de código concluídas · ETAPA 4 parcial (índice composto pendente) · Testes no emulador pendentes
+> Status: ✅ Integração Firebase Completa — todas as ETAPAs concluídas · Testes no emulador pendentes
 > Criado em: 2026-06-02 · Última atualização: 2026-06-03
 
 ---
@@ -359,11 +359,14 @@ Executar ANTES de qualquer commit Firebase:
 ### ETAPA 4 — Publicar Security Rules e Index 🟡 Parcial
 
 - [x] Publicar Firestore Security Rules no Console — isolamento por `uid`, vets somente leitura
-- [ ] Criar index composto: `vaccinations → animalId ASC, dateIso DESC` — **pendente** · criar antes de testar relatórios sanitários · VaccinationFirestoreDataSource usa ordenação client-side como fallback
+- [x] Criar index composto: `vaccinations → animalId ASC, dateIso DESC` — deployado via `firebase deploy --only firestore:indexes`
+  - `firestore.indexes.json` criado e versionado no repositório
+  - `firebase.json` atualizado com seção `firestore`
+  - `VaccinationFirestoreDataSource` atualizado para usar `orderBy` server-side
 - [x] Acesso não autenticado bloqueado no router (ETAPA 11 — auth guard) · validação Firestore-level pendente de teste no emulador
-- [ ] **Nenhum commit** (configuração no console)
+- [x] **Commit:** `feat(firestore): add composite index and enable server-side ordering`
 
-> 🟡 Concluído parcialmente em 2026-06-03. Security Rules publicadas. Índice composto é o único item pendente nesta etapa.
+> ✅ Concluído em 2026-06-03. ETAPA 4 100% completa.
 
 ---
 
