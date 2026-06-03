@@ -20,6 +20,7 @@ Future<void> main() async {
   await Future.wait([
     Hive.openBox<String>('animals'),
     Hive.openBox<String>('vaccinations'),
+    Hive.openBox<String>('vets'),
   ]);
 
   // Formatos de data em pt-BR

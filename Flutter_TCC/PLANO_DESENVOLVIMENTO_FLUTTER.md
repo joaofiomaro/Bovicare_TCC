@@ -478,28 +478,34 @@ fast   = 200ms    normal = 350ms    slow = 500ms    verySlow = 800ms
 
 ---
 
-### FASE 6 — Feature: Vaccination (Registro de Vacinação)
+### FASE 6 — Feature: Vaccination (Registro de Vacinação) ✅
 > Objetivo: registro de vacinação com cálculo automático de carência.
 
 **Tarefas:**
 
 **Domain:**
-- [ ] `VaccinationRecord` entity (id, animalId, vaccineName, date, dose, quarantineDays, veterinarianId)
-- [ ] `VaccinationRepository` (interface)
-- [ ] `RegisterVaccinationUseCase`, `GetAnimalVaccinationsUseCase`
-- [ ] `CalculateQuarantineEndUseCase` — pura, sem repositório
+- [x] `VaccinationRecord` entity (freezed) — id, animalId, vaccineName, dose, date, quarantineDays, lot, veterinarianName, nextDoseDate
+- [x] `VaccineInfo` value object — catálogo com `quarantineDaysFor()` e `nextDoseFor()` (normas MAPA)
+- [x] `VaccinationRepository` (interface)
+- [x] `RegisterVaccinationUseCase`, `GetAnimalVaccinationsUseCase`
+- [x] `CalculateQuarantineEndUseCase` — pura, sem repositório
 
 **Data:**
-- [ ] `VaccinationModel` (freezed + json_serializable + HiveType)
-- [ ] `VaccinationLocalDataSource` — Hive Box
-- [ ] `VaccinationRepositoryImpl`
+- [x] `VaccinationModel` (freezed + json_serializable) — `Box<String>` JSON, sorted by date desc
+- [x] `VaccinationLocalDataSource` — CRUD Hive
+- [x] `VaccinationRepositoryImpl`
 
 **Presentation:**
-- [ ] `vaccinationsProvider(animalId)` (AsyncNotifier)
-- [ ] `VaccinationFormProvider`
-- [ ] `VaccinationScreen` — seletor de vacinas (Febre Aftosa, IBR, Brucelose, etc.), dose, data
-- [ ] `QuarantineCalculator` widget — mostra data fim de carência dinamicamente
-- [ ] Integração com `AnimalHistoryTab`
+- [x] `vaccinationsProvider(animalId)` — FutureProvider.autoDispose.family
+- [x] `vaccinationFormProvider` — AsyncNotifier com invalidação automática do cache
+- [x] `VaccinationScreen` — 5 campos, card do animal, date picker, dropdown vet (mock Fase 8)
+- [x] `QuarantineCalculator` widget — cálculo reativo: próxima dose + carência por vacina
+- [x] `_SanitarioTab` — lista real de vacinações com data de carência e próxima dose
+- [x] `_HistoricoTab` — timeline real mesclando vacinações + eventos do animal
+- [x] `_ResumoTab` — histórico recente real (sem mock)
+- [x] `main.dart` — abre `Box<String>('vaccinations')` em paralelo com `'animals'`
+
+> ✅ Concluído em 2026-06-02.
 
 **Critério de conclusão:** Vacinação salva no animal, cálculo de carência correto, aparece no histórico.
 
@@ -726,13 +732,14 @@ fast   = 200ms    normal = 350ms    slow = 500ms    verySlow = 800ms
 - [x] `NewAnimalScreen` — formulário completo, RFID simulado, date picker, salva no Hive
 - [x] `main.dart` atualizado — `Hive.openBox<String>('animals')` no boot
 
-### FASE 6 — Vaccination 🔴
-- [ ] `VaccinationRecord` entity, `VaccinationRepository`
-- [ ] `RegisterVaccinationUseCase`, `CalculateQuarantineEndUseCase`
-- [ ] `VaccinationModel` + Hive, `VaccinationRepositoryImpl`
-- [ ] `vaccinationsProvider`, `VaccinationFormProvider`
-- [x] `VaccinationScreen` — placeholder com animalId via rota
-- [ ] Cálculo de carência automático
+### FASE 6 — Vaccination ✅
+- [x] `VaccinationRecord` entity (freezed), `VaccineInfo` value object
+- [x] `VaccinationRepository`, `RegisterVaccinationUseCase`, `GetAnimalVaccinationsUseCase`, `CalculateQuarantineEndUseCase`
+- [x] `VaccinationModel` (freezed + json_serializable), `VaccinationLocalDataSource`, `VaccinationRepositoryImpl`
+- [x] `vaccinationsProvider` (FutureProvider.autoDispose.family), `vaccinationFormProvider` (AsyncNotifier)
+- [x] `VaccinationScreen` — formulário completo com QuarantineCalculator reativo
+- [x] `_SanitarioTab`, `_HistoricoTab`, `_ResumoTab` integradas com dados reais do Hive
+- [x] `flutter analyze` → 0 issues
 
 ### FASE 7 — Brete 🔴
 - [ ] `BreteStatus` entity, `BreteRepository`
