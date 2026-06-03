@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -8,6 +10,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
+import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,13 +18,18 @@ Future<void> main() async {
   // Carrega variáveis de ambiente
   await dotenv.load();
 
-  // Inicializa banco local Hive e abre todos os boxes necessários.
+  // Inicializa Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Firestore com persistência offline nativa
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  );
+
+  // Inicializa Hive apenas para vets (dados locais que não vão para a nuvem)
   await Hive.initFlutter();
-  await Future.wait([
-    Hive.openBox<String>('animals'),
-    Hive.openBox<String>('vaccinations'),
-    Hive.openBox<String>('vets'),
-  ]);
+  await Hive.openBox<String>('vets');
 
   // Formatos de data em pt-BR
   await initializeDateFormatting('pt_BR');
