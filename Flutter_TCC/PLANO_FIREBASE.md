@@ -287,7 +287,7 @@ Executar ANTES de qualquer commit Firebase:
 - [x] `git status` confirmado — nenhum arquivo sensível no staging (commit `2676dd6`)
 - [x] Firestore em **Production Mode** (não Test Mode) — confirmado, região `southamerica-east1`
 - [ ] Security Rules publicadas ANTES de qualquer dado ser salvo — pendente ETAPA 4
-- [ ] SHA-1 do app registrado no Firebase — pendente antes da ETAPA 5
+- [x] SHA-1 do app registrado no Firebase — `CF:52:EC:10:F6:88:7D:54:96:90:68:7B:EB:FB:3E:A1:D3:88:16:91`
 - [x] Nenhuma API key de servidor hardcoded — `firebase_options.dart` contém apenas chaves de cliente (seguras para commitar)
 - [x] `.env` continua no `.gitignore`
 
@@ -306,11 +306,11 @@ Executar ANTES de qualquer commit Firebase:
 - [x] Habilitar Authentication → E-mail/senha
 - [x] Criar Cloud Firestore → Production Mode → região `southamerica-east1`
 - [x] Registrar apps Flutter (Android, iOS, Web) via `flutterfire configure --project=bovicare-tcc`
-- [ ] Obter SHA-1 e registrar no Firebase Console → **pendente** — obrigatório para Google Sign-In funcionar no dispositivo físico/emulador
+- [x] Obter SHA-1 e registrar no Firebase Console → `CF:52:EC:10:F6:88:7D:54:96:90:68:7B:EB:FB:3E:A1:D3:88:16:91` (debug keystore)
 - [x] `google-services.json` gerado automaticamente pelo flutterfire em `android/app/`
 - [x] **`google-services.json` e `GoogleService-Info.plist` adicionados ao `.gitignore`**
 
-> ✅ Concluído em 2026-06-03. Apenas SHA-1 pendente (necessário antes de testar Google Sign-In). Para obter: `cd Flutter_TCC/android && ./gradlew signingReport` — copiar linha `SHA1:` e adicionar em Project Settings → App Android → Add fingerprint.
+> ✅ Concluído em 2026-06-03. Todos os itens confirmados. SHA-1 debug registrado no Firebase Console.
 
 ---
 
