@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/extensions/datetime_ext.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
@@ -12,6 +13,8 @@ import '../../../../shared/widgets/app_skeleton.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../dashboard/domain/entities/activity_item.dart';
 import '../../../dashboard/presentation/widgets/activity_timeline.dart';
+import '../../../vaccination/domain/entities/vaccination_record.dart';
+import '../../../vaccination/presentation/providers/vaccinations_provider.dart';
 import '../../domain/entities/animal_entity.dart';
 import '../providers/animals_provider.dart';
 
@@ -72,7 +75,7 @@ class _AnimalProfileContent extends StatelessWidget {
               child: TabBarView(
                 children: [
                   _ResumoTab(animal: animal),
-                  _SanitarioTab(),
+                  _SanitarioTab(animalId: animal.id),
                   _ReproducaoTab(animal: animal),
                   _HistoricoTab(animal: animal),
                 ],
@@ -242,6 +245,21 @@ class _ResumoTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final recentEvents = ref.watch(vaccinationsProvider(animal.id)).maybeWhen(
+          data: (records) => records
+              .take(3)
+              .map(
+                (r) => ActivityItem(
+                  type:     ActivityType.vaccination,
+                  title:    '${r.vaccineName} — ${r.dose}',
+                  subtitle: r.lot != null ? 'Lote ${r.lot}' : null,
+                  date:     r.date,
+                ),
+              )
+              .toList(),
+          orElse: () => <ActivityItem>[],
+        );
+
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: AppSpacing.x2l),
       child: Column(
@@ -258,33 +276,20 @@ class _ResumoTab extends ConsumerWidget {
           const SizedBox(height: AppSpacing.xl),
           const _SectionLabel('Histórico recente'),
           const SizedBox(height: AppSpacing.sm),
-          ActivityTimeline(activities: _mockHistory()),
+          if (recentEvents.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.base),
+              child: AppEmptyState(
+                icon:     Icons.history_rounded,
+                title:    'Sem registros',
+                subtitle: 'As ações registradas aparecerão aqui.',
+              ),
+            )
+          else
+            ActivityTimeline(activities: recentEvents),
         ],
       ),
     );
-  }
-
-  /// Histórico simulado — será substituído por dados reais na Fase 6.
-  List<ActivityItem> _mockHistory() {
-    final now = DateTime.now();
-    return [
-      ActivityItem(
-        type:     ActivityType.vaccination,
-        title:    'Aftosa — dose de reforço',
-        subtitle: 'Lote #22B',
-        date:     DateTime(now.year, 1, 15),
-      ),
-      ActivityItem(
-        type:  ActivityType.birth,
-        title: 'Prenhez constatada',
-        date:  DateTime(now.year - 1, 10, 10),
-      ),
-      ActivityItem(
-        type:  ActivityType.vaccination,
-        title: 'Vermifugação — Ivermectina 1%',
-        date:  DateTime(now.year - 1, 9, 2),
-      ),
-    ];
   }
 }
 
@@ -435,13 +440,137 @@ class _ActionItem extends StatelessWidget {
 
 // ── Tab: Sanitário ────────────────────────────────────────────────────────────
 
-class _SanitarioTab extends StatelessWidget {
+class _SanitarioTab extends ConsumerWidget {
+  const _SanitarioTab({required this.animalId});
+  final String animalId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vaccinations = ref.watch(vaccinationsProvider(animalId));
+
+    return vaccinations.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error:   (e, _) => AppEmptyState(
+        icon:     Icons.error_outline_rounded,
+        title:    'Erro ao carregar',
+        subtitle: e.toString(),
+      ),
+      data: (records) {
+        if (records.isEmpty) {
+          return const AppEmptyState(
+            icon:     Icons.vaccines_outlined,
+            title:    'Sem vacinações registradas',
+            subtitle: 'Registre a primeira vacinação pelo Resumo do animal.',
+          );
+        }
+        return ListView.separated(
+          padding:     const EdgeInsets.symmetric(
+            horizontal: AppSpacing.base,
+            vertical:   AppSpacing.base,
+          ),
+          itemCount:   records.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder:  (_, i) => _VaccinationTile(record: records[i]),
+        );
+      },
+    );
+  }
+}
+
+class _VaccinationTile extends StatelessWidget {
+  const _VaccinationTile({required this.record});
+  final VaccinationRecord record;
+
   @override
   Widget build(BuildContext context) {
-    return const AppEmptyState(
-      icon:     Icons.medical_services_outlined,
-      title:    'Histórico sanitário',
-      subtitle: 'As vacinações e tratamentos registrados aparecerão aqui.',
+    final quarantineEnd = record.quarantineDays > 0
+        ? record.date.add(Duration(days: record.quarantineDays))
+        : null;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width:  36,
+            height: 36,
+            decoration: const BoxDecoration(
+              color:        AppColors.brandLight,
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
+            child: const Icon(
+              Icons.vaccines_outlined,
+              color: AppColors.brandGreen,
+              size:  18,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${record.vaccineName} — ${record.dose}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  record.date.toBrDate +
+                      (record.lot != null ? ' · Lote ${record.lot}' : '') +
+                      (record.veterinarianName != null
+                          ? ' · ${record.veterinarianName}'
+                          : ''),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.mutedGreen,
+                      ),
+                ),
+                if (quarantineEnd != null) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.block_rounded,
+                        size:  12,
+                        color: AppColors.amber,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Carência até ${quarantineEnd.toBrDate}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color:      AppColors.amber,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (record.nextDoseDate != null) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_month_outlined,
+                        size:  12,
+                        color: AppColors.info,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Próxima dose: ${record.nextDoseDate!.toBrDate}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.info,
+                            ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -475,23 +604,55 @@ class _ReproducaoTab extends StatelessWidget {
 
 // ── Tab: Histórico ────────────────────────────────────────────────────────────
 
-class _HistoricoTab extends StatelessWidget {
+class _HistoricoTab extends ConsumerWidget {
   const _HistoricoTab({required this.animal});
   final AnimalEntity animal;
 
   @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    // Histórico mock — Fase 6 conectará ao repositório real.
-    final events = [
-      ActivityItem(type: ActivityType.vaccination, title: 'Aftosa — dose de reforço',  subtitle: 'Lote #22B',      date: DateTime(now.year, 1, 15)),
-      ActivityItem(type: ActivityType.birth,       title: 'Prenhez constatada',                                    date: DateTime(now.year - 1, 10, 10)),
-      ActivityItem(type: ActivityType.vaccination, title: 'Vermifugação — Ivermectina', subtitle: '1% subcutâneo', date: DateTime(now.year - 1, 9, 2)),
-      ActivityItem(type: ActivityType.weight,      title: 'Pesagem — 384 kg',                                      date: DateTime(now.year - 1, 8)),
-    ];
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.base),
-      child: ActivityTimeline(activities: events),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vaccinations = ref.watch(vaccinationsProvider(animal.id));
+
+    return vaccinations.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error:   (_, __) => const SizedBox.shrink(),
+      data: (records) {
+        // Converte VaccinationRecord → ActivityItem para reutilizar a timeline.
+        final vaccinationEvents = records.map(
+          (r) => ActivityItem(
+            type:     ActivityType.vaccination,
+            title:    '${r.vaccineName} — ${r.dose}',
+            subtitle: r.lot != null ? 'Lote ${r.lot}' : null,
+            date:     r.date,
+          ),
+        );
+
+        // Eventos estáticos do animal (prenhez, etc.) mesclados com vacinações.
+        final staticEvents = <ActivityItem>[
+          if (animal.status == AnimalStatus.pregnant &&
+              animal.pregnancyDate != null)
+            ActivityItem(
+              type:  ActivityType.birth,
+              title: 'Prenhez constatada',
+              date:  animal.pregnancyDate!,
+            ),
+        ];
+
+        final all = [...vaccinationEvents, ...staticEvents]
+          ..sort((a, b) => b.date.compareTo(a.date));
+
+        if (all.isEmpty) {
+          return const AppEmptyState(
+            icon:     Icons.history_rounded,
+            title:    'Histórico vazio',
+            subtitle: 'As ações realizadas neste animal aparecerão aqui.',
+          );
+        }
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.base),
+          child: ActivityTimeline(activities: all),
+        );
+      },
     );
   }
 }

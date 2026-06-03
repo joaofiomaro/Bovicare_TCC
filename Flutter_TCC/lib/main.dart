@@ -15,9 +15,12 @@ Future<void> main() async {
   // Carrega variáveis de ambiente
   await dotenv.load();
 
-  // Inicializa banco local Hive e abre boxes necessários.
+  // Inicializa banco local Hive e abre todos os boxes necessários.
   await Hive.initFlutter();
-  await Hive.openBox<String>('animals');
+  await Future.wait([
+    Hive.openBox<String>('animals'),
+    Hive.openBox<String>('vaccinations'),
+  ]);
 
   // Formatos de data em pt-BR
   await initializeDateFormatting('pt_BR');
