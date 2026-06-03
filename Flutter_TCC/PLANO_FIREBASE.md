@@ -18,26 +18,28 @@
 
 ---
 
-## 1. Auditoria do Estado Atual
+## 1. Auditoria do Estado Anterior
 
-### 1.1 Autenticação (PROBLEMA CRÍTICO)
+> ✅ **Todos os problemas abaixo foram resolvidos.** Esta seção documenta o estado ANTES da integração Firebase.
 
-| Aspecto | Estado atual | Problema |
+### 1.1 Autenticação ~~(PROBLEMA CRÍTICO)~~ → ✅ RESOLVIDO (ETAPA 5)
+
+| Aspecto | Estado anterior | Estado atual |
 |---|---|---|
-| Mecanismo | SharedPreferences JSON | Não é autenticação real |
-| Senha | Não é validada | Qualquer e-mail conhecido loga |
-| Sessão | Booleano local | Sem expiração, sem token |
-| Multi-device | Impossível | Dados presos no dispositivo |
-| Segurança | Nula | Dados acessíveis sem credencial real |
+| Mecanismo | SharedPreferences JSON | Firebase Auth (email/senha + Google) |
+| Senha | Não era validada | Validada pelo Firebase |
+| Sessão | Booleano local | Token JWT com expiração automática |
+| Multi-device | Impossível | ✅ Sincronizado via Firebase |
+| Segurança | Nula | ✅ Auth guard no router + Security Rules |
 
-### 1.2 Banco de Dados (OFFLINE-LOCAL ONLY)
+### 1.2 Banco de Dados ~~(OFFLINE-LOCAL ONLY)~~ → ✅ RESOLVIDO (ETAPAs 6–10)
 
-| Box Hive | Dados | Sync | Problema |
+| Fonte | Dados | Sync | Estado atual |
 |---|---|---|---|
-| `animals` | 7 animais seed | ❌ Nenhum | Perdido se app reinstalado |
-| `vaccinations` | Registros locais | ❌ Nenhum | Não existe na nuvem |
-| `vets` | Seed fixo | ❌ Nenhum | Igual em todos os dispositivos |
-| `SharedPreferences` | Usuário + sessão | ❌ Nenhum | Apagado com o app |
+| ~~Box Hive `animals`~~ | 7 animais seed | ❌ | ✅ Firestore `/users/{uid}/animals` |
+| ~~Box Hive `vaccinations`~~ | Registros locais | ❌ | ✅ Firestore `/users/{uid}/vaccinations` |
+| ~~Box Hive `vets`~~ | Seed fixo | ❌ | ✅ In-memory estático (VetInMemoryDataSource) |
+| ~~SharedPreferences auth~~ | Usuário + sessão | ❌ | ✅ Firebase Auth + Firestore `/users/{uid}` |
 
 ### 1.3 O que Funciona Bem (NÃO MUDA)
 
@@ -54,36 +56,44 @@
 
 ### PERMANECE INTACTO (Zero alterações)
 ```
-lib/core/                          ← todo o core
 lib/features/*/domain/             ← todas as entities, use cases, repositories
-lib/features/*/presentation/       ← todos os screens e widgets
+lib/features/*/presentation/       ← todos os screens e widgets (exceto login_screen.dart*)
 lib/shared/widgets/                ← design system
-lib/core/router/                   ← navegação
+```
+> *`login_screen.dart` recebeu o botão "Continuar com Google" (adição, não alteração de lógica existente).
+
+### MUDOU (Data Sources e inicialização) ✅ CONCLUÍDO
+```
+lib/main.dart                                    ✅ Firebase init, Firestore offline, Hive removido
+lib/core/router/app_router.dart                  ✅ Auth guard + refreshListenable
+lib/features/auth/data/datasources/              ✅ AuthFirebaseDataSource (substituiu AuthLocalDataSource)
+lib/features/auth/data/repositories/             ✅ Firebase injetado
+lib/features/auth/data/models/user_model.dart    ✅ fromFirestore() / toFirestore()
+lib/features/herd/data/datasources/              ✅ AnimalFirestoreDataSource (substituiu local)
+lib/features/herd/data/models/                   ✅ AnimalModel.toFirestore() / fromFirestore()
+lib/features/vaccination/data/datasources/       ✅ VaccinationFirestoreDataSource (substituiu local)
+lib/features/vaccination/data/models/            ✅ VaccinationModel.toFirestore() / fromFirestore()
+lib/features/vets/data/datasources/              ✅ VetInMemoryDataSource (substituiu VetLocalDataSource)
+lib/features/dashboard/data/datasources/         ✅ DashboardFirestoreDataSource (substituiu mock)
+pubspec.yaml                                     ✅ Firebase deps adicionadas, hive_flutter removido
+android/settings.gradle.kts                     ✅ Google Services plugin (via flutterfire)
+android/app/build.gradle.kts                     ✅ apply plugin google-services (via flutterfire)
+android/app/google-services.json                 ✅ NÃO commitado (.gitignore)
+lib/firebase_options.dart                        ✅ gerado pelo flutterfire configure
 ```
 
-### MUDA (Data Sources e inicialização)
+### REMOVIDO ✅ CONCLUÍDO
 ```
-lib/main.dart                                    ← init Firebase + remover Hive de animals/vaccinations
-lib/features/auth/data/datasources/              ← AuthLocalDataSource → AuthFirebaseDataSource
-lib/features/auth/data/repositories/             ← injetar Firebase
-lib/features/herd/data/datasources/              ← AnimalLocalDataSource → AnimalFirestoreDataSource
-lib/features/herd/data/models/                   ← AnimalModel.toFirestore() / fromFirestore()
-lib/features/vaccination/data/datasources/       ← VaccinationLocalDataSource → VaccinationFirestoreDataSource
-lib/features/vaccination/data/models/            ← VaccinationModel.toFirestore() / fromFirestore()
-pubspec.yaml                                     ← novas dependências Firebase
-android/build.gradle.kts                         ← Google services plugin
-android/app/build.gradle.kts                     ← apply plugin
-android/app/google-services.json                 ← NÃO commitado (.gitignore)
-```
-
-### REMOVIDO
-```
-lib/features/auth/data/datasources/auth_local_data_source.dart   ← substituído
-lib/features/herd/data/datasources/animal_local_data_source.dart ← substituído
-lib/features/vaccination/data/datasources/vaccination_local_data_source.dart ← substituído
-Hive.openBox('animals')   ← removido do main.dart
-Hive.openBox('vaccinations') ← removido do main.dart
-hive_flutter (pubspec)    ← avaliar remoção
+lib/features/auth/data/datasources/auth_local_data_source.dart          ✅ removido
+lib/features/herd/data/datasources/animal_local_data_source.dart        ✅ removido
+lib/features/vaccination/data/datasources/vaccination_local_data_source.dart ✅ removido
+lib/features/vets/data/datasources/vet_local_data_source.dart           ✅ removido
+lib/features/dashboard/data/datasources/dashboard_local_data_source.dart ✅ removido
+Hive.initFlutter()       ✅ removido do main.dart
+Hive.openBox('animals')  ✅ removido do main.dart
+Hive.openBox('vaccinations') ✅ removido do main.dart
+Hive.openBox('vets')     ✅ removido do main.dart
+hive_flutter (pubspec)   ✅ removido — zero imports restantes em lib/
 ```
 
 ---
@@ -107,9 +117,9 @@ FirebaseFirestore.instance.settings = const Settings(
 );
 ```
 
-**O Hive permanece apenas para:**
-- Dados que não precisam de cloud (preferência de tema → SharedPreferences)
-- Cache de vets (seed público, raramente muda)
+**Hive foi completamente removido.** Substituições finais:
+- Preferência de tema → `SharedPreferences` (mantido)
+- Vets → `VetInMemoryDataSource` (lista `const` estática, sem I/O)
 
 ### 3.2 Autenticação
 
@@ -128,9 +138,9 @@ SplashScreen → Firebase.currentUser
 
 Cada produtor tem seus próprios dados isolados:
 ```
-/users/{uid}/animals/{animalId}
-/users/{uid}/vaccinations/{vaccinationId}
-/vets/{vetId}   ← coleção pública, leitura autenticada
+/users/{uid}/animals/{animalId}        ← Firestore ✅
+/users/{uid}/vaccinations/{vaccinationId} ← Firestore ✅
+vets                                   ← in-memory estático (não usa Firestore)
 ```
 
 ### 3.4 Modelos Firestore
@@ -190,7 +200,12 @@ Map<String, dynamic> toFirestore() { ... }
 }
 ```
 
-### Coleção pública: `/vets/{vetId}`
+### Coleção pública: `/vets/{vetId}` — ⚠️ NÃO UTILIZADA
+
+> Decisão final (ETAPA 9): vets são dados demo estáticos que nunca mudam.
+> Implementados como `VetInMemoryDataSource` (`const` list) — sem Firestore, sem leitura de rede.
+> O schema abaixo é mantido como referência caso a coleção seja populada no futuro.
+
 ```
 {
   name:             string,
@@ -254,26 +269,25 @@ Fields: animalId ASC, dateIso DESC
 
 ## 6. Dependências
 
-### Adicionar ao pubspec.yaml
+### Adicionado ao pubspec.yaml ✅
 ```yaml
 # Firebase
-firebase_core:    ^3.6.0
-firebase_auth:    ^5.3.1
-cloud_firestore:  ^5.4.4
-google_sign_in:   ^6.2.1
+firebase_core:    ^3.6.0   ✅ instalado (3.15.2)
+firebase_auth:    ^5.3.1   ✅ instalado (5.7.0)
+cloud_firestore:  ^5.4.4   ✅ instalado (5.6.12)
+google_sign_in:   ^6.2.1   ✅ instalado (6.3.0)
 ```
 
-### Remover do pubspec.yaml (após migração confirmada)
+### Removido do pubspec.yaml ✅
 ```yaml
-# hive_flutter — remover se nenhum Box for usado para dados de negócio
-# Manter shared_preferences para SharedPreferences (theme)
+hive_flutter: ^1.1.0  ✅ removido — zero usos restantes em lib/
 ```
 
-### Manter
+### Mantido
 ```yaml
-shared_preferences  # para themeProvider
-freezed             # models continuam imutáveis
-json_serializable   # continua útil para testes e modelos
+shared_preferences  ✅ mantido — themeProvider
+freezed             ✅ mantido — models imutáveis
+json_serializable   ✅ mantido — serialização JSON
 ```
 
 ---
@@ -333,22 +347,23 @@ Executar ANTES de qualquer commit Firebase:
 - [x] Firestore configurado com `persistenceEnabled: true` e `cacheSizeBytes: CACHE_SIZE_UNLIMITED`
 - [x] `Hive.openBox('animals')` removido do `main.dart`
 - [x] `Hive.openBox('vaccinations')` removido do `main.dart`
-- [x] `Hive.openBox('vets')` mantido (seed local)
+- [x] `Hive.openBox('vets')` ~~mantido~~ → removido na ETAPA 10 (vets migrado para in-memory)
+- [x] `Hive.initFlutter()` removido na ETAPA 10
 - [ ] Testar boot sem crash no emulador
 - [x] **Commit:** incluído no commit `2676dd6` junto com ETAPA 2
 
-> ✅ Concluído em 2026-06-03. `firebase_options.dart` gerado pelo flutterfire e importado no main.dart. Boot aguarda teste no emulador (ETAPA 4 primeiro, pois as Security Rules precisam estar publicadas).
+> ✅ Concluído em 2026-06-03. `firebase_options.dart` gerado pelo flutterfire e importado no main.dart.
 
 ---
 
 ### ETAPA 4 — Publicar Security Rules e Index 🟡 Parcial
 
 - [x] Publicar Firestore Security Rules no Console — isolamento por `uid`, vets somente leitura
-- [ ] Criar index composto: `vaccinations → animalId ASC, dateIso DESC` — pendente, necessário antes dos relatórios sanitários
-- [ ] Verificar que regras bloqueiam acesso não autenticado — pendente (testar após ETAPA 6)
+- [ ] Criar index composto: `vaccinations → animalId ASC, dateIso DESC` — **pendente** · criar antes de testar relatórios sanitários · VaccinationFirestoreDataSource usa ordenação client-side como fallback
+- [x] Acesso não autenticado bloqueado no router (ETAPA 11 — auth guard) · validação Firestore-level pendente de teste no emulador
 - [ ] **Nenhum commit** (configuração no console)
 
-> 🟡 Concluído parcialmente em 2026-06-03. Security Rules publicadas. Índice composto adiado — criar antes de implementar ETAPA 9 (Relatórios).
+> 🟡 Concluído parcialmente em 2026-06-03. Security Rules publicadas. Índice composto é o único item pendente nesta etapa.
 
 ---
 
@@ -373,7 +388,7 @@ Executar ANTES de qualquer commit Firebase:
 - [ ] Testar fluxo completo no emulador (pendente ETAPA 4 — Console)
 - [x] **Commit:** `feat(auth): replace mock auth with Firebase Auth and Google Sign-In` — hash `a9d299f`
 
-> ✅ Concluído em 2026-06-03. `flutter analyze` → 0 issues. Teste funcional aguarda habilitação de Authentication no Console (ETAPA 4).
+> ✅ Concluído em 2026-06-03. `flutter analyze` → 0 issues. Authentication (Google + email/senha) habilitado no Console (ETAPA 1). Pronto para teste no emulador.
 
 ---
 
@@ -480,16 +495,16 @@ Executar ANTES de qualquer commit Firebase:
 
 ## 9. Critérios de Conclusão
 
-| Critério | Como verificar |
-|---|---|
-| Auth real | Login com Google funciona sem SharedPreferences |
-| Dados na nuvem | Animal criado no app aparece no Firestore Console |
-| Offline-first | Criar animal no modo avião → aparece no Firestore ao reconectar |
-| Isolamento | User A não vê dados de User B |
-| Segurança | `google-services.json` não está no repositório |
-| Qualidade | `flutter analyze` → 0 issues |
-| SplashScreen | Redireciona corretamente sem `Future.delayed` |
-| Logout | Limpa sessão Firebase + Google Sign-In |
+| Critério | Como verificar | Status |
+|---|---|---|
+| Auth real | Login com Google funciona sem SharedPreferences | ⏳ testar no emulador |
+| Dados na nuvem | Animal criado no app aparece no Firestore Console | ⏳ testar no emulador |
+| Offline-first | Criar animal no modo avião → aparece no Firestore ao reconectar | ⏳ testar no emulador |
+| Isolamento | User A não vê dados de User B | ⏳ testar no emulador |
+| Segurança | `google-services.json` não está no repositório | ✅ confirmado via git status |
+| Qualidade | `flutter analyze` → 0 issues | ✅ confirmado |
+| SplashScreen | Redireciona corretamente sem chamada de rede | ✅ usa `FirebaseAuth.currentUser` síncrono |
+| Logout | Limpa sessão Firebase + Google Sign-In | ✅ `signOut()` + `GoogleSignIn.signOut()` em paralelo |
 
 ---
 
