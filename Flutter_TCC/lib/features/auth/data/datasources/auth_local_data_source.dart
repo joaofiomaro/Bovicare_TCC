@@ -46,6 +46,18 @@ class AuthLocalDataSource {
     await prefs.setBool(_kSessionKey, false);
   }
 
+  Future<void> updateProfile(UserModel updated) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kUserKey, jsonEncode(updated.toJson()));
+  }
+
+  /// Remove todos os dados do usuário do SharedPreferences.
+  /// A limpeza dos boxes Hive é responsabilidade do AuthRepositoryImpl.
+  Future<void> deleteAccount() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+  }
+
   Future<UserModel?> getCurrentUser() async {
     final prefs      = await SharedPreferences.getInstance();
     final hasSession = prefs.getBool(_kSessionKey) ?? false;

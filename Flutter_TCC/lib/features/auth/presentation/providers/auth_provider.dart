@@ -4,10 +4,12 @@ import '../../data/datasources/auth_local_data_source.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../domain/usecases/delete_account_use_case.dart';
 import '../../domain/usecases/get_current_user_use_case.dart';
 import '../../domain/usecases/login_use_case.dart';
 import '../../domain/usecases/logout_use_case.dart';
 import '../../domain/usecases/register_use_case.dart';
+import '../../domain/usecases/update_profile_use_case.dart';
 
 // --- DI ---
 
@@ -73,6 +75,16 @@ class AuthNotifier extends AsyncNotifier<UserEntity?> {
 
   Future<void> logout() async {
     await ref.read(_logoutUseCaseProvider).call();
+    state = const AsyncData(null);
+  }
+
+  Future<void> updateProfile(UserEntity updated) async {
+    await UpdateProfileUseCase(ref.read(authRepositoryProvider)).call(updated);
+    state = AsyncData(updated);
+  }
+
+  Future<void> deleteAccount() async {
+    await DeleteAccountUseCase(ref.read(authRepositoryProvider)).call();
     state = const AsyncData(null);
   }
 }
