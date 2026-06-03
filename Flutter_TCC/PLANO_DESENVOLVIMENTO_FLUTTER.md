@@ -1,5 +1,5 @@
 # BoviCare — Plano de Desenvolvimento Flutter
-> Projeto: `Flutter_TCC/` | Status: 🟡 Em Desenvolvimento — Fases 0–6 e 8 concluídas · Fase 7 adiada (hardware) · `flutter analyze` 0 issues
+> Projeto: `Flutter_TCC/` | Status: 🟡 Em Desenvolvimento — Fases 0–6, 8 e 9 concluídas · Fase 7 adiada (hardware) · `flutter analyze` 0 issues
 > Última atualização: 2026-06-02
 
 ---
@@ -306,7 +306,7 @@ fast   = 200ms    normal = 350ms    slow = 500ms    verySlow = 800ms
 | 09 | Painel Brete | `/brete` | brete | ⏸️ Adiado — aguarda hardware ESP32 (placeholder funcional) |
 | 10 | Veterinários | `/vets` | vets | ✅ Completo — mapa OSM, filtros, busca, lista com distância |
 | 11 | Detalhe Veterinário | `/vets/:id` | vets | ✅ Completo — perfil, especialidades, ContactButtons funcionais |
-| 12 | Relatórios | `/reports` | reports | 🟡 Placeholder — rota funcional, tela em branco |
+| 12 | Relatórios | `/reports` | reports | ✅ Completo — 4 tipos, 4 períodos, DataTable, toast com contagem |
 | 13 | Perfil | `/profile` | profile | 🟡 Parcial — toggle dark/light funcional; avatar/logout pendentes |
 
 ---
@@ -576,23 +576,34 @@ fast   = 200ms    normal = 350ms    slow = 500ms    verySlow = 800ms
 
 ---
 
-### FASE 9 — Feature: Reports (Relatórios)
+### FASE 9 — Feature: Reports (Relatórios) ✅
 > Objetivo: geração de relatórios por tipo e período.
 
 **Tarefas:**
 
 **Domain:**
-- [ ] `ReportType` enum (sanitary, reproductive, financial, inventory)
-- [ ] `ReportFilter` (type, startDate, endDate)
-- [ ] `ReportData` entity
-- [ ] `GenerateReportUseCase` — agrega dados do Hive por filtro
+- [x] `ReportPeriod` enum (lastMonth, quarter, year, custom) com `dateRange` computed
+- [x] `ReportType` enum (sanitary, reproductive, financial, inventory) com labels e subtítulos
+- [x] `ReportFilter` — período, datas customizadas, `copyWith`
+- [x] `ReportData` entity — headers, rows (List<List<String>>), metadados
+- [x] `GenerateReportUseCase` — agrega `AnimalRepository` + `VaccinationRepository`:
+  - Sanitário: vacinações no período com carência
+  - Reprodutivo: animais prenhes com dias de gestação
+  - Financeiro: animais com peso registrado
+  - Inventário: rebanho completo
+
+**Vaccination (extensão):**
+- [x] `VaccinationRepository.getAll()` adicionado para o relatório sanitário
 
 **Presentation:**
-- [ ] `reportProvider` (AsyncNotifier com estado de filtro)
-- [ ] `ReportsScreen` — seleção tipo (chips), date range picker, botão gerar
-- [ ] `ReportPreview` widget — tabela de resultados
-- [ ] `DateRangePicker` widget — calendário inline
-- [ ] Toast de "relatório gerado" com contagem de registros
+- [x] `reportFilterProvider` — StateProvider<ReportFilter>
+- [x] `reportProvider` — AsyncNotifier<ReportData?> com generate/clear
+- [x] `ReportTypeCard` — card com ícone, loading indicator, ação de gerar
+- [x] `ReportPreview` — DataTable horizontal com zebra striping e summary card
+- [x] `ReportsScreen` — chips de período, date pickers livres, 4 cards de tipo,
+       chips PDF/CSV, preview inline, toast com contagem de registros
+
+> ✅ Concluído em 2026-06-02.
 
 **Critério de conclusão:** Cada tipo de relatório retorna dados filtrados, sem crash em período sem dados.
 
@@ -771,11 +782,12 @@ fast   = 200ms    normal = 350ms    slow = 500ms    verySlow = 800ms
 - [x] `ContactButtons` — tel:, wa.me, mailto: via url_launcher
 - [x] AndroidManifest + main.dart atualizados (permissões GPS + Box vets)
 
-### FASE 9 — Reports 🔴
-- [ ] `ReportType` enum, `ReportFilter`, `GenerateReportUseCase`
-- [ ] `reportProvider`
-- [x] `ReportsScreen` — placeholder (rota funcional)
-- [ ] DateRangePicker, ReportPreview
+### FASE 9 — Reports ✅
+- [x] `ReportType`, `ReportPeriod`, `ReportFilter`, `ReportData`, `GenerateReportUseCase`
+- [x] `reportFilterProvider`, `reportProvider` (AsyncNotifier)
+- [x] `ReportsScreen` — chips de período, date pickers, 4 cards de tipo, chips formato
+- [x] `ReportTypeCard`, `ReportPreview` (DataTable horizontal, zebra striping)
+- [x] `VaccinationRepository.getAll()` adicionado (extensão necessária)
 
 ### FASE 10 — Profile 🔄
 - [ ] `UpdateProfileUseCase`, `DeleteAccountUseCase`
