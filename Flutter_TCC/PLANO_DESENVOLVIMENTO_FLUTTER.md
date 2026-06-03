@@ -547,26 +547,30 @@ fast   = 200ms    normal = 350ms    slow = 500ms    verySlow = 800ms
 **Tarefas:**
 
 **Domain:**
-- [ ] `VetEntity` entity (id, name, crmv, specialties, phone, whatsapp, email, lat, lng, isAvailable, rating, distance)
-- [ ] `VetRepository` (interface)
-- [ ] `GetVetsUseCase`, `GetVetByIdUseCase`, `GetNearbyVetsUseCase`
-- [ ] `CalculateDistanceUseCase` — Haversine formula
+- [x] `VetEntity` (freezed) — id, name, crmv, specialties, phone, whatsapp, email, city, state, lat, lng, isAvailable, coverageRadiusKm, distanceKm (runtime, não persistido)
+- [x] `VetRepository` (interface)
+- [x] `GetVetsUseCase`, `GetVetByIdUseCase`
+- [x] `CalculateDistanceUseCase` — Haversine formula, use case puro
 
 **Data:**
-- [ ] `VetModel` (freezed + json_serializable)
-- [ ] `VetLocalDataSource` — Hive cache + dados mock iniciais
-- [ ] `LocationService` — wrapper `geolocator`
-- [ ] `VetRepositoryImpl`
+- [x] `VetModel` (freezed + json_serializable) — `Box<String>` JSON, sem hive_generator
+- [x] `VetLocalDataSource` — CRUD Hive + seed de 4 veterinários ao redor de Rio Claro, SP
+- [x] `LocationService` — wrapper geolocator com fallback Rio Claro, SP (-22.41, -47.56)
+- [x] `VetRepositoryImpl`
 
 **Presentation:**
-- [ ] `vetsProvider` (AsyncNotifier com filtro disponibilidade)
-- [ ] `userLocationProvider` (StreamProvider)
-- [ ] `VetsListScreen` — lista + mapa (PageView ou SliverAppBar com mapa expandido)
-- [ ] `VetsMap` widget — flutter_map com marcadores customizados
-- [ ] `VetCard` widget — foto, distância, disponibilidade badge, especialidades chips
-- [ ] `VetsListSkeleton`
-- [ ] `VetDetailScreen` — perfil completo, horários, avaliações
-- [ ] `ContactButtons` widget — Ligar (url_launcher tel:), WhatsApp (wa.me link), Email
+- [x] `vetsProvider` — AsyncNotifier com filtro disponibilidade + busca + distâncias calculadas e ordenadas
+- [x] `userLocationProvider` — FutureProvider com fallback seguro (sem crash se GPS negado)
+- [x] `vetDetailProvider` — FutureProvider.autoDispose.family
+- [x] `VetsListScreen` — busca, toggle disponibilidade, mapa recolhível, lista animada, pull-to-refresh
+- [x] `VetsMap` widget — flutter_map + OpenStreetMap, marcador do usuário + marcadores dos vets por disponibilidade
+- [x] `VetCard` widget — avatar, nome, especialidades, distância, CRMV, badge disponibilidade, animação entrada
+- [x] `VetDetailScreen` — SliverAppBar com header verde, card especialidades, card localização, ContactButtons
+- [x] `ContactButtons` widget — Ligar (tel:), WhatsApp (wa.me), Email (mailto:) via url_launcher
+- [x] AndroidManifest — `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `INTERNET`
+- [x] `main.dart` — abre `Box<String>('vets')` no boot
+
+> ✅ Concluído em 2026-06-02.
 
 **Critério de conclusão:** Mapa carrega com marcadores, distância calculada do usuário, botões de contato funcionam.
 
