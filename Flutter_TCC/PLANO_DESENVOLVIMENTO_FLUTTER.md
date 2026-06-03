@@ -1,5 +1,5 @@
 # BoviCare — Plano de Desenvolvimento Flutter
-> Projeto: `Flutter_TCC/` | Status: 🟡 Em Desenvolvimento — Fases 0–6, 8 e 9 concluídas · Fase 7 adiada (hardware) · `flutter analyze` 0 issues
+> Projeto: `Flutter_TCC/` | Status: 🟡 Em Desenvolvimento — Fases 0–6, 8–10 concluídas · Fase 7 adiada (hardware) · Fase 11 pendente · `flutter analyze` 0 issues
 > Última atualização: 2026-06-02
 
 ---
@@ -307,7 +307,7 @@ fast   = 200ms    normal = 350ms    slow = 500ms    verySlow = 800ms
 | 10 | Veterinários | `/vets` | vets | ✅ Completo — mapa OSM, filtros, busca, lista com distância |
 | 11 | Detalhe Veterinário | `/vets/:id` | vets | ✅ Completo — perfil, especialidades, ContactButtons funcionais |
 | 12 | Relatórios | `/reports` | reports | ✅ Completo — 4 tipos, 4 períodos, DataTable, toast com contagem |
-| 13 | Perfil | `/profile` | profile | 🟡 Parcial — toggle dark/light funcional; avatar/logout pendentes |
+| 13 | Perfil | `/profile` | profile | ✅ Completo — hero, editar dados, LGPD, sync, logout com confirmação |
 
 ---
 
@@ -609,22 +609,27 @@ fast   = 200ms    normal = 350ms    slow = 500ms    verySlow = 800ms
 
 ---
 
-### FASE 10 — Feature: Profile (Perfil + Configurações)
+### FASE 10 — Feature: Profile (Perfil + Configurações) ✅
 > Objetivo: gestão de conta, preferências e LGPD.
 
 **Tarefas:**
 
-**Domain:**
-- [ ] `UpdateProfileUseCase`
-- [ ] `DeleteAccountUseCase` (LGPD compliance)
+**Domain (extensão Auth):**
+- [x] `UpdateProfileUseCase` — atualiza nome e fazenda no SharedPreferences
+- [x] `DeleteAccountUseCase` — LGPD: apaga todos os Hive boxes + SharedPreferences
+- [x] `AuthRepository.updateProfile()` + `deleteAccount()` — interface + impl
+- [x] `AuthNotifier.updateProfile()` + `deleteAccount()` — provider
 
 **Presentation:**
-- [ ] `profileProvider` (AsyncNotifier)
-- [ ] `ProfileScreen` — avatar, nome, email, fazenda, plano
-- [ ] `ThemeToggle` widget — switch dark/light com animação
-- [ ] `SyncSection` widget — status última sincronização
-- [ ] `LgpdSection` widget — termos, exportar dados, excluir conta
-- [ ] `LogoutButton` — AppBottomSheet de confirmação → limpa Hive → navega login
+- [x] `ProfileScreen` — hero (AppAvatar 40px, nome, role/fazenda)
+- [x] Seção Conta: Editar dados (modal bottom sheet), Configurar alertas (toast), toggle Dark/Light
+- [x] `_EditProfileSheet` — nome + fazenda editáveis, e-mail read-only, salva via authProvider
+- [x] Seção LGPD: consentimentos, exportar dados, excluir conta com confirmação
+- [x] Seção Sincronização: `_SyncCard` com botão animado e toast de sucesso
+- [x] Logout — `AppBottomSheet` de confirmação → `authProvider.logout()` → `/login`
+- [x] Excluir conta — `AppBottomSheet` danger → limpa todos os dados → `/login`
+
+> ✅ Concluído em 2026-06-02.
 
 **Critério de conclusão:** Dark mode persiste entre sessões, logout limpa dados locais, retorna ao login.
 
@@ -789,11 +794,10 @@ fast   = 200ms    normal = 350ms    slow = 500ms    verySlow = 800ms
 - [x] `ReportTypeCard`, `ReportPreview` (DataTable horizontal, zebra striping)
 - [x] `VaccinationRepository.getAll()` adicionado (extensão necessária)
 
-### FASE 10 — Profile 🔄
-- [ ] `UpdateProfileUseCase`, `DeleteAccountUseCase`
-- [ ] `profileProvider`
-- [x] `ProfileScreen` — toggle dark/light funcional via Riverpod + SharedPreferences
-- [ ] Avatar, nome, email, fazenda, LGPD section, logout completo
+### FASE 10 — Profile ✅
+- [x] `UpdateProfileUseCase`, `DeleteAccountUseCase` (LGPD)
+- [x] `AuthRepository` + `AuthRepositoryImpl` + `AuthNotifier` estendidos
+- [x] `ProfileScreen` — hero completo, editar dados, toggle dark/light, LGPD, sync, logout
 
 ### FASE 11 — Qualidade
 - [ ] Unit tests UseCases
