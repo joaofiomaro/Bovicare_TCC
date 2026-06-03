@@ -1,11 +1,11 @@
 import '../../domain/entities/animal_entity.dart';
 import '../../domain/repositories/animal_repository.dart';
-import '../datasources/animal_local_data_source.dart';
+import '../datasources/animal_firestore_data_source.dart';
 import '../models/animal_model.dart';
 
 class AnimalRepositoryImpl implements AnimalRepository {
   const AnimalRepositoryImpl(this._dataSource);
-  final AnimalLocalDataSource _dataSource;
+  final AnimalFirestoreDataSource _dataSource;
 
   @override
   Future<List<AnimalEntity>> getAll() async {

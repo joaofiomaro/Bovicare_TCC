@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/datasources/vaccination_local_data_source.dart';
+import '../../data/datasources/vaccination_firestore_data_source.dart';
 import '../../data/repositories/vaccination_repository_impl.dart';
 import '../../domain/entities/vaccination_record.dart';
 import '../../domain/repositories/vaccination_repository.dart';
@@ -9,8 +9,8 @@ import '../../domain/usecases/register_vaccination_use_case.dart';
 
 // --- DI ---
 
-final _vaccinationDataSourceProvider = Provider<VaccinationLocalDataSource>(
-  (_) => VaccinationLocalDataSource(),
+final _vaccinationDataSourceProvider = Provider<VaccinationFirestoreDataSource>(
+  (_) => VaccinationFirestoreDataSource(),
 );
 
 final vaccinationRepositoryProvider = Provider<VaccinationRepository>(

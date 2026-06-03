@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../domain/entities/vaccination_record.dart';
@@ -26,6 +27,23 @@ class VaccinationModel with _$VaccinationModel {
   factory VaccinationModel.fromJson(Map<String, dynamic> json) =>
       _$VaccinationModelFromJson(json);
 
+  factory VaccinationModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final d = doc.data()!;
+    return VaccinationModel(
+      id:               doc.id,
+      animalId:         d['animalId'] as String,
+      vaccineName:      d['vaccineName'] as String,
+      dose:             d['dose'] as String,
+      dateIso:          d['dateIso'] as String,
+      quarantineDays:   (d['quarantineDays'] as num).toInt(),
+      lot:              d['lot'] as String?,
+      veterinarianName: d['veterinarianName'] as String?,
+      nextDoseDateIso:  d['nextDoseDateIso'] as String?,
+    );
+  }
+
   factory VaccinationModel.fromEntity(VaccinationRecord r) => VaccinationModel(
         id:               r.id,
         animalId:         r.animalId,
@@ -37,6 +55,17 @@ class VaccinationModel with _$VaccinationModel {
         veterinarianName: r.veterinarianName,
         nextDoseDateIso:  r.nextDoseDate?.toIso8601String(),
       );
+
+  Map<String, dynamic> toFirestore() => {
+        'animalId':       animalId,
+        'vaccineName':    vaccineName,
+        'dose':           dose,
+        'dateIso':        dateIso,
+        'quarantineDays': quarantineDays,
+        if (lot != null)              'lot':              lot,
+        if (veterinarianName != null) 'veterinarianName': veterinarianName,
+        if (nextDoseDateIso != null)  'nextDoseDateIso':  nextDoseDateIso,
+      };
 
   VaccinationRecord toEntity() => VaccinationRecord(
         id:               id,

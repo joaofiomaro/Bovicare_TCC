@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/datasources/dashboard_local_data_source.dart';
+import '../../data/datasources/dashboard_firestore_data_source.dart';
 import '../../data/repositories/dashboard_repository_impl.dart';
 import '../../domain/entities/activity_item.dart';
 import '../../domain/entities/dashboard_stats.dart';
@@ -10,8 +10,8 @@ import '../../domain/usecases/get_recent_activities_use_case.dart';
 
 // --- DI ---
 
-final _dashboardDataSourceProvider = Provider<DashboardLocalDataSource>(
-  (_) => DashboardLocalDataSource(),
+final _dashboardDataSourceProvider = Provider<DashboardFirestoreDataSource>(
+  (_) => DashboardFirestoreDataSource(),
 );
 
 final dashboardRepositoryProvider = Provider<DashboardRepository>(

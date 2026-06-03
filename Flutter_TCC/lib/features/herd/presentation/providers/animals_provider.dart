@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/datasources/animal_local_data_source.dart';
+import '../../data/datasources/animal_firestore_data_source.dart';
 import '../../data/repositories/animal_repository_impl.dart';
 import '../../domain/entities/animal_entity.dart';
 import '../../domain/repositories/animal_repository.dart';
@@ -21,8 +21,8 @@ final herdSearchProvider = StateProvider<String>((_) => '');
 
 // --- DI ---
 
-final _animalDataSourceProvider = Provider<AnimalLocalDataSource>(
-  (_) => AnimalLocalDataSource(),
+final _animalDataSourceProvider = Provider<AnimalFirestoreDataSource>(
+  (_) => AnimalFirestoreDataSource(),
 );
 
 final animalRepositoryProvider = Provider<AnimalRepository>(

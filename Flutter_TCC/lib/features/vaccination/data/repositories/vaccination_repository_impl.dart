@@ -1,11 +1,11 @@
 import '../../domain/entities/vaccination_record.dart';
 import '../../domain/repositories/vaccination_repository.dart';
-import '../datasources/vaccination_local_data_source.dart';
+import '../datasources/vaccination_firestore_data_source.dart';
 import '../models/vaccination_model.dart';
 
 class VaccinationRepositoryImpl implements VaccinationRepository {
   const VaccinationRepositoryImpl(this._dataSource);
-  final VaccinationLocalDataSource _dataSource;
+  final VaccinationFirestoreDataSource _dataSource;
 
   @override
   Future<List<VaccinationRecord>> getAll() async {
