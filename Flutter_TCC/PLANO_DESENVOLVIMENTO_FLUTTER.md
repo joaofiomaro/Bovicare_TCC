@@ -1,6 +1,6 @@
 # BoviCare — Plano de Desenvolvimento Flutter
-> Projeto: `Flutter_TCC/` | Status: 🟡 Em Desenvolvimento — Fases 0–6, 8–10 concluídas · Fase 7 adiada (hardware) · Fase 11 pendente · `flutter analyze` 0 issues
-> Última atualização: 2026-06-02
+> Projeto: `Flutter_TCC/` | Status: 🟡 Em Desenvolvimento — Fases 0–6, 8–10 concluídas · Firebase integrado (ver PLANO_FIREBASE.md) · Fase 7 adiada (hardware) · Fase 11 pendente · `flutter analyze` 0 issues
+> Última atualização: 2026-06-03
 
 ---
 
