@@ -1,6 +1,6 @@
 # BoviCare — Plano de Integração Firebase
-> Status: 📋 Planejamento — aguarda execução etapa por etapa
-> Criado em: 2026-06-02
+> Status: 🟡 Em Andamento — ETAPAs 1, 2 e 3 concluídas · ETAPA 4 pendente (manual)
+> Criado em: 2026-06-02 · Última atualização: 2026-06-03
 
 ---
 
@@ -282,14 +282,14 @@ json_serializable   # continua útil para testes e modelos
 
 Executar ANTES de qualquer commit Firebase:
 
-- [ ] `google-services.json` adicionado ao `Flutter_TCC/.gitignore`
-- [ ] `GoogleService-Info.plist` adicionado ao `Flutter_TCC/.gitignore` (iOS)
-- [ ] Verificar `git status` — nenhum dos arquivos acima no staging
-- [ ] Firestore em **Production Mode** (não Test Mode)
-- [ ] Security Rules publicadas ANTES de qualquer dado ser salvo
-- [ ] SHA-1 do app registrado no Firebase (para Google Sign-In funcionar)
-- [ ] Nenhuma API key hardcoded no código Dart
-- [ ] `.env` continua no `.gitignore`
+- [x] `google-services.json` adicionado ao `Flutter_TCC/.gitignore`
+- [x] `GoogleService-Info.plist` adicionado ao `Flutter_TCC/.gitignore` (iOS)
+- [x] `git status` confirmado — nenhum arquivo sensível no staging (commit `2676dd6`)
+- [ ] Firestore em **Production Mode** (não Test Mode) — confirmar no Console
+- [ ] Security Rules publicadas ANTES de qualquer dado ser salvo — pendente ETAPA 4
+- [ ] SHA-1 do app registrado no Firebase — pendente antes da ETAPA 5
+- [x] Nenhuma API key de servidor hardcoded — `firebase_options.dart` contém apenas chaves de cliente (seguras para commitar)
+- [x] `.env` continua no `.gitignore`
 
 ---
 
@@ -299,37 +299,45 @@ Executar ANTES de qualquer commit Firebase:
 
 ---
 
-### ETAPA 1 — Setup Firebase Console (manual — você executa)
+### ETAPA 1 — Setup Firebase Console (manual — você executa) ✅
 
-- [ ] Criar projeto em [console.firebase.google.com](https://console.firebase.google.com)
+- [x] Criar projeto em [console.firebase.google.com](https://console.firebase.google.com)
 - [ ] Habilitar Authentication → Google Sign-In
 - [ ] Habilitar Authentication → E-mail/senha
 - [ ] Criar Cloud Firestore → Production Mode → região `southamerica-east1`
-- [ ] Registrar app Android: package `br.com.bovicare`
-- [ ] Obter SHA-1: `cd android && ./gradlew signingReport`
-- [ ] Baixar `google-services.json` → colocar em `android/app/`
-- [ ] **Adicionar `google-services.json` ao `.gitignore` ANTES de qualquer commit**
+- [x] Registrar apps Flutter (Android, iOS, Web) via `flutterfire configure --project=bovicare-tcc`
+- [ ] Obter SHA-1 e registrar no Firebase Console → necessário para Google Sign-In funcionar
+- [x] `google-services.json` gerado automaticamente pelo flutterfire em `android/app/`
+- [x] **`google-services.json` e `GoogleService-Info.plist` adicionados ao `.gitignore`**
+
+> ✅ Concluído parcialmente em 2026-06-03. Firebase CLI e FlutterFire CLI instalados. `flutterfire configure` registrou apps para Android, iOS e Web. Authentication e Firestore precisam ser habilitados no Console (itens acima desmarcados). SHA-1 pendente para Google Sign-In.
 
 ---
 
-### ETAPA 2 — Dependências e Configuração Android
+### ETAPA 2 — Dependências e Configuração Android ✅
 
-- [ ] Adicionar pacotes Firebase ao `pubspec.yaml`
-- [ ] Atualizar `android/build.gradle.kts` → Google Services plugin
-- [ ] Atualizar `android/app/build.gradle.kts` → apply plugin
-- [ ] `flutter pub get`
-- [ ] Verificar `flutter analyze` → 0 issues
-- [ ] **Commit:** `chore: add Firebase dependencies and Android config`
+- [x] Adicionar pacotes Firebase ao `pubspec.yaml` (`firebase_core`, `firebase_auth`, `cloud_firestore`, `google_sign_in`)
+- [x] `android/settings.gradle.kts` → Google Services plugin adicionado pelo flutterfire
+- [x] `android/app/build.gradle.kts` → `com.google.gms.google-services` aplicado pelo flutterfire
+- [x] `flutter pub get` → dependências instaladas sem conflitos
+- [x] `flutter analyze` → **0 issues**
+- [x] **Commit:** `chore: add Firebase dependencies and initialize Firebase (ETAPAs 2 e 3)` — hash `2676dd6`
+
+> ✅ Concluído em 2026-06-03. Gradle configurado automaticamente pelo flutterfire configure.
 
 ---
 
-### ETAPA 3 — Inicialização Firebase e Firestore offline
+### ETAPA 3 — Inicialização Firebase e Firestore offline ✅
 
-- [ ] `Firebase.initializeApp()` no `main.dart`
-- [ ] Configurar Firestore `persistenceEnabled: true`
-- [ ] Remover `Hive.openBox('animals')` e `Hive.openBox('vaccinations')`
-- [ ] Testar boot sem crash
-- [ ] **Commit:** `chore: initialize Firebase and configure Firestore offline persistence`
+- [x] `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)` no `main.dart`
+- [x] Firestore configurado com `persistenceEnabled: true` e `cacheSizeBytes: CACHE_SIZE_UNLIMITED`
+- [x] `Hive.openBox('animals')` removido do `main.dart`
+- [x] `Hive.openBox('vaccinations')` removido do `main.dart`
+- [x] `Hive.openBox('vets')` mantido (seed local)
+- [ ] Testar boot sem crash no emulador
+- [x] **Commit:** incluído no commit `2676dd6` junto com ETAPA 2
+
+> ✅ Concluído em 2026-06-03. `firebase_options.dart` gerado pelo flutterfire e importado no main.dart. Boot aguarda teste no emulador (ETAPA 4 primeiro, pois as Security Rules precisam estar publicadas).
 
 ---
 
