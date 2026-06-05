@@ -297,6 +297,14 @@ class _ModulesList extends StatelessWidget {
         onTap:    () => context.goNamed(AppRoutes.vets),
       ),
       _ModuleItem(
+        icon:     Icons.assignment_outlined,
+        color:    AppColors.info,
+        bg:       AppColors.infoLight,
+        title:    'Meus chamados',
+        subtitle: 'Solicitar e acompanhar atendimentos',
+        onTap:    () => context.pushNamed(AppRoutes.myServiceCalls),
+      ),
+      _ModuleItem(
         icon:     Icons.bar_chart_rounded,
         color:    AppColors.mutedGreen,
         bg:       AppColors.brandPale,

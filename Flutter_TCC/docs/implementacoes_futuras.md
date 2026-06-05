@@ -381,12 +381,21 @@ Coleção compartilhada exige regras explícitas (ver bloco completo em §8.1):
 - Use cases com mock repo (`AcceptCallUseCase` rejeita se não-open, etc.).
 - Seleção de tabs por papel (lógica pura `tabsForRole(role)`).
 
-### 6.9 Critérios de aceite
-- [ ] Login como vet abre dashboard/tabs distintos do produtor.
-- [ ] Produtor abre chamado; vet vê no pool, aceita, evolui status e conclui com laudo.
-- [ ] Produtor acompanha status e cancela enquanto aberto.
-- [ ] Regras de segurança publicadas **e versionadas** impedem acesso indevido.
-- [ ] `flutter analyze` 0 issues · testes verdes.
+### 6.9 Critérios de aceite — ✅ CONCLUÍDO (2026-06-05)
+- [x] Login como vet abre dashboard/tabs distintos do produtor (`tabsForRole`, `HomeDashboardScreen`).
+- [x] Produtor abre chamado; vet vê no pool, aceita (transação atômica), evolui status e conclui com laudo.
+- [x] Produtor acompanha status e cancela enquanto aberto (`ProducerCallsScreen`).
+- [x] Regras de segurança versionadas (`firestore.rules`) impedem acesso indevido (ver §8.1).
+- [x] `flutter analyze` 0 issues · 158 testes passando.
+
+**O que foi implementado (feature `service_call`):**
+- Domain: `ServiceCall` (freezed) + enums `ServiceUrgency`/`ServiceStatus`, `ServiceCallX` (isOpen/isActive/isClosed/canAccept/canCancel) e `nextServiceStatus` (função pura); `ServiceCallRepository`; use cases `OpenServiceCallUseCase`, `AcceptCallUseCase`, `AdvanceCallUseCase`, `CancelCallUseCase`, `GetOpen/Vet/ProducerCallsUseCase` (validações: campos obrigatórios, aceitar só se aberto, laudo ao concluir, cancelar só se aberto).
+- Data: `ServiceCallModel` (freezed+json+firestore, enums por `.name`, datas ISO, `createdAtIso` para ordenação); `ServiceCallFirestoreDataSource` (coleção compartilhada `serviceCalls`; **accept via `runTransaction`** — só aplica `open → accepted` se ainda aberto, evita corrida entre dois vets); `ServiceCallRepositoryImpl`.
+- Presentation: `serviceCallVisuals` (badges); providers `openCallsProvider`, `vetCallsProvider`, `producerCallsProvider`, `ServiceCallActionsNotifier` (open/accept/advance/cancel, bool, invalida as listas afetadas); telas `HomeDashboardScreen` (switch por papel), `VetDashboardScreen` (KPIs do pool/atendimentos), `VetCallsScreen` (abas Abertos/Meus ativos/Histórico), `VetAgendaScreen`, `OpenServiceCallScreen` (produtor), `ProducerCallsScreen`; widgets `ServiceCallTile`, `vet_call_action_sheet` (aceitar/agendar/iniciar/concluir com laudo).
+- Navegação: `AppShell` agora é `ConsumerWidget` e monta as abas via `tabsForRole(role)` (vet: Início·Chamados·Agenda·Perfil; produtor: Início·Rebanho·Brete·Vets·Perfil); `indexFromTabs` resolve a aba ativa por maior prefixo; rota `/dashboard` renderiza vet/produtor conforme papel; card "Meus chamados" no dashboard do produtor.
+- Testes: use cases (mocktail), transições puras (`nextServiceStatus`, `ServiceCallX`), `tabsForRole`/`indexFromTabs`.
+
+> **Decisões de engenharia:** (1) ordenação por `createdAtIso` (string ISO, ordena cronologicamente) em vez de `Timestamp`, alinhado ao padrão do projeto (vaccinations usa `dateIso`); índices em §8.2 ajustados. (2) `accept` usa `runTransaction` (não batch) por exigir releitura do status antes de gravar — única forma de impedir corrida entre dois vets, complementando a Security Rule. (3) Fallback de papel nulo → conjunto do produtor (shell não trava enquanto `authProvider` carrega).
 
 ---
 
@@ -414,10 +423,16 @@ Hoje o seletor PDF/CSV é cosmético. Opcional neste módulo: gerar **CSV** (str
 - GMD: período = dias entre primeira e última pesagem; 0/1 pesagem ⇒ "—".
 - Testes unitários com mocks dos 3 repositórios.
 
-### 7.6 Critérios de aceite
-- [ ] Relatório de vendas com totais corretos do lote.
-- [ ] Ganho de peso por cabeça exibido quando há pesagens.
-- [ ] `flutter analyze` 0 issues · testes verdes.
+### 7.6 Critérios de aceite — ✅ CONCLUÍDO (2026-06-05)
+- [x] Relatório de vendas (`ReportType.sales`) com linha de totais do período (Σ valor, peso total, média ponderada R$/@).
+- [x] Ganho de peso por cabeça (GMD) exibido no relatório financeiro quando há pesagens.
+- [x] `flutter analyze` 0 issues · testes verdes.
+
+**O que foi implementado:**
+- `NumX.toBrl` (`core/extensions/num_ext.dart`) — formatação monetária pt_BR via `intl`.
+- `ReportType.sales` (label/subtitle/ícone) + campo opcional `footer` em `ReportData` (linha de totais, renderizada destacada no `ReportPreview`).
+- `GenerateReportUseCase` agora recebe também `SaleRepository` e `WeighingRepository` (DI no `report_provider`): ramo `_salesReport` (data, comprador, cabeças, peso, valor, R$/cab., R$/@ — com média **ponderada** = valor total ÷ arrobas totais; arroba = 15 kg); `_financial` enriquecido com coluna **GMD** (consulta de pesagens por animal em paralelo via `Future.wait`).
+- Testes: ramo de vendas (totais, média ponderada, fora do período/lista vazia), GMD no financeiro, `NumX.toBrl` (incl. NBSP do `intl`).
 
 ---
 
@@ -515,9 +530,9 @@ Meta: manter **0 issues** no analyze e **cobertura crescente** (cada módulo adi
 - [x] **M1 — Editar animal** ✅ (2026-06-03): form reutilizável, rota `/herd/:id/edit`, botão na ficha, invalidação de providers, widget test. `flutter analyze` 0 issues · 111 testes.
 - [x] **M2 — Baixa de rebanho** ✅ (2026-06-03): `exitType` no modelo, vendas (coleção `sales` + batch atômico), óbitos, baixa individual + lote (modo seleção), tela de arquivados, use cases + testes. `flutter analyze` 0 issues · 134 testes.
 - [x] **M3 — Pesagens** ✅ (2026-06-03): coleção `weighings`, ação "Pesar" (batch atômico), histórico/GMD na ficha, use cases + testes. `flutter analyze` 0 issues · 121 testes.
-- [ ] **M4 — Vet + Chamados**: coleção `serviceCalls`, shell/dashboard por papel, fluxo abrir→aceitar→concluir, regras de segurança versionadas, testes.
-- [ ] **M5 — Relatórios**: relatório de vendas + ganho de peso, totais, `NumX.toBrl`, testes.
-- [ ] **Transversal**: `firestore.rules` versionado e publicado, índices deployados, migração de `exitType` tratada.
+- [x] **M5 — Relatórios** ✅ (2026-06-05): relatório de vendas (totais ponderados) + GMD no financeiro, `NumX.toBrl`, testes. `flutter analyze` 0 issues.
+- [x] **M4 — Vet + Chamados** ✅ (2026-06-05): coleção `serviceCalls`, shell/dashboard por papel (`tabsForRole`), fluxo abrir→aceitar (transação)→evoluir→concluir com laudo, cancelamento pelo produtor, regras versionadas, testes. `flutter analyze` 0 issues.
+- [x] **Transversal** ✅ (2026-06-05): `firestore.rules` versionado e referenciado no `firebase.json`; índices de `serviceCalls` em `firestore.indexes.json`; migração de `exitType` tratada via default no `fromFirestore` (§8.3, já no M2). *Deploy via CLI fica a cargo do dono do projeto (`firebase deploy --only firestore:rules,firestore:indexes`).*
 
 ### Auditoria final (ao concluir tudo)
 Replicar o rigor da auditoria do checkup anterior (`RELATORIO_ANALISE.md §8`):
@@ -530,6 +545,19 @@ Replicar o rigor da auditoria do checkup anterior (`RELATORIO_ANALISE.md §8`):
 6. **Checklist de segurança git** (nenhum segredo; `.gitignore` ok).
 7. Documentar o resultado numa seção de auditoria neste arquivo, marcando cada item com ✅ e o que foi feito.
 8. Atualizar `PLANO_DESENVOLVIMENTO_FLUTTER.md` (status/fases) e `README.md` (features).
+
+### Resultado da auditoria final — ✅ (2026-06-05)
+
+1. ✅ **`flutter analyze`** → **0 issues** (very_good_analysis + directives_ordering).
+2. ✅ **`flutter test`** → **158 testes, 100% verde** (eram 121 ao fim do M3; +37 entre M5 e M4).
+3. ✅ **`dart run build_runner build --delete-conflicting-outputs`** → 30 outputs, sem conflitos (Freezed/JSON de `ServiceCall`/`ServiceCallModel` gerados).
+4. ⚠️ **Regras de segurança** versionadas em `firestore.rules` e referenciadas no `firebase.json`. Validação no emulador/Playground e **deploy** dependem de credenciais do projeto Firebase → **a cargo do dono** (`firebase deploy --only firestore:rules,firestore:indexes`). Regras escritas para: produtor só lê o próprio chamado; vet lê o pool aberto e o que lhe foi atribuído; aceitar exige `open → accepted` com `vetId == auth.uid`; `delete` sempre negado.
+5. ✅ **Sem dead code / mocks de produção** introduzidos; ações reais substituem "Em breve" no fluxo de chamados.
+6. ✅ **Checklist de segurança git**: nenhum segredo no código; `.env`/`google-services.json` seguem no `.gitignore`; `firestore.rules` versionável (sem segredos).
+7. ✅ Este documento atualizado (M4/M5/Transversal marcados, seções "O que foi implementado" e esta auditoria).
+8. ✅ `README.md` atualizado com as novas features (chamados, relatórios de venda/GMD).
+
+> **Pendências operacionais (fora do código):** publicar `firestore.rules` e os índices compostos de `serviceCalls` no console/CLI do Firebase antes de usar a feature de chamados em produção. Os índices são criados automaticamente na primeira query se o link de erro do Firestore for seguido, mas o recomendado é o deploy versionado.
 
 ---
 

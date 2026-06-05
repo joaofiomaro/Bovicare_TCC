@@ -7,6 +7,30 @@
         { "fieldPath": "animalId", "order": "ASCENDING"  },
         { "fieldPath": "dateIso",  "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "serviceCalls",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status",    "order": "ASCENDING"  },
+        { "fieldPath": "createdAtIso", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "serviceCalls",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "vetId",     "order": "ASCENDING"  },
+        { "fieldPath": "createdAtIso", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "serviceCalls",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "producerId", "order": "ASCENDING"  },
+        { "fieldPath": "createdAt",  "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

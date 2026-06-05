@@ -26,6 +26,12 @@ abstract final class AppRoutes {
   static const String vets      = 'vets';
   static const String vetDetail = 'vet-detail';
 
+  // Chamados (serviceCalls)
+  static const String vetCalls       = 'vet-calls';
+  static const String vetAgenda      = 'vet-agenda';
+  static const String newServiceCall = 'new-service-call';
+  static const String myServiceCalls = 'my-service-calls';
+
   // Reports
   static const String reports = 'reports';
 
@@ -52,4 +58,9 @@ abstract final class AppPaths {
   static String vetDetail(String id) => '/vets/$id';
   static const String reports  = '/reports';
   static const String profile  = '/profile';
+
+  static const String vetCalls       = '/calls';
+  static const String vetAgenda      = '/agenda';
+  static const String newServiceCall = '/new-call';
+  static const String myServiceCalls = '/my-calls';
 }

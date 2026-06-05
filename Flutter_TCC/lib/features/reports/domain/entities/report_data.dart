@@ -18,19 +18,22 @@ enum ReportType {
   sanitary,
   reproductive,
   financial,
+  sales,
   inventory;
 
   String get label => switch (this) {
     ReportType.sanitary     => 'Relatório sanitário',
     ReportType.reproductive => 'Relatório reprodutivo',
     ReportType.financial    => 'Relatório financeiro',
+    ReportType.sales        => 'Relatório de vendas',
     ReportType.inventory    => 'Inventário completo',
   };
 
   String get subtitle => switch (this) {
     ReportType.sanitary     => 'Vacinações, vermifugações, medicações',
     ReportType.reproductive => 'Prenhezes, partos, natalidade',
-    ReportType.financial    => 'Peso de abate, valores estimados',
+    ReportType.financial    => 'Peso de abate, ganho de peso (GMD)',
+    ReportType.sales        => r'Lotes vendidos, valores e R$/@',
     ReportType.inventory    => 'Lista do rebanho com status',
   };
 }
@@ -84,6 +87,7 @@ class ReportData {
     required this.generatedAt,
     required this.periodStart,
     required this.periodEnd,
+    this.footer,
   });
 
   final ReportType       type;
@@ -92,6 +96,9 @@ class ReportData {
   final DateTime         generatedAt;
   final DateTime         periodStart;
   final DateTime         periodEnd;
+
+  /// Linha de totais opcional (ex.: total geral vendido), alinhada a [headers].
+  final List<String>?    footer;
 
   int get totalRecords => rows.length;
 }

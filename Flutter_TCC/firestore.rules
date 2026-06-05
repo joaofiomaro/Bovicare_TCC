@@ -1,0 +1,62 @@
+rules_version = '2';
+
+// BoviCare — Regras de segurança do Firestore.
+// Dados privados isolados por usuário (rebanho, vacinações, vendas, pesagens,
+// perfil) e a coleção compartilhada `serviceCalls` (produtor ↔ veterinário).
+// Publicar com: firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+
+    // Veterinário: lê o papel do próprio perfil (custa 1 leitura por avaliação).
+    function isVet() {
+      return isSignedIn()
+        && get(/databases/$(db)/documents/users/$(request.auth.uid)).data.role == 'vet';
+    }
+
+    // ── Dados privados do usuário ─────────────────────────────────────────────
+    // Perfil + subcoleções (animals, vaccinations, sales, weighings).
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+      match /{sub=**} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // ── Chamados — coleção compartilhada produtor ↔ vet ───────────────────────
+    match /serviceCalls/{callId} {
+      // Produtor cria o próprio chamado, sempre em aberto.
+      allow create: if isOwner(request.resource.data.producerId)
+                    && request.resource.data.status == 'open';
+
+      // Leem: o produtor dono, o vet atribuído ou qualquer vet quando aberto (pool).
+      allow read: if isOwner(resource.data.producerId)
+                  || (isSignedIn() && resource.data.vetId == request.auth.uid)
+                  || (resource.data.status == 'open' && isVet());
+
+      allow update: if
+        // Produtor cancela o próprio chamado enquanto ainda aberto.
+        (isOwner(resource.data.producerId)
+           && resource.data.status == 'open'
+           && request.resource.data.status == 'cancelled'
+           && request.resource.data.producerId == resource.data.producerId)
+        // Vet aceita um chamado do pool (open → accepted, assume o vínculo).
+        || (isVet()
+           && resource.data.status == 'open'
+           && request.resource.data.status == 'accepted'
+           && request.resource.data.vetId == request.auth.uid
+           && request.resource.data.producerId == resource.data.producerId)
+        // Vet atribuído evolui o atendimento (inProgress/completed/resolution).
+        || (isSignedIn()
+           && resource.data.vetId == request.auth.uid
+           && request.resource.data.vetId == resource.data.vetId
+           && request.resource.data.producerId == resource.data.producerId);
+
+      // Nunca deletar — histórico/auditoria.
+      allow delete: if false;
+    }
+  }
+}

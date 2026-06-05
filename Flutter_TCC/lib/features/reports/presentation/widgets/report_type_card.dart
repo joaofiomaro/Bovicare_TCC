@@ -97,6 +97,7 @@ class ReportTypeCard extends StatelessWidget {
     ReportType.sanitary     => (Icons.shield_outlined,        AppColors.brandGreen, AppColors.brandLight),
     ReportType.reproductive => (Icons.favorite_outline_rounded, AppColors.brandGreen, AppColors.brandLight),
     ReportType.financial    => (Icons.bar_chart_rounded,      AppColors.amber,      AppColors.amberLight),
+    ReportType.sales        => (Icons.sell_outlined,          AppColors.brandGreen, AppColors.brandLight),
     ReportType.inventory    => (Icons.list_alt_rounded,       AppColors.mutedGreen, AppColors.brandPale),
   };
 }

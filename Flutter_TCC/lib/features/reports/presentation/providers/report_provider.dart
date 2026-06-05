@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../herd/presentation/providers/animals_provider.dart';
+import '../../../herd/presentation/providers/sales_provider.dart';
 import '../../../vaccination/presentation/providers/vaccinations_provider.dart';
+import '../../../weighing/presentation/providers/weighings_provider.dart';
 import '../../domain/entities/report_data.dart';
 import '../../domain/usecases/generate_report_use_case.dart';
 
@@ -22,6 +24,8 @@ class ReportNotifier extends AsyncNotifier<ReportData?> {
       final useCase = GenerateReportUseCase(
         ref.read(animalRepositoryProvider),
         ref.read(vaccinationRepositoryProvider),
+        ref.read(saleRepositoryProvider),
+        ref.read(weighingRepositoryProvider),
       );
       return useCase.call(type, filter);
     });

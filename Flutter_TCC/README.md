@@ -42,6 +42,8 @@ lib/
 │   ├── vaccination/# Registros sanitários (Firestore)
 │   ├── brete/      # Painel IoT ESP32 (placeholder)
 │   ├── vets/       # Veterinários (in-memory)
+│   ├── weighing/   # Pesagens e ganho de peso (GMD)
+│   ├── service_call/# Chamados produtor↔vet (coleção compartilhada)
 │   ├── reports/    # Relatórios por tipo e período
 │   └── profile/    # Perfil + LGPD + configurações
 └── shared/
@@ -155,7 +157,11 @@ O projeto usa `very_good_analysis` com regras rigorosas. Todo PR deve manter `fl
 | Vacinação | Formulário + cálculo de carência MAPA | ✅ |
 | Brete IoT | Painel MQTT (aguarda hardware ESP32) | ⏸️ |
 | Veterinários | Mapa OSM, filtros, botões de contato | ✅ |
-| Relatórios | 4 tipos × 4 períodos, preview inline | ✅ |
+| Baixa de rebanho | Venda/óbito, individual e em lote (batch atômico) | ✅ |
+| Pesagens | Histórico + GMD por animal | ✅ |
+| Chamados | Produtor abre; vet aceita (transação), evolui e conclui com laudo | ✅ |
+| Dashboard do vet | Tabs e KPIs por papel (`tabsForRole`) | ✅ |
+| Relatórios | Sanitário, reprodutivo, financeiro (+GMD), vendas, inventário | ✅ |
 | Perfil | Editar dados, dark mode, LGPD, logout | ✅ |
 
 ---

@@ -9,7 +9,6 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/brete/presentation/screens/brete_screen.dart';
-import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/herd/domain/entities/animal_entity.dart';
 import '../../features/herd/presentation/screens/animal_form_screen.dart';
 import '../../features/herd/presentation/screens/animal_profile_screen.dart';
@@ -17,6 +16,11 @@ import '../../features/herd/presentation/screens/archived_animals_screen.dart';
 import '../../features/herd/presentation/screens/herd_list_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/reports/presentation/screens/reports_screen.dart';
+import '../../features/service_call/presentation/screens/home_dashboard_screen.dart';
+import '../../features/service_call/presentation/screens/open_service_call_screen.dart';
+import '../../features/service_call/presentation/screens/producer_calls_screen.dart';
+import '../../features/service_call/presentation/screens/vet_agenda_screen.dart';
+import '../../features/service_call/presentation/screens/vet_calls_screen.dart';
 import '../../features/vaccination/presentation/screens/vaccination_screen.dart';
 import '../../features/vets/presentation/screens/vet_detail_screen.dart';
 import '../../features/vets/presentation/screens/vets_list_screen.dart';
@@ -81,7 +85,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path:    AppPaths.dashboard,
             name:    AppRoutes.dashboard,
-            builder: (_, __) => const DashboardScreen(),
+            builder: (_, __) => const HomeDashboardScreen(),
           ),
           GoRoute(
             path:    AppPaths.herd,
@@ -169,6 +173,29 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path:    AppPaths.profile,
             name:    AppRoutes.profile,
             builder: (_, __) => const ProfileScreen(),
+          ),
+          // Chamados — veterinário
+          GoRoute(
+            path:    AppPaths.vetCalls,
+            name:    AppRoutes.vetCalls,
+            builder: (_, __) => const VetCallsScreen(),
+          ),
+          GoRoute(
+            path:    AppPaths.vetAgenda,
+            name:    AppRoutes.vetAgenda,
+            builder: (_, __) => const VetAgendaScreen(),
+          ),
+          // Chamados — produtor
+          GoRoute(
+            path:    AppPaths.myServiceCalls,
+            name:    AppRoutes.myServiceCalls,
+            builder: (_, __) => const ProducerCallsScreen(),
+          ),
+          GoRoute(
+            path:        AppPaths.newServiceCall,
+            name:        AppRoutes.newServiceCall,
+            pageBuilder: (_, state) =>
+                _slideTransition(state, const OpenServiceCallScreen()),
           ),
         ],
       ),

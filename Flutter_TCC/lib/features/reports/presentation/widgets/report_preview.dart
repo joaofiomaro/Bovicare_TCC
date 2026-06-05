@@ -95,31 +95,58 @@ class ReportPreview extends StatelessWidget {
                     ),
                   )
                   .toList(),
-              rows: data.rows.asMap().entries.map((entry) {
-                final isEven = entry.key.isEven;
-                return DataRow(
-                  color: WidgetStatePropertyAll(
-                    isEven
-                        ? Colors.transparent
-                        : (isDark
-                            ? AppColors.darkSurface.withValues(alpha: 0.5)
-                            : AppColors.brandPale.withValues(alpha: 0.4)),
-                  ),
-                  cells: entry.value
-                      .map(
-                        (cell) => DataCell(
-                          Text(
-                            cell,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(fontSize: 12),
+              rows: [
+                ...data.rows.asMap().entries.map((entry) {
+                  final isEven = entry.key.isEven;
+                  return DataRow(
+                    color: WidgetStatePropertyAll(
+                      isEven
+                          ? Colors.transparent
+                          : (isDark
+                              ? AppColors.darkSurface.withValues(alpha: 0.5)
+                              : AppColors.brandPale.withValues(alpha: 0.4)),
+                    ),
+                    cells: entry.value
+                        .map(
+                          (cell) => DataCell(
+                            Text(
+                              cell,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(fontSize: 12),
+                            ),
                           ),
-                        ),
-                      )
-                      .toList(),
-                );
-              }).toList(),
+                        )
+                        .toList(),
+                  );
+                }),
+                // Linha de totais (ex.: relatório de vendas).
+                if (data.footer case final footer?)
+                  DataRow(
+                    color: WidgetStatePropertyAll(
+                      isDark
+                          ? AppColors.darkSurface2
+                          : AppColors.brandPale,
+                    ),
+                    cells: footer
+                        .map(
+                          (cell) => DataCell(
+                            Text(
+                              cell,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    fontSize:   12,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+              ],
             ),
           ),
       ],

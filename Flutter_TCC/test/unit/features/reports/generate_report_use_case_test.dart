@@ -1,9 +1,13 @@
 import 'package:bovicare/features/herd/domain/entities/animal_entity.dart';
+import 'package:bovicare/features/herd/domain/entities/sale_record.dart';
 import 'package:bovicare/features/herd/domain/repositories/animal_repository.dart';
+import 'package:bovicare/features/herd/domain/repositories/sale_repository.dart';
 import 'package:bovicare/features/reports/domain/entities/report_data.dart';
 import 'package:bovicare/features/reports/domain/usecases/generate_report_use_case.dart';
 import 'package:bovicare/features/vaccination/domain/entities/vaccination_record.dart';
 import 'package:bovicare/features/vaccination/domain/repositories/vaccination_repository.dart';
+import 'package:bovicare/features/weighing/domain/entities/weighing.dart';
+import 'package:bovicare/features/weighing/domain/repositories/weighing_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:mocktail/mocktail.dart';
@@ -13,11 +17,17 @@ class MockAnimalRepository extends Mock implements AnimalRepository {}
 class MockVaccinationRepository extends Mock
     implements VaccinationRepository {}
 
+class MockSaleRepository extends Mock implements SaleRepository {}
+
+class MockWeighingRepository extends Mock implements WeighingRepository {}
+
 void main() {
   setUpAll(() async => initializeDateFormatting('pt_BR'));
 
   late MockAnimalRepository animals;
   late MockVaccinationRepository vaccinations;
+  late MockSaleRepository sales;
+  late MockWeighingRepository weighings;
   late GenerateReportUseCase useCase;
 
   // Dentro do intervalo padrão (últimos 30 dias).
@@ -57,7 +67,13 @@ void main() {
   setUp(() {
     animals = MockAnimalRepository();
     vaccinations = MockVaccinationRepository();
-    useCase = GenerateReportUseCase(animals, vaccinations);
+    sales = MockSaleRepository();
+    weighings = MockWeighingRepository();
+    useCase = GenerateReportUseCase(animals, vaccinations, sales, weighings);
+
+    // Defaults — sobrescritos por teste quando relevante.
+    when(() => weighings.getByAnimal(any())).thenAnswer((_) async => []);
+    when(() => sales.getAll()).thenAnswer((_) async => []);
   });
 
   group('GenerateReportUseCase — sanitário', () {
@@ -125,6 +141,91 @@ void main() {
       expect(report.rows, hasLength(1));
       expect(report.rows.first[0], '#047');
       expect(report.rows.first[4], '384 kg');
+      expect(report.headers, contains('GMD'));
+    });
+
+    test('exibe GMD quando há pesagens; "—" quando não há', () async {
+      when(() => animals.getAll()).thenAnswer((_) async => [pregnant]);
+      // 30 kg em 30 dias ⇒ 1.000 kg/dia.
+      when(() => weighings.getByAnimal('1')).thenAnswer(
+        (_) async => [
+          Weighing(
+            id: 'w1',
+            animalId: '1',
+            weightKg: 354,
+            date: now.subtract(const Duration(days: 30)),
+          ),
+          Weighing(id: 'w2', animalId: '1', weightKg: 384, date: now),
+        ],
+      );
+
+      final report = await useCase.call(
+        ReportType.financial,
+        const ReportFilter(),
+      );
+
+      // GMD é a coluna 5 (entre Peso e Status).
+      expect(report.rows.first[5], '1.000 kg/dia');
+    });
+  });
+
+  group('GenerateReportUseCase — vendas', () {
+    final sale = SaleRecord(
+      id: 's1',
+      date: now.subtract(const Duration(days: 2)),
+      type: SaleType.lote,
+      animalIds: const ['1', '2'],
+      headCount: 2,
+      totalValue: 9000,
+      totalWeightKg: 600, // 40 @ ⇒ R$ 225/@
+      buyer: 'Frigorífico X',
+    );
+
+    test('monta linhas e total geral do período', () async {
+      when(() => sales.getAll()).thenAnswer((_) async => [sale]);
+
+      final report = await useCase.call(
+        ReportType.sales,
+        const ReportFilter(),
+      );
+
+      expect(report.type, ReportType.sales);
+      expect(report.rows, hasLength(1));
+      expect(report.rows.first[2], '2'); // cabeças
+      expect(report.footer, isNotNull);
+      expect(report.footer!.first, 'TOTAL');
+      expect(report.footer![2], '2'); // soma de cabeças
+    });
+
+    test(r'média ponderada de R$/@ = valor total ÷ arrobas totais', () async {
+      final sale2 = sale.copyWith(
+        id: 's2',
+        totalValue: 3000,
+        totalWeightKg: 150, // 10 @
+      );
+      when(() => sales.getAll()).thenAnswer((_) async => [sale, sale2]);
+
+      final report = await useCase.call(
+        ReportType.sales,
+        const ReportFilter(),
+      );
+
+      // (9000 + 3000) / ((600 + 150) / 15) = 12000 / 50 = R$ 240,00/@.
+      expect(report.footer!.last, contains('240'));
+    });
+
+    test('ignora vendas fora do período e lida com lista vazia', () async {
+      when(() => sales.getAll()).thenAnswer(
+        (_) async => [sale.copyWith(date: now.subtract(const Duration(days: 90)))],
+      );
+
+      final report = await useCase.call(
+        ReportType.sales,
+        const ReportFilter(),
+      );
+
+      expect(report.rows, isEmpty);
+      expect(report.footer, isNull);
     });
   });
 
