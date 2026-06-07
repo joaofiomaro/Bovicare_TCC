@@ -1,6 +1,7 @@
 # BoviCare — Plano de Desenvolvimento Flutter
-> Projeto: `Flutter_TCC/` | Status: ✅ Fases 0–6, 8–11 concluídas · Firebase 100% integrado · Fase 7 adiada (hardware) · `flutter analyze` 0 issues · 108 testes passando · Refino pós-checkup aplicado (ver `docs/RELATORIO_ANALISE.md` §8)
-> Última atualização: 2026-06-03
+> Projeto: `Flutter_TCC/` | Status: ✅ Fases 0–6, 8–11 + Módulos M1–M5 concluídos · Firebase 100% integrado (Auth + Firestore) · Security Rules por papel testadas (26 casos) e publicadas em produção · Fase 7 (Brete) adiada (hardware) · `flutter analyze` 0 issues · **159 testes Flutter + 26 testes de regras**
+> Última atualização: 2026-06-07
+> Detalhe dos módulos M1–M5 e segurança: `docs/implementacoes_futuras.md` · Checkup anterior: `docs/RELATORIO_ANALISE.md`
 
 ---
 
@@ -15,6 +16,7 @@
 7. [Fases de Desenvolvimento](#7-fases-de-desenvolvimento)
 8. [Checklist de Progresso](#8-checklist-de-progresso)
 9. [Regras de Qualidade](#9-regras-de-qualidade)
+10. [Evolução Pós-MVP (Módulos M1–M5 + Segurança)](#10-evolução-pós-mvp-módulos-m1m5--segurança)
 
 ---
 
@@ -310,14 +312,18 @@ fast   = 200ms    normal = 350ms    slow = 500ms    verySlow = 800ms
 | 03 | Cadastro | `/register` | auth | ✅ Completo — Firebase Auth, UserRole tipado, doc Firestore |
 | 04 | Dashboard | `/dashboard` | dashboard | ✅ Completo — KPIs reais Firestore (count aggregation), timeline, skeleton |
 | 05 | Rebanho | `/herd` | herd | ✅ Completo — CRUD Firestore, filtros, busca live, skeleton, FAB |
-| 06 | Ficha Animal | `/herd/:id` | animal | ✅ Completo — 4 tabs, prenhez, grade de ações, histórico real |
-| 07 | Novo Animal | `/herd/new` | animal | ✅ Completo — formulário, RFID simulado, date picker, salva no Firestore |
+| 06 | Ficha Animal | `/herd/:id` | herd | ✅ Completo — 4 tabs, prenhez, grade de ações, **evolução de peso/GMD**, **baixa** |
+| 07 | Cadastro/Edição de Animal | `/herd/new` · `/herd/:id/edit` | herd | ✅ Completo — `AnimalFormScreen` reutilizável (M1), RFID simulado, upsert |
 | 08 | Registrar Vacinação | `/herd/:id/vaccine` | vaccination | ✅ Completo — formulário, QuarantineCalculator, salva no Firestore |
 | 09 | Painel Brete | `/brete` | brete | ⏸️ Adiado — aguarda hardware ESP32 (placeholder funcional) |
 | 10 | Veterinários | `/vets` | vets | ✅ Completo — mapa OSM, filtros, busca, lista com distância |
 | 11 | Detalhe Veterinário | `/vets/:id` | vets | ✅ Completo — perfil, especialidades, ContactButtons funcionais |
-| 12 | Relatórios | `/reports` | reports | ✅ Completo — 4 tipos, 4 períodos, DataTable, toast com contagem |
+| 12 | Relatórios | `/reports` | reports | ✅ Completo — sanitário, reprodutivo, financeiro (**+GMD**), **vendas (totais ponderados)**, inventário |
 | 13 | Perfil | `/profile` | profile | ✅ Completo — hero, editar dados, LGPD, sync, logout com confirmação |
+| 14 | Arquivados | `/herd/archived` | herd | ✅ M2 — animais vendidos/óbito, histórico preservado |
+| 15 | Dashboard do Vet | `/dashboard` (papel vet) | service_call | ✅ M4 — KPIs do pool/atendimentos, tabs por papel (`tabsForRole`) |
+| 16 | Chamados (vet) | `/calls` · `/agenda` | service_call | ✅ M4 — pool/ativos/histórico, aceitar (transação), evoluir, concluir com laudo |
+| 17 | Chamados (produtor) | `/my-calls` · `/new-call` | service_call | ✅ M4 — abrir, acompanhar status, cancelar |
 
 ---
 
@@ -821,6 +827,18 @@ fast   = 200ms    normal = 350ms    slow = 500ms    verySlow = 800ms
 - [x] Auth guard no router (`_AuthChangeListenable` + `refreshListenable`)
 - [x] `flutter analyze` → **0 issues** · `flutter test` → **97/97 passando**
 
+### FASE 12 — Pós-MVP: Módulos M1–M5 + Segurança ✅
+> Roadmap detalhado e auditorias em `docs/implementacoes_futuras.md`.
+- [x] **M1 — Edição de animal:** `AnimalFormScreen` reutilizável (cadastro/edição, upsert), rota `/herd/:id/edit`, botão na ficha, widget test
+- [x] **M2 — Baixa de rebanho:** `exitType` no modelo, coleção `sales`, venda/óbito individual e em lote (batch atômico), modo seleção, tela de arquivados, dashboard só com ativos
+- [x] **M3 — Pesagens:** feature `weighing`, ação "Pesar" (batch atômico atualiza peso), histórico + GMD na ficha
+- [x] **M5 — Relatórios enriquecidos:** `ReportType.sales` (totais ponderados R$/@), GMD no financeiro, `NumX.toBrl`
+- [x] **M4 — Vet + Chamados:** coleção compartilhada `serviceCalls`, shell/dashboard por papel (`tabsForRole`), abrir→aceitar (transação)→evoluir→concluir com laudo, cancelamento pelo produtor
+- [x] **Segurança Firestore:** `firestore.rules` por papel + `role` imutável, índices versionados, **publicados em produção**; `.firebaserc` para deploy direto
+- [x] **Testes de regras:** `firestore-tests/` (emulador + `@firebase/rules-unit-testing`) — **26 casos**; pegaram e corrigiram uma falha real de escalonamento de privilégio
+- [x] **Checkup de qualidade (auditoria):** índice corrigido, relatórios excluem arquivados, 7 duplicações de data consolidadas em `toBrDate`
+- [x] `flutter analyze` → **0 issues** · `flutter test` → **159 passando** · regras → **26/26**
+
 ---
 
 ## 9. Regras de Qualidade
@@ -842,6 +860,41 @@ fast   = 200ms    normal = 350ms    slow = 500ms    verySlow = 800ms
 ### Atualizações deste arquivo
 - Ao concluir uma tarefa: marque `[x]` e adicione `> ✅ Concluído em: <data>. Como foi feito: <descrição breve.>`
 - Ao iniciar uma fase: atualize o Status no cabeçalho
+
+---
+
+## 10. Evolução Pós-MVP (Módulos M1–M5 + Segurança)
+
+Após o MVP (Fases 0–11) e o checkup de qualidade (`docs/RELATORIO_ANALISE.md`),
+o app evoluiu com 5 módulos funcionais e a consolidação da segurança. O
+planejamento, as decisões de engenharia e as auditorias completas vivem em
+**`docs/implementacoes_futuras.md`** — esta seção é o resumo executivo.
+
+| Módulo | Entrega | Destaques técnicos |
+|--------|---------|--------------------|
+| **M1** | Edição de animal | `AnimalFormScreen` reutilizável (cadastro/edição via upsert); rota `/herd/:id/edit`; preserva status/prenhez/baixa |
+| **M2** | Baixa de rebanho | Arquivar (não deletar): `exitType` + coleção `sales`; venda/óbito individual e **em lote** com **`WriteBatch` atômico**; modo seleção; tela de arquivados; dashboard conta só ativos |
+| **M3** | Pesagens | Feature `weighing`; "Pesar" grava pesagem **e** atualiza o peso do animal no mesmo batch; **GMD** (ganho médio diário) na ficha |
+| **M5** | Relatórios enriquecidos | `ReportType.sales` com **média ponderada de R$/@**; **GMD** no financeiro; `NumX.toBrl`; relatórios do rebanho excluem arquivados |
+| **M4** | Vet + Chamados | Coleção compartilhada `serviceCalls`; **shell/dashboard por papel** (`tabsForRole`); fluxo abrir→**aceitar (transação anti-corrida)**→evoluir→concluir com laudo; produtor cancela |
+
+### Segurança Firestore (publicada em produção)
+- **`firestore.rules`** versionado e por papel: dados privados isolados por `uid`
+  (incl. `sales`/`weighings`); chamados compartilhados com regras de leitura
+  (dono/vet atribuído/pool aberto) e escrita (aceitar/evoluir/cancelar); `delete`
+  de chamado sempre negado.
+- **`role` imutável** após o cadastro — fecha escalonamento de privilégio
+  (produtor não vira vet para ler chamados alheios).
+- **Índices compostos** (`serviceCalls`, `vaccinations`) versionados em
+  `firestore.indexes.json`. `.firebaserc` permite `firebase deploy` direto.
+- **Testes de regras** (`firestore-tests/`, emulador + `@firebase/rules-unit-testing`):
+  **26 casos** validam cada cenário de acesso. Pegaram uma falha real
+  (wildcard recursivo `{sub=**}` casando o doc de perfil e anulando a
+  imutabilidade do `role`) — corrigida e republicada.
+
+### Estado de qualidade
+`flutter analyze` **0 issues** · `flutter test` **159 passando** · regras **26/26**
+· `build_runner` sem conflitos · auditoria de segurança git limpa.
 
 ---
 

@@ -37,8 +37,7 @@ lib/
 ├── features/
 │   ├── auth/       # Firebase Auth + Google Sign-In
 │   ├── dashboard/  # KPIs agregados via Firestore count()
-│   ├── herd/       # Gestão do rebanho (CRUD Firestore)
-│   ├── animal/     # Ficha do animal (4 tabs)
+│   ├── herd/       # Rebanho: CRUD, ficha (4 tabs), baixa (venda/óbito), arquivados
 │   ├── vaccination/# Registros sanitários (Firestore)
 │   ├── brete/      # Painel IoT ESP32 (placeholder)
 │   ├── vets/       # Veterinários (in-memory)
@@ -48,6 +47,10 @@ lib/
 │   └── profile/    # Perfil + LGPD + configurações
 └── shared/
     └── widgets/    # Design system (AppButton, AppCard, AppTextField…)
+
+firestore-tests/    # Testes das Security Rules (emulador + rules-unit-testing)
+firestore.rules     # Regras de segurança (versionadas e publicadas)
+firestore.indexes.json
 ```
 
 ---
@@ -93,7 +96,6 @@ flutterfire configure --project=SEU_PROJETO_ID
 No Firebase Console:
 - Habilite Authentication → Google Sign-In e E-mail/senha
 - Crie o Firestore em Production Mode (região: `southamerica-east1`)
-- Publique as Security Rules (arquivo `firestore.rules` na raiz)
 - Registre o SHA-1 do debug keystore: `cd android && ./gradlew signingReport`
 
 **4. Crie o `.env`**
@@ -102,9 +104,11 @@ cp .env.example .env
 # Edite conforme necessário (MQTT_BROKER_URL, etc.)
 ```
 
-**5. Deploy dos índices Firestore**
+**5. Deploy das Security Rules e índices Firestore**
+
+O `.firebaserc` já aponta o projeto padrão, então basta (a partir de `Flutter_TCC/`):
 ```bash
-firebase deploy --only firestore:indexes --project SEU_PROJETO_ID
+firebase deploy --only firestore:rules,firestore:indexes
 ```
 
 **6. Execute o app**
@@ -130,6 +134,18 @@ flutter test test/widget/
 flutter test --coverage
 ```
 
+**159 testes Flutter** (unit + widget) verdes.
+
+### Testes das Security Rules (emulador)
+
+Validam as regras do Firestore de forma reproduzível (não tocam produção):
+```bash
+cd firestore-tests
+npm install      # primeira vez
+npm test         # sobe o emulador, roda 26 casos e desliga
+```
+Requer Java 11+ (emulador) e Firebase CLI. Detalhes em `firestore-tests/README.md`.
+
 ---
 
 ## Qualidade
@@ -151,9 +167,10 @@ O projeto usa `very_good_analysis` com regras rigorosas. Todo PR deve manter `fl
 | Login | E-mail/senha + Google Sign-In | ✅ |
 | Cadastro | Produtor ou veterinário | ✅ |
 | Dashboard | KPIs reais (total, prenhas, alertas, vacinas) | ✅ |
-| Rebanho | CRUD completo, filtros, busca live | ✅ |
-| Ficha Animal | 4 tabs: resumo, sanitário, reprodução, histórico | ✅ |
-| Novo Animal | Formulário com RFID simulado | ✅ |
+| Rebanho | CRUD completo, filtros, busca live, modo seleção | ✅ |
+| Ficha Animal | 4 tabs + evolução de peso/GMD + dar baixa | ✅ |
+| Cadastro/Edição de Animal | Formulário reutilizável, RFID simulado, upsert | ✅ |
+| Arquivados | Animais vendidos/óbito (histórico preservado) | ✅ |
 | Vacinação | Formulário + cálculo de carência MAPA | ✅ |
 | Brete IoT | Painel MQTT (aguarda hardware ESP32) | ⏸️ |
 | Veterinários | Mapa OSM, filtros, botões de contato | ✅ |
@@ -169,9 +186,13 @@ O projeto usa `very_good_analysis` com regras rigorosas. Todo PR deve manter `fl
 ## Segurança
 
 - Autenticação real via Firebase Auth (sem dados sensíveis em SharedPreferences)
-- Dados isolados por `uid` no Firestore
-- Security Rules bloqueiam acesso cruzado entre usuários
-- `google-services.json` nunca commitado (`.gitignore`)
+- Dados privados isolados por `uid` no Firestore (animais, vacinações, vendas, pesagens)
+- **Security Rules por papel** (`firestore.rules`, publicadas): chamados compartilhados
+  com leitura/escrita controladas (dono, vet atribuído, pool aberto); `delete` negado
+- **`role` imutável** após o cadastro — fecha escalonamento de privilégio (produtor não
+  vira veterinário para acessar chamados alheios)
+- **26 testes automatizados de regras** (`firestore-tests/`) validam cada cenário de acesso
+- `google-services.json` / `.env` nunca commitados (`.gitignore`)
 - Auth guard no router — rotas protegidas redirecionam para `/login`
 
 ---
