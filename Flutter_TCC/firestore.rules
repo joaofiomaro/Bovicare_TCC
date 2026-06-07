@@ -12,15 +12,24 @@ service cloud.firestore {
     function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
 
     // Veterinário: lê o papel do próprio perfil (custa 1 leitura por avaliação).
+    // O exists() evita erro de avaliação caso o perfil ainda não exista.
     function isVet() {
       return isSignedIn()
+        && exists(/databases/$(db)/documents/users/$(request.auth.uid))
         && get(/databases/$(db)/documents/users/$(request.auth.uid)).data.role == 'vet';
     }
 
-    // ── Dados privados do usuário ─────────────────────────────────────────────
-    // Perfil + subcoleções (animals, vaccinations, sales, weighings).
+    // ── Perfil do usuário ─────────────────────────────────────────────────────
     match /users/{uid} {
-      allow read, write: if isOwner(uid);
+      allow read:   if isOwner(uid);
+      allow create: if isOwner(uid);
+      // `role` é definido no cadastro e IMUTÁVEL depois — impede que um produtor
+      // se autopromova a veterinário e acesse o pool de chamados alheios.
+      allow update: if isOwner(uid)
+                    && request.resource.data.role == resource.data.role;
+      allow delete: if isOwner(uid);
+
+      // Subcoleções privadas (animals, vaccinations, sales, weighings).
       match /{sub=**} {
         allow read, write: if isOwner(uid);
       }
@@ -28,9 +37,10 @@ service cloud.firestore {
 
     // ── Chamados — coleção compartilhada produtor ↔ vet ───────────────────────
     match /serviceCalls/{callId} {
-      // Produtor cria o próprio chamado, sempre em aberto.
+      // Produtor cria o próprio chamado, sempre aberto e sem vet pré-atribuído.
       allow create: if isOwner(request.resource.data.producerId)
-                    && request.resource.data.status == 'open';
+                    && request.resource.data.status == 'open'
+                    && !('vetId' in request.resource.data);
 
       // Leem: o produtor dono, o vet atribuído ou qualquer vet quando aberto (pool).
       allow read: if isOwner(resource.data.producerId)
@@ -49,11 +59,13 @@ service cloud.firestore {
            && request.resource.data.status == 'accepted'
            && request.resource.data.vetId == request.auth.uid
            && request.resource.data.producerId == resource.data.producerId)
-        // Vet atribuído evolui o atendimento (inProgress/completed/resolution).
+        // Vet atribuído evolui o atendimento — sem alterar o vínculo nem os
+        // dados de origem do produtor.
         || (isSignedIn()
            && resource.data.vetId == request.auth.uid
            && request.resource.data.vetId == resource.data.vetId
-           && request.resource.data.producerId == resource.data.producerId);
+           && request.resource.data.producerId == resource.data.producerId
+           && request.resource.data.producerName == resource.data.producerName);
 
       // Nunca deletar — histórico/auditoria.
       allow delete: if false;

@@ -604,6 +604,27 @@ Todos os módulos foram conferidos no código-fonte e estão **íntegros**:
 4. ✅ **Arquitetura/padrões** verificados: separação domínio (`label`) × apresentação (`badge`) consistente (`ServiceStatusX`/`ServiceStatusVisuals`); datas em ISO; `FirestoreErrorHandler` em todos os data sources; DI por Riverpod.
 5. ✅ **Segurança**: `firestore.rules` por papel revisado (produtor lê o próprio; vet lê pool aberto + atribuídos; `delete` negado); nenhum segredo no código.
 
+### 🔐 Endurecimento das Security Rules (2026-06-07)
+
+A revisão das regras encontrou uma **falha crítica de escalonamento de
+privilégio** e pontos a endurecer — todos corrigidos em `firestore.rules`:
+
+| # | Falha | Correção |
+|---|-------|----------|
+| 1 | 🔴 **Auto-promoção a veterinário** — `match /users/{uid} { allow write }` deixava o usuário gravar qualquer campo do próprio perfil, inclusive `role`. Um produtor podia setar `role: 'vet'` e, via `isVet()`, **ler o pool de chamados de todos os outros produtores** e aceitá-los. | `role` agora é **imutável** após o cadastro: `allow update: if isOwner(uid) && request.resource.data.role == resource.data.role`. (Edição de perfil só altera nome/fazenda — `copyWith` preserva o `role`, então o fluxo continua íntegro.) |
+| 2 | 🟠 `isVet()` poderia errar se o perfil não existisse. | Adicionado `exists(...)` antes do `get(...)`. |
+| 3 | 🟠 `create` de chamado não impedia vet pré-atribuído. | `create` agora exige `!('vetId' in request.resource.data)`. |
+| 4 | 🟠 Vet atribuído podia sobrescrever dados de origem do produtor. | Branch de evolução fixa `producerId`/`producerName` (imutáveis). |
+
+**Validação de fluxos:** todas as operações reais do app foram traçadas contra
+as novas regras (cadastro/login, perfil, rebanho/vacinação/vendas/pesagens,
+abrir→aceitar via transação→evoluir→concluir, cancelar) — **nenhuma quebra**.
+
+> **Deploy obrigatório:** as regras e índices vivem versionados no repo mas só
+> valem em produção após o deploy. Rodar (dono do projeto, autenticado):
+> `firebase deploy --only firestore:rules,firestore:indexes`.
+> Recomenda-se validar antes no **Rules Playground**/emulador.
+
 > **Pendências conhecidas (não-bloqueantes, fora do escopo do roadmap):** seletor PDF/CSV da tela de relatórios é cosmético (export real adiado — §7.4); telas "Em breve" de manejos extras (Vermifugação/Medicação/Observação/Prenhez), Brete (Fase 7, aguarda hardware) e 3 itens do Perfil permanecem como placeholders intencionais.
 
 ---
