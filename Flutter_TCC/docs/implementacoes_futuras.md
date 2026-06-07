@@ -620,10 +620,11 @@ privilégio** e pontos a endurecer — todos corrigidos em `firestore.rules`:
 as novas regras (cadastro/login, perfil, rebanho/vacinação/vendas/pesagens,
 abrir→aceitar via transação→evoluir→concluir, cancelar) — **nenhuma quebra**.
 
-> **Deploy obrigatório:** as regras e índices vivem versionados no repo mas só
-> valem em produção após o deploy. Rodar (dono do projeto, autenticado):
-> `firebase deploy --only firestore:rules,firestore:indexes`.
-> Recomenda-se validar antes no **Rules Playground**/emulador.
+> **Deploy concluído (2026-06-07):** `firebase deploy --only firestore:rules,firestore:indexes`
+> executado com sucesso no projeto `bovicare-tcc` — regras compiladas sem erros,
+> publicadas em `cloud.firestore`, e índices criados. `.firebaserc` versionado
+> aponta o projeto padrão, permitindo redeploy direto pelo terminal
+> (`firebase deploy --only firestore:rules,firestore:indexes`).
 
 > **Pendências conhecidas (não-bloqueantes, fora do escopo do roadmap):** seletor PDF/CSV da tela de relatórios é cosmético (export real adiado — §7.4); telas "Em breve" de manejos extras (Vermifugação/Medicação/Observação/Prenhez), Brete (Fase 7, aguarda hardware) e 3 itens do Perfil permanecem como placeholders intencionais.
 
