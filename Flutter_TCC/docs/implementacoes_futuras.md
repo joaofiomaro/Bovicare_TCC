@@ -626,6 +626,21 @@ abrir→aceitar via transação→evoluir→concluir, cancelar) — **nenhuma qu
 > aponta o projeto padrão, permitindo redeploy direto pelo terminal
 > (`firebase deploy --only firestore:rules,firestore:indexes`).
 
+### 🧪 Testes automatizados das Security Rules (2026-06-07)
+
+Projeto em `firestore-tests/` (`@firebase/rules-unit-testing` + emulador +
+`node --test`): **26 casos** cobrindo perfil (role imutável), subcoleções
+(animals/vaccinations/sales/weighings) e chamados por papel
+(criar/ler/aceitar/evoluir/cancelar/delete). Rodar: `cd firestore-tests && npm install && npm test`.
+
+> **Falha real encontrada pelos testes:** a primeira versão das regras usava
+> `match /users/{uid}/{sub=**}` (wildcard recursivo). No `rules_version 2` ele
+> casa **zero ou mais** segmentos — inclusive o próprio doc de perfil —, então o
+> `allow write` da subcoleção **anulava a imutabilidade do `role`** e um produtor
+> ainda conseguia se autopromover a vet. Corrigido para wildcard de **nível único**
+> `match /users/{uid}/{collection}/{docId}` (cobre as subcoleções sem casar o
+> perfil). Após a correção: **26/26 verdes** e regras corrigidas republicadas.
+
 > **Pendências conhecidas (não-bloqueantes, fora do escopo do roadmap):** seletor PDF/CSV da tela de relatórios é cosmético (export real adiado — §7.4); telas "Em breve" de manejos extras (Vermifugação/Medicação/Observação/Prenhez), Brete (Fase 7, aguarda hardware) e 3 itens do Perfil permanecem como placeholders intencionais.
 
 ---

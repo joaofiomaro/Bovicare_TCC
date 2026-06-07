@@ -28,11 +28,15 @@ service cloud.firestore {
       allow update: if isOwner(uid)
                     && request.resource.data.role == resource.data.role;
       allow delete: if isOwner(uid);
+    }
 
-      // Subcoleções privadas (animals, vaccinations, sales, weighings).
-      match /{sub=**} {
-        allow read, write: if isOwner(uid);
-      }
+    // Subcoleções privadas (animals, vaccinations, sales, weighings).
+    // Wildcard de NÍVEL ÚNICO ({collection}/{docId} = 2 segmentos): cobre os
+    // documentos das subcoleções SEM casar o doc de perfil acima — caso
+    // contrário um `allow write` recursivo (`{sub=**}`) anularia a
+    // imutabilidade do `role` (vide teste de auto-promoção).
+    match /users/{uid}/{collection}/{docId} {
+      allow read, write: if isOwner(uid);
     }
 
     // ── Chamados — coleção compartilhada produtor ↔ vet ───────────────────────

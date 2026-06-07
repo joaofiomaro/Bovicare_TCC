@@ -1,0 +1,14 @@
+{
+  "name": "bovicare-firestore-rules-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Testes automatizados das Security Rules do Firestore (emulador).",
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore --project bovicare-tcc --config ../firebase.json \"node --test\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.3.1"
+  }
+}
