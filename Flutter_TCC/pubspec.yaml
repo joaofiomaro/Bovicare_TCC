@@ -71,6 +71,10 @@ dev_dependencies:
   # --- Testes ---
   mocktail: ^1.0.5
 
+  # --- Ícone & Splash nativos (geração) ---
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.4
+
 flutter:
   uses-material-design: true
 
@@ -79,3 +83,32 @@ flutter:
     - assets/animations/
     - assets/icons/
     - .env
+
+# Ícone do app (gera ícones nativos a partir da marca).
+# Rodar: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/app_icon.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  min_sdk_android: 21
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    background_color: "#FFFFFF"
+    theme_color: "#1C6B3A"
+  windows:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+
+# Splash screen nativo (logo centralizado sobre fundo branco).
+# Rodar: dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: "assets/images/bovicare_logo.png"
+  android_12:
+    image: "assets/icon/app_icon_foreground.png"
+    color: "#FFFFFF"
+  web: false
