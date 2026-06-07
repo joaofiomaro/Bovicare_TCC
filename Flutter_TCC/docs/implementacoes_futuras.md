@@ -561,4 +561,51 @@ Replicar o rigor da auditoria do checkup anterior (`RELATORIO_ANALISE.md §8`):
 
 ---
 
+## 11. Revisão completa do app — auditoria de qualidade (2026-06-07)
+
+Análise transversal de todo o app (não só dos módulos), buscando redundâncias,
+erros e problemas críticos, e **conferindo se os passos do roadmap foram
+implementados corretamente**. A auditoria anterior (§10) reportava "0 issues",
+mas a verificação atual encontrou **2 issues de lint** e outros problemas reais
+— todos corrigidos.
+
+### Verificação dos módulos do roadmap
+Todos os módulos foram conferidos no código-fonte e estão **íntegros**:
+- **M1–M3** (herd): edição, baixa de rebanho e pesagens — conforme §3/§4/§5.
+- **M4** (service_call): coleção compartilhada, `accept` via `runTransaction`,
+  shell por papel (`tabsForRole`), fluxo completo, `firestore.rules` por papel —
+  conforme §6. Navegação verificada (Dashboard → "Meus chamados" → abrir; vet via abas).
+- **M5** (reports): `ReportType.sales` com média ponderada de R$/@, GMD no
+  financeiro, `NumX.toBrl` — conforme §7.
+- **Transversal**: `firestore.rules` versionado e referenciado no `firebase.json`;
+  índices de `serviceCalls`/`vaccinations` em `firestore.indexes.json`.
+
+### 🔴 Problemas críticos corrigidos
+| # | Problema | Correção |
+|---|----------|----------|
+| 1 | **Índice composto incorreto** — `firestore.indexes.json` declarava o índice de `producerId` com o campo `createdAt`, mas o data source ordena por `createdAtIso`. A query "Meus chamados" do produtor **falharia em produção** por índice ausente. | Campo corrigido para `createdAtIso`. |
+| 2 | **Relatórios incluíam animais com baixa** — inventário, financeiro e reprodutivo usavam `getAll()` sem filtrar arquivados, mostrando animais **vendidos/óbito** como se fossem do rebanho atual (inconsistência M2↔M5). | Os três ramos passam a filtrar `!a.isArchived`; teste de regressão adicionado. |
+
+### 🟠 Redundâncias eliminadas
+| # | Redundância | Correção |
+|---|-------------|----------|
+| 3 | **Formatação manual de data** (`padLeft`) duplicando `DateTimeX.toBrDate` em **7 locais** (report_preview, reports_screen, quarantine_calculator, vaccination_screen, animal_form_screen, animal_profile_screen ×2) — viola o princípio §1. | Tudo consolidado em `.toBrDate`; **3 helpers locais removidos** (`_fmt`/`_formatDate`). |
+
+### 🟡 Lint e testes
+| # | Item | Correção |
+|---|------|----------|
+| 4 | 2 issues `avoid_redundant_argument_values` no teste de service_call (`DateTime(2026,6,1)`, `scheduledDate: null`). | Removidos os valores default. |
+| 5 | Widget test de `AnimalFormScreen` quebrou ao consolidar para `toBrDate` (locale `pt_BR` não inicializado no teste). | `initializeDateFormatting('pt_BR')` no `setUpAll` (o app já inicializa no `main.dart`). |
+
+### Resultado da revisão
+1. ✅ **`flutter analyze`** → **0 issues** (era 2).
+2. ✅ **`flutter test`** → **159 testes, 100% verde** (+1 regressão de inventário arquivado).
+3. ✅ **Sem dead code** introduzido; `HomeDashboardScreen` encapsula corretamente `DashboardScreen` (produtor) e `VetDashboardScreen` (vet) — nenhum órfão.
+4. ✅ **Arquitetura/padrões** verificados: separação domínio (`label`) × apresentação (`badge`) consistente (`ServiceStatusX`/`ServiceStatusVisuals`); datas em ISO; `FirestoreErrorHandler` em todos os data sources; DI por Riverpod.
+5. ✅ **Segurança**: `firestore.rules` por papel revisado (produtor lê o próprio; vet lê pool aberto + atribuídos; `delete` negado); nenhum segredo no código.
+
+> **Pendências conhecidas (não-bloqueantes, fora do escopo do roadmap):** seletor PDF/CSV da tela de relatórios é cosmético (export real adiado — §7.4); telas "Em breve" de manejos extras (Vermifugação/Medicação/Observação/Prenhez), Brete (Fase 7, aguarda hardware) e 3 itens do Perfil permanecem como placeholders intencionais.
+
+---
+
 *Plano elaborado seguindo a arquitetura e os padrões já consolidados no BoviCare. Cada módulo é independente o suficiente para ser implementado, testado e auditado isoladamente, com commit próprio.*

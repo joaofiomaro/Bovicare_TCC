@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/extensions/datetime_ext.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_header.dart';
@@ -156,10 +157,7 @@ class _Form extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateLabel =
-        '${date.day.toString().padLeft(2, '0')}/'
-        '${date.month.toString().padLeft(2, '0')}/'
-        '${date.year}';
+    final dateLabel = date.toBrDate;
 
     return Column(
       children: [

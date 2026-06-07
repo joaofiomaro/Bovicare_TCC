@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/extensions/datetime_ext.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
@@ -182,11 +183,7 @@ class _AnimalFormScreenState extends ConsumerState<AnimalFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final birthLabel = _birthDate != null
-        ? '${_birthDate!.day.toString().padLeft(2, '0')}/'
-            '${_birthDate!.month.toString().padLeft(2, '0')}/'
-            '${_birthDate!.year}'
-        : 'Selecionar data';
+    final birthLabel = _birthDate?.toBrDate ?? 'Selecionar data';
 
     return Scaffold(
       body: Column(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/extensions/datetime_ext.dart';
 import '../../domain/entities/vaccine_info.dart';
 
 /// Card informativo que recalcula dinamicamente próxima dose e fim de carência
@@ -61,14 +62,14 @@ class QuarantineCalculator extends StatelessWidget {
           if (nextDose != null)
             _InfoRow(
               label: 'Próxima dose',
-              value: _formatDate(nextDose),
+              value: nextDose.toBrDate,
               icon:  Icons.vaccines_outlined,
             ),
           if (quarantineEnd != null) ...[
             const SizedBox(height: AppSpacing.xs),
             _InfoRow(
               label: 'Carência até',
-              value: '${_formatDate(quarantineEnd)} ($quarantineDays dias)',
+              value: '${quarantineEnd.toBrDate} ($quarantineDays dias)',
               icon:  Icons.block_rounded,
               color: AppColors.amber,
             ),
@@ -84,10 +85,6 @@ class QuarantineCalculator extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}/'
-      '${d.month.toString().padLeft(2, '0')}/'
-      '${d.year}';
 }
 
 class _InfoRow extends StatelessWidget {

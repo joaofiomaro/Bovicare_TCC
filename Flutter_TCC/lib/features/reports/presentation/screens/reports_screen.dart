@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/extensions/datetime_ext.dart';
 import '../../../../shared/widgets/app_chip_filter.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_toast.dart';
@@ -228,11 +229,6 @@ class _DateField extends StatelessWidget {
   final DateTime?           lastDate;
   final ValueChanged<DateTime> onChanged;
 
-  String _fmt(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}/'
-      '${d.month.toString().padLeft(2, '0')}/'
-      '${d.year}';
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -280,7 +276,7 @@ class _DateField extends StatelessWidget {
             const SizedBox(width: 6),
             Expanded(
               child: Text(
-                date != null ? _fmt(date!) : label,
+                date != null ? date!.toBrDate : label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: date != null
                           ? Theme.of(context).colorScheme.onSurface

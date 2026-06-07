@@ -5,6 +5,7 @@ import 'package:bovicare/features/herd/presentation/screens/animal_form_screen.d
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAnimalRepository extends Mock implements AnimalRepository {}
@@ -21,7 +22,10 @@ AnimalEntity _makeAnimal() => AnimalEntity(
     );
 
 void main() {
-  setUpAll(() => registerFallbackValue(_makeAnimal()));
+  setUpAll(() async {
+    registerFallbackValue(_makeAnimal());
+    await initializeDateFormatting('pt_BR');
+  });
 
   late MockAnimalRepository repo;
 

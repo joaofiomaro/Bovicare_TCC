@@ -28,8 +28,8 @@
       "collectionGroup": "serviceCalls",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "producerId", "order": "ASCENDING"  },
-        { "fieldPath": "createdAt",  "order": "DESCENDING" }
+        { "fieldPath": "producerId",   "order": "ASCENDING"  },
+        { "fieldPath": "createdAtIso", "order": "DESCENDING" }
       ]
     }
   ],

@@ -21,7 +21,7 @@ ServiceCall _call({ServiceStatus status = ServiceStatus.open, String? vetId}) =>
       description: 'Pata dianteira inchada',
       urgency: ServiceUrgency.high,
       status: status,
-      createdAt: DateTime(2026, 6, 1),
+      createdAt: DateTime(2026, 6),
       vetId: vetId,
     );
 
@@ -139,7 +139,6 @@ void main() {
       verify(() => repo.updateStatus(
             callId: 'c1',
             status: ServiceStatus.completed,
-            scheduledDate: null,
             resolution: 'Tratamento aplicado',
           )).called(1);
     });

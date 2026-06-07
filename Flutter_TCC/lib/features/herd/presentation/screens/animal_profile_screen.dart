@@ -215,9 +215,7 @@ class _AnimalHeader extends StatelessWidget {
   String _infoLine(AnimalEntity a) {
     final breed = a.breed;
     final sex   = a.sex == AnimalSex.female ? 'Fêmea' : 'Macho';
-    final birth = '${a.birthDate.day.toString().padLeft(2, '0')}/'
-        '${a.birthDate.month.toString().padLeft(2, '0')}/'
-        '${a.birthDate.year}';
+    final birth = a.birthDate.toBrDate;
     final weight = a.weightKg != null
         ? ' · ${a.weightKg!.toStringAsFixed(0)} kg'
         : '';
@@ -321,11 +319,7 @@ class _PregnancyCard extends StatelessWidget {
     final days     = animal.pregnancyDays;
     final progress = animal.pregnancyProgress;
     final expected = animal.expectedBirthDate;
-    final expectedStr = expected != null
-        ? '${expected.day.toString().padLeft(2, '0')}/'
-          '${expected.month.toString().padLeft(2, '0')}/'
-          '${expected.year}'
-        : '—';
+    final expectedStr = expected?.toBrDate ?? '—';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),

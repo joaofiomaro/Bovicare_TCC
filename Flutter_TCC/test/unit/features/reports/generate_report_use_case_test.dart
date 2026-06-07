@@ -230,7 +230,7 @@ void main() {
   });
 
   group('GenerateReportUseCase — inventário', () {
-    test('inclui todos os animais do rebanho', () async {
+    test('inclui os animais ativos do rebanho', () async {
       when(() => animals.getAll())
           .thenAnswer((_) async => [pregnant, healthy]);
 
@@ -241,6 +241,24 @@ void main() {
 
       expect(report.rows, hasLength(2));
       expect(report.headers, contains('Status'));
+    });
+
+    test('exclui animais arquivados (vendidos/óbito)', () async {
+      final sold = healthy.copyWith(
+        id: '3',
+        earTag: '099',
+        exitType: AnimalExitType.sold,
+      );
+      when(() => animals.getAll())
+          .thenAnswer((_) async => [pregnant, healthy, sold]);
+
+      final report = await useCase.call(
+        ReportType.inventory,
+        const ReportFilter(),
+      );
+
+      // O animal vendido não entra no inventário do rebanho ativo.
+      expect(report.rows, hasLength(2));
     });
   });
 }

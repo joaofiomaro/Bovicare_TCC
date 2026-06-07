@@ -85,8 +85,8 @@ class GenerateReportUseCase {
 
     final rows = animals
         .where((a) =>
-            a.status == AnimalStatus.pregnant ||
-            a.pregnancyDate != null)
+            !a.isArchived &&
+            (a.status == AnimalStatus.pregnant || a.pregnancyDate != null))
         .map((a) {
           final days     = a.pregnancyDays;
           final expected = a.expectedBirthDate;
@@ -113,8 +113,9 @@ class GenerateReportUseCase {
   // ── Financeiro (com ganho de peso / GMD) ────────────────────────────────────
 
   Future<ReportData> _financial(DateTime start, DateTime end) async {
-    final animals =
-        (await _animals.getAll()).where((a) => a.weightKg != null).toList();
+    final animals = (await _animals.getAll())
+        .where((a) => !a.isArchived && a.weightKg != null)
+        .toList();
 
     // Ganho médio diário por cabeça — uma consulta de pesagens por animal,
     // resolvidas em paralelo. Fonte: coleção `weighings` (M3).
@@ -223,7 +224,8 @@ class GenerateReportUseCase {
   // ── Inventário ─────────────────────────────────────────────────────────────
 
   Future<ReportData> _inventory(DateTime start, DateTime end) async {
-    final animals = await _animals.getAll();
+    final animals =
+        (await _animals.getAll()).where((a) => !a.isArchived).toList();
 
     final rows = animals
         .map((a) => [

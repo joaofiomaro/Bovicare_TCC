@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/extensions/datetime_ext.dart';
 import '../../domain/entities/report_data.dart';
 
 /// Exibe o resultado gerado em uma tabela horizontal rolável.
@@ -38,7 +39,7 @@ class ReportPreview extends StatelessWidget {
               Expanded(
                 child: Text(
                   '${data.totalRecords} ${data.totalRecords == 1 ? 'registro' : 'registros'} '
-                  '· ${_fmt(data.periodStart)} a ${_fmt(data.periodEnd)}',
+                  '· ${data.periodStart.toBrDate} a ${data.periodEnd.toBrDate}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color:      AppColors.brandGreen,
                         fontWeight: FontWeight.w600,
@@ -152,9 +153,4 @@ class ReportPreview extends StatelessWidget {
       ],
     );
   }
-
-  String _fmt(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}/'
-      '${d.month.toString().padLeft(2, '0')}/'
-      '${d.year}';
 }
