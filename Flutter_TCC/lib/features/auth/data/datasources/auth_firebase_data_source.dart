@@ -18,6 +18,19 @@ class AuthFirebaseDataSource {
   final FirebaseFirestore _firestore;
   final GoogleSignIn _googleSignIn;
 
+  /// Subcoleções privadas do usuário — apagadas junto com a conta (LGPD).
+  /// Deve refletir a lista aceita em `firestore.rules`.
+  static const List<String> _privateCollections = [
+    'animals',
+    'vaccinations',
+    'sales',
+    'weighings',
+  ];
+
+  /// Janela em que o Firebase aceita operações sensíveis (`user.delete()`)
+  /// sem exigir reautenticação.
+  static const Duration _recentLoginWindow = Duration(minutes: 5);
+
   Future<UserModel> loginWithEmail(String email, String password) async {
     try {
       final result = await _auth.signInWithEmailAndPassword(
@@ -58,21 +71,36 @@ class AuthFirebaseDataSource {
     required String password,
     required String role,
   }) async {
+    final UserCredential result;
     try {
-      final result = await _auth.createUserWithEmailAndPassword(
+      result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      final uid = result.user!.uid;
-      final model = UserModel(id: uid, name: name, email: email, role: role);
-      await _userDoc(uid).set({
+    } on FirebaseAuthException catch (e) {
+      throw AuthFailure(_mapFirebaseError(e.code));
+    }
+
+    final user  = result.user!;
+    final model = UserModel(id: user.uid, name: name, email: email, role: role);
+    try {
+      await _userDoc(user.uid).set({
         ...model.toFirestore(),
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
       return model;
-    } on FirebaseAuthException catch (e) {
-      throw AuthFailure(_mapFirebaseError(e.code));
+    } on FirebaseException {
+      // Sem o perfil (role) o app não funciona: desfaz o cadastro para não
+      // deixar uma conta órfã no Auth e permitir tentar novamente.
+      try {
+        await user.delete();
+      } on FirebaseAuthException catch (_) {
+        // Melhor esforço — a conta poderá ser limpa no próximo login.
+      }
+      throw const ServerFailure(
+        'Não foi possível concluir o cadastro. Tente novamente.',
+      );
     }
   }
 
@@ -84,25 +112,74 @@ class AuthFirebaseDataSource {
     return UserModel.fromFirestore(doc);
   }
 
-  Future<void> logout() => Future.wait([
-        _auth.signOut(),
-        _googleSignIn.signOut(),
-      ]);
-
-  Future<void> updateProfile(UserModel updated) async {
-    await _userDoc(updated.id).update({
-      ...updated.toFirestore(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+  /// Encerra a sessão. O signOut do Google é melhor esforço (a conta pode
+  /// ter entrado por e-mail/senha ou a plataforma não ter o SDK) — nunca
+  /// impede o signOut do Firebase.
+  Future<void> logout() async {
+    try {
+      await _googleSignIn.signOut();
+    } on Exception catch (_) {
+      // Ignorado propositalmente.
+    }
+    await _auth.signOut();
   }
 
+  /// Atualiza apenas os campos editáveis do perfil. `email` e `role` são
+  /// imutáveis (regras do Firestore); `farmName` nulo remove o campo em vez
+  /// de manter o valor antigo.
+  Future<void> updateProfile(UserModel updated) async {
+    try {
+      await _userDoc(updated.id).update({
+        'name':      updated.name,
+        'farmName':  updated.farmName ?? FieldValue.delete(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } on FirebaseException {
+      throw const ServerFailure('Não foi possível salvar o perfil.');
+    }
+  }
+
+  /// Apaga permanentemente a conta e todos os dados privados do usuário
+  /// (LGPD — direito ao esquecimento).
+  ///
+  /// Os chamados (`serviceCalls`) são preservados por auditoria — as regras
+  /// do Firestore proíbem exclusão — mas ficam sem vínculo com o perfil.
   Future<void> deleteAccount() async {
     final user = _auth.currentUser;
     if (user == null) return;
-    await _deleteCollection(_userDoc(user.uid).collection('animals'));
-    await _deleteCollection(_userDoc(user.uid).collection('vaccinations'));
-    await _userDoc(user.uid).delete();
-    await user.delete();
+
+    // O Firebase exige login recente para `user.delete()`. Verificar ANTES
+    // de apagar os dados: se falhasse depois, o perfil já teria sido removido
+    // e a conta ficaria num estado inconsistente (Auth vivo, dados apagados).
+    final lastSignIn = user.metadata.lastSignInTime;
+    final isRecent = lastSignIn != null &&
+        DateTime.now().difference(lastSignIn) <= _recentLoginWindow;
+    if (!isRecent) {
+      throw const AuthFailure(
+        'Por segurança, saia e faça login novamente antes de excluir a conta.',
+      );
+    }
+
+    try {
+      final userDoc = _userDoc(user.uid);
+      for (final name in _privateCollections) {
+        await _deleteCollection(userDoc.collection(name));
+      }
+      await userDoc.delete();
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      throw AuthFailure(_mapFirebaseError(e.code));
+    } on FirebaseException {
+      throw const ServerFailure(
+        'Não foi possível excluir todos os dados. Tente novamente.',
+      );
+    }
+
+    try {
+      await _googleSignIn.signOut();
+    } on Exception catch (_) {
+      // Ignorado propositalmente.
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -111,6 +188,8 @@ class AuthFirebaseDataSource {
       _firestore.collection('users').doc(uid);
 
   /// Primeiro login via Google: cria o documento do usuário se não existir.
+  /// Contas criadas por este caminho entram como produtor (papel imutável);
+  /// veterinários devem usar o cadastro por e-mail para escolher o papel.
   Future<UserModel> _fetchOrCreateUserDoc(User user) async {
     final doc = await _userDoc(user.uid).get();
     if (doc.exists) return UserModel.fromFirestore(doc);
@@ -146,12 +225,14 @@ class AuthFirebaseDataSource {
         'user-not-found' => 'Nenhuma conta encontrada com este e-mail.',
         'wrong-password' => 'Senha incorreta.',
         'invalid-credential' => 'E-mail ou senha incorretos.',
+        'invalid-email' => 'E-mail inválido.',
         'email-already-in-use' => 'Este e-mail já está cadastrado.',
-        'weak-password' => 'Senha muito fraca. Use ao menos 6 caracteres.',
+        'weak-password' => 'Senha muito fraca. Use ao menos 8 caracteres.',
         'user-disabled' => 'Esta conta foi desativada.',
         'network-request-failed' => 'Sem conexão. Verifique sua internet.',
         'too-many-requests' => 'Muitas tentativas. Tente novamente mais tarde.',
-        'requires-recent-login' => 'Faça login novamente para continuar.',
+        'requires-recent-login' =>
+          'Por segurança, saia e faça login novamente antes de continuar.',
         _ => 'Ocorreu um erro. Tente novamente.',
       };
 }

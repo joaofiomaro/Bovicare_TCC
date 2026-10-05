@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/utils/id_generator.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_header.dart';
@@ -60,7 +61,7 @@ class _VaccinationScreenState extends ConsumerState<VaccinationScreen> {
 
   Future<void> _submit(AnimalEntity animal) async {
     final record = VaccinationRecord(
-      id:               DateTime.now().millisecondsSinceEpoch.toString(),
+      id:               generateId(),
       animalId:         widget.animalId,
       vaccineName:      _vaccineName,
       dose:             _dose,

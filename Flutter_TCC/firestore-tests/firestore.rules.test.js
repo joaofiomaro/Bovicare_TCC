@@ -38,6 +38,16 @@ function callDoc(overrides = {}) {
   };
 }
 
+/** Perfil válido (schema exigido pelas regras). */
+function profileDoc(overrides = {}) {
+  return {
+    name: 'Produtor Novo',
+    email: 'novo@bovicare.com',
+    role: 'producer',
+    ...overrides,
+  };
+}
+
 let testEnv;
 
 before(async () => {
@@ -55,17 +65,31 @@ after(async () => {
 
 beforeEach(async () => {
   await testEnv.clearFirestore();
-  // Semeia perfis (com role) e um chamado aberto, ignorando as regras.
+  // Semeia perfis (com role) e chamados em vários estados, ignorando as regras.
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore();
-    await setDoc(doc(db, 'users/prod1'), { name: 'P1', role: 'producer' });
-    await setDoc(doc(db, 'users/prod2'), { name: 'P2', role: 'producer' });
-    await setDoc(doc(db, 'users/vet1'), { name: 'Dra. Ana', role: 'vet' });
-    await setDoc(doc(db, 'users/vet2'), { name: 'Dr. Bob', role: 'vet' });
+    await setDoc(doc(db, 'users/prod1'), { name: 'P1', email: 'p1@x.com', role: 'producer' });
+    await setDoc(doc(db, 'users/prod2'), { name: 'P2', email: 'p2@x.com', role: 'producer' });
+    await setDoc(doc(db, 'users/vet1'), { name: 'Dra. Ana', email: 'ana@x.com', role: 'vet' });
+    await setDoc(doc(db, 'users/vet2'), { name: 'Dr. Bob', email: 'bob@x.com', role: 'vet' });
     await setDoc(doc(db, 'serviceCalls/call1'), callDoc());
     await setDoc(
       doc(db, 'serviceCalls/accepted1'),
       callDoc({ status: 'accepted', vetId: 'vet1', vetName: 'Dra. Ana' }),
+    );
+    await setDoc(
+      doc(db, 'serviceCalls/inprogress1'),
+      callDoc({ status: 'inProgress', vetId: 'vet1', vetName: 'Dra. Ana' }),
+    );
+    await setDoc(
+      doc(db, 'serviceCalls/done1'),
+      callDoc({
+        status: 'completed',
+        vetId: 'vet1',
+        vetName: 'Dra. Ana',
+        resolution: 'Tratado',
+        completedAtIso: '2026-06-08T10:00:00.000Z',
+      }),
     );
   });
 });
@@ -73,6 +97,7 @@ beforeEach(async () => {
 // Atalhos para Firestore por contexto.
 const asProd1 = () => testEnv.authenticatedContext('prod1').firestore();
 const asProd2 = () => testEnv.authenticatedContext('prod2').firestore();
+const asProd3 = () => testEnv.authenticatedContext('prod3').firestore();
 const asVet1 = () => testEnv.authenticatedContext('vet1').firestore();
 const asVet2 = () => testEnv.authenticatedContext('vet2').firestore();
 const asAnon = () => testEnv.unauthenticatedContext().firestore();
@@ -90,15 +115,53 @@ describe('Perfil do usuário', () => {
     await assertFails(getDoc(doc(asAnon(), 'users/prod1')));
   });
 
+  test('cria o próprio perfil com schema válido', async () => {
+    await assertSucceeds(setDoc(doc(asProd3(), 'users/prod3'), profileDoc()));
+  });
+
+  test('NÃO cria perfil em nome de outro uid', async () => {
+    await assertFails(setDoc(doc(asProd3(), 'users/outro'), profileDoc()));
+  });
+
+  test('🔒 NÃO cria perfil com papel desconhecido (ex.: admin)', async () => {
+    await assertFails(
+      setDoc(doc(asProd3(), 'users/prod3'), profileDoc({ role: 'admin' })),
+    );
+  });
+
+  test('NÃO cria perfil com campo fora do schema', async () => {
+    await assertFails(
+      setDoc(doc(asProd3(), 'users/prod3'), profileDoc({ isAdmin: true })),
+    );
+  });
+
+  test('NÃO cria perfil com nome vazio', async () => {
+    await assertFails(
+      setDoc(doc(asProd3(), 'users/prod3'), profileDoc({ name: '' })),
+    );
+  });
+
   test('dono atualiza nome (role inalterado)', async () => {
     await assertSucceeds(
       updateDoc(doc(asProd1(), 'users/prod1'), { name: 'Novo Nome' }),
     );
   });
 
+  test('dono marca demoSeededAt (usado pelo seed do rebanho demo)', async () => {
+    await assertSucceeds(
+      updateDoc(doc(asProd1(), 'users/prod1'), { demoSeededAt: new Date() }),
+    );
+  });
+
   test('🔒 dono NÃO consegue se autopromover a veterinário', async () => {
     await assertFails(
       updateDoc(doc(asProd1(), 'users/prod1'), { role: 'vet' }),
+    );
+  });
+
+  test('🔒 dono NÃO altera o e-mail do perfil', async () => {
+    await assertFails(
+      updateDoc(doc(asProd1(), 'users/prod1'), { email: 'outro@x.com' }),
     );
   });
 });
@@ -131,6 +194,12 @@ describe('Subcoleções privadas (animals/vaccinations/sales/weighings)', () => 
   test('NÃO escreve em subcoleção alheia', async () => {
     await assertFails(
       setDoc(doc(asProd2(), 'users/prod1/sales/s1'), { totalValue: 1 }),
+    );
+  });
+
+  test('NÃO escreve em subcoleção desconhecida pelo app', async () => {
+    await assertFails(
+      setDoc(doc(asProd1(), 'users/prod1/secrets/x'), { any: 1 }),
     );
   });
 });
@@ -168,6 +237,48 @@ describe('Chamados — criação', () => {
       ),
     );
   });
+
+  test('NÃO cria chamado com urgência fora do enum', async () => {
+    await assertFails(
+      setDoc(
+        doc(asProd1(), 'serviceCalls/new5'),
+        callDoc({ urgency: 'critical' }),
+      ),
+    );
+  });
+
+  test('NÃO cria chamado com campo fora do schema', async () => {
+    await assertFails(
+      setDoc(
+        doc(asProd1(), 'serviceCalls/new6'),
+        callDoc({ priorityOverride: 999 }),
+      ),
+    );
+  });
+
+  test('NÃO cria chamado com título vazio', async () => {
+    await assertFails(
+      setDoc(doc(asProd1(), 'serviceCalls/new7'), callDoc({ title: '' })),
+    );
+  });
+
+  test('NÃO cria chamado com UF inválida', async () => {
+    await assertFails(
+      setDoc(
+        doc(asProd1(), 'serviceCalls/new8'),
+        callDoc({ state: 'Rio Grande do Sul' }),
+      ),
+    );
+  });
+
+  test('NÃO cria chamado já com laudo (resolution)', async () => {
+    await assertFails(
+      setDoc(
+        doc(asProd1(), 'serviceCalls/new9'),
+        callDoc({ resolution: 'x' }),
+      ),
+    );
+  });
 });
 
 describe('Chamados — leitura', () => {
@@ -181,6 +292,14 @@ describe('Chamados — leitura', () => {
 
   test('vet lê chamado aberto do pool', async () => {
     await assertSucceeds(getDoc(doc(asVet1(), 'serviceCalls/call1')));
+  });
+
+  test('vet atribuído lê o próprio chamado encerrado', async () => {
+    await assertSucceeds(getDoc(doc(asVet1(), 'serviceCalls/done1')));
+  });
+
+  test('🔒 vet de fora NÃO lê chamado atribuído a outro vet', async () => {
+    await assertFails(getDoc(doc(asVet2(), 'serviceCalls/accepted1')));
   });
 
   test('vet faz query do pool aberto', async () => {
@@ -238,10 +357,59 @@ describe('Chamados — aceitar / evoluir / cancelar', () => {
     );
   });
 
+  test('🔒 vet NÃO aceita em nome de outro vetId', async () => {
+    await assertFails(
+      updateDoc(doc(asVet1(), 'serviceCalls/call1'), {
+        status: 'accepted',
+        vetId: 'vet2',
+        vetName: 'Dr. Bob',
+      }),
+    );
+  });
+
+  test('vet NÃO altera a descrição ao aceitar', async () => {
+    await assertFails(
+      updateDoc(doc(asVet1(), 'serviceCalls/call1'), {
+        status: 'accepted',
+        vetId: 'vet1',
+        vetName: 'Dra. Ana',
+        description: 'Adulterada',
+      }),
+    );
+  });
+
   test('vet atribuído evolui o atendimento', async () => {
     await assertSucceeds(
       updateDoc(doc(asVet1(), 'serviceCalls/accepted1'), {
         status: 'inProgress',
+      }),
+    );
+  });
+
+  test('vet atribuído agenda a visita', async () => {
+    await assertSucceeds(
+      updateDoc(doc(asVet1(), 'serviceCalls/accepted1'), {
+        status: 'inProgress',
+        scheduledDateIso: '2026-06-10T09:00:00.000Z',
+      }),
+    );
+  });
+
+  test('vet atribuído conclui com laudo', async () => {
+    await assertSucceeds(
+      updateDoc(doc(asVet1(), 'serviceCalls/inprogress1'), {
+        status: 'completed',
+        resolution: 'Animal tratado, retorno em 7 dias.',
+        completedAtIso: '2026-06-09T10:00:00.000Z',
+      }),
+    );
+  });
+
+  test('vet atribuído NÃO conclui sem laudo', async () => {
+    await assertFails(
+      updateDoc(doc(asVet1(), 'serviceCalls/inprogress1'), {
+        status: 'completed',
+        completedAtIso: '2026-06-09T10:00:00.000Z',
       }),
     );
   });
@@ -262,10 +430,54 @@ describe('Chamados — aceitar / evoluir / cancelar', () => {
     );
   });
 
+  test('🔒 vet atribuído NÃO transfere o chamado para outro vet', async () => {
+    await assertFails(
+      updateDoc(doc(asVet1(), 'serviceCalls/accepted1'), {
+        vetId: 'vet2',
+        vetName: 'Dr. Bob',
+      }),
+    );
+  });
+
+  test('🔒 chamado concluído é imutável (não reabre)', async () => {
+    await assertFails(
+      updateDoc(doc(asVet1(), 'serviceCalls/done1'), {
+        status: 'inProgress',
+      }),
+    );
+  });
+
   test('produtor cancela o próprio chamado aberto', async () => {
     await assertSucceeds(
       updateDoc(doc(asProd1(), 'serviceCalls/call1'), {
         status: 'cancelled',
+      }),
+    );
+  });
+
+  test('produtor NÃO cancela chamado já aceito', async () => {
+    await assertFails(
+      updateDoc(doc(asProd1(), 'serviceCalls/accepted1'), {
+        status: 'cancelled',
+      }),
+    );
+  });
+
+  test('produtor NÃO edita o chamado ao cancelar', async () => {
+    await assertFails(
+      updateDoc(doc(asProd1(), 'serviceCalls/call1'), {
+        status: 'cancelled',
+        title: 'Editado',
+      }),
+    );
+  });
+
+  test('🔒 produtor NÃO se auto-atribui como vet', async () => {
+    await assertFails(
+      updateDoc(doc(asProd1(), 'serviceCalls/call1'), {
+        status: 'accepted',
+        vetId: 'prod1',
+        vetName: 'P1',
       }),
     );
   });

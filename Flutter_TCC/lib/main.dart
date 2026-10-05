@@ -14,7 +14,10 @@ import 'firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await dotenv.load();
+  // `.env` é opcional: só contém configurações não sensíveis (tile server do
+  // mapa, broker MQTT). Sem o arquivo o app usa os padrões embutidos em vez
+  // de falhar na inicialização.
+  await dotenv.load(isOptional: true);
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 

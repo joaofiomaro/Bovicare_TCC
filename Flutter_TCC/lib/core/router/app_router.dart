@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
@@ -45,13 +47,6 @@ class _AuthChangeListenable extends ChangeNotifier {
   }
 }
 
-/// Redirect global — chamado em cada navegação e ao mudar estado de auth.
-/// Delega à função pura [authRedirect] (testável isoladamente).
-String? _authRedirect(BuildContext context, GoRouterState state) => authRedirect(
-      isLoggedIn: FirebaseAuth.instance.currentUser != null,
-      location: state.matchedLocation,
-    );
-
 /// Provider do GoRouter — criado uma única vez via Riverpod.
 final appRouterProvider = Provider<GoRouter>((ref) {
   final listenable = _AuthChangeListenable();
@@ -59,9 +54,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     initialLocation:    AppPaths.splash,
-    debugLogDiagnostics: true,
+    // Logs de navegação só em debug — em release exporiam rotas e ids de
+    // documentos no logcat/console.
+    debugLogDiagnostics: kDebugMode,
     refreshListenable:  listenable,
-    redirect:           _authRedirect,
+    // Redirect global — chamado em cada navegação e ao mudar estado de auth.
+    // Delega à função pura [authRedirect] (testável isoladamente).
+    redirect: (_, state) => authRedirect(
+      isLoggedIn: FirebaseAuth.instance.currentUser != null,
+      location:   state.matchedLocation,
+      // O papel só é conhecido após carregar o perfil; até lá não restringe.
+      role: ref.read(authProvider).valueOrNull?.role,
+    ),
     routes: [
       GoRoute(
         path:    AppPaths.splash,

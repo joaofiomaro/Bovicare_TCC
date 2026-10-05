@@ -1,11 +1,11 @@
 {
-    "name": "bovicare",
-    "short_name": "bovicare",
+    "name": "BoviCare",
+    "short_name": "BoviCare",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
     "theme_color": "#1C6B3A",
-    "description": "A new Flutter project.",
+    "description": "Gestão de rebanho bovino para produtores e veterinários.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

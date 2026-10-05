@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/errors/failures.dart';
 import '../../data/datasources/auth_firebase_data_source.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/user_entity.dart';
@@ -97,14 +98,30 @@ class AuthNotifier extends AsyncNotifier<UserEntity?> {
     state = const AsyncData(null);
   }
 
-  Future<void> updateProfile(UserEntity updated) async {
-    await UpdateProfileUseCase(ref.read(authRepositoryProvider)).call(updated);
-    state = AsyncData(updated);
+  /// Retorna `false` em caso de falha (o estado atual é preservado).
+  Future<bool> updateProfile(UserEntity updated) async {
+    try {
+      await UpdateProfileUseCase(ref.read(authRepositoryProvider))
+          .call(updated);
+      state = AsyncData(updated);
+      return true;
+    } on Exception catch (_) {
+      return false;
+    }
   }
 
-  Future<void> deleteAccount() async {
-    await DeleteAccountUseCase(ref.read(authRepositoryProvider)).call();
-    state = const AsyncData(null);
+  /// Exclui a conta e os dados. Retorna `null` em sucesso ou a mensagem de
+  /// erro amigável (ex.: exige login recente).
+  Future<String?> deleteAccount() async {
+    try {
+      await DeleteAccountUseCase(ref.read(authRepositoryProvider)).call();
+      state = const AsyncData(null);
+      return null;
+    } on Failure catch (e) {
+      return e.message;
+    } on Exception catch (_) {
+      return 'Não foi possível excluir a conta. Tente novamente.';
+    }
   }
 }
 

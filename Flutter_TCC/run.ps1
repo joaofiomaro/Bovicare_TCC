@@ -44,7 +44,20 @@ if ($running) {
     Start-Sleep -Seconds 2
 }
 
-# 2. Compila e roda o app
+# 2. Garante o .env (asset obrigatorio no build; conteudo nao sensivel)
+$envFile = Join-Path $PSScriptRoot ".env"
+$envExample = Join-Path $PSScriptRoot ".env.example"
+if (-not (Test-Path $envFile)) {
+    if (Test-Path $envExample) {
+        Copy-Item $envExample $envFile
+        Write-Host "[OK] .env criado a partir do .env.example" -ForegroundColor Cyan
+    } else {
+        New-Item -ItemType File -Path $envFile | Out-Null
+        Write-Host "[OK] .env vazio criado (o app usa os padroes embutidos)" -ForegroundColor Cyan
+    }
+}
+
+# 3. Compila e roda o app
 Write-Host ""
 Write-Host "[>>] Compilando BoviCare..." -ForegroundColor Yellow
 Write-Host "[  ] Hot reload: r  |  Restart: R  |  Sair: q" -ForegroundColor DarkGray

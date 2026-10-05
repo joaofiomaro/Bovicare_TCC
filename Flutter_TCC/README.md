@@ -187,13 +187,49 @@ O projeto usa `very_good_analysis` com regras rigorosas. Todo PR deve manter `fl
 
 - Autenticação real via Firebase Auth (sem dados sensíveis em SharedPreferences)
 - Dados privados isolados por `uid` no Firestore (animais, vacinações, vendas, pesagens)
-- **Security Rules por papel** (`firestore.rules`, publicadas): chamados compartilhados
-  com leitura/escrita controladas (dono, vet atribuído, pool aberto); `delete` negado
-- **`role` imutável** após o cadastro — fecha escalonamento de privilégio (produtor não
-  vira veterinário para acessar chamados alheios)
-- **26 testes automatizados de regras** (`firestore-tests/`) validam cada cenário de acesso
-- `google-services.json` / `.env` nunca commitados (`.gitignore`)
-- Auth guard no router — rotas protegidas redirecionam para `/login`
+- **Security Rules por papel + schema** (`firestore.rules`): chamados compartilhados
+  com leitura/escrita controladas (dono, vet atribuído, pool aberto); `delete` negado;
+  cada escrita valida campos permitidos, tipos, tamanhos e enums; transições de status
+  restritas (produtor só cancela em aberto; vet só evolui o próprio; encerrado é imutável)
+- **`role` e `email` imutáveis** após o cadastro — fecha escalonamento de privilégio
+  (produtor não vira veterinário para acessar chamados alheios); `role` só aceita
+  `producer`/`vet`; subcoleções limitadas às conhecidas pelo app
+- **51 testes automatizados de regras** (`firestore-tests/`) validam cada cenário de acesso
+- Auth guard no router — rotas protegidas redirecionam para `/login`; **guarda por papel**
+  (vet não abre telas do produtor e vice-versa)
+- IDs de documentos gerados com `Random.secure` (20 chars, formato Firestore) — nunca
+  `millisecondsSinceEpoch` (previsível e sujeito a colisão)
+- Exclusão de conta (LGPD) apaga **todas** as subcoleções privadas e exige login recente
+  antes de tocar nos dados (evita estado inconsistente); chamados ficam por auditoria
+- Android: `allowBackup=false`; release assinado por `android/key.properties`
+  (nunca versionado — ver `android/key.properties.example`)
+- Logs de navegação do GoRouter apenas em debug
+- `google-services.json` / `GoogleService-Info.plist` / `.env` / `key.properties` nunca
+  commitados (`.gitignore`)
+
+### Chaves de API do Firebase (`lib/firebase_options.dart`)
+
+As chaves ali são **identificadores públicos do projeto** (vão dentro do APK de qualquer
+forma) — a proteção real são as Security Rules. Ainda assim, no Google Cloud Console
+(APIs & Services → Credentials) restrinja cada chave:
+
+| Chave | Restrição recomendada |
+|---|---|
+| Android | Aplicativo Android: `br.com.bovicare.bovicare` + SHA-1 (debug e release) |
+| iOS | Aplicativo iOS: bundle `br.com.bovicare.bovicare` |
+| Web | Referenciadores HTTP: domínios do app |
+
+Recomendado também ativar **Firebase App Check** (Play Integrity / App Attest) para
+que só builds legítimos falem com Firestore/Auth.
+
+### Mapa de veterinários
+
+Usa `flutter_map` + tiles públicos do **OpenStreetMap** — **não** há Google Maps nem
+chave de API. Requisitos atendidos no código: `User-Agent` identificando o app
+(obrigatório pela política do OSM; sem ele o servidor responde 403 e o mapa fica cinza),
+atribuição ODbL, permissão de localização no Android (`ACCESS_FINE/COARSE_LOCATION`)
+e no iOS (`NSLocationWhenInUseUsageDescription`). Se o GPS estiver negado/desligado o
+app usa Rio Claro, SP como referência e avisa na tela.
 
 ---
 

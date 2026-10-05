@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/utils/id_generator.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
@@ -134,7 +135,7 @@ class _AnimalFormScreenState extends ConsumerState<AnimalFormScreen> {
     final base = widget.initial;
     final animal = AnimalEntity(
       // Em edição preserva o id; em cadastro gera um novo.
-      id:        base?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id:        base?.id ?? generateId(),
       earTag:    _earTagController.text.trim(),
       name:      _nameController.text.trim().isEmpty
           ? null

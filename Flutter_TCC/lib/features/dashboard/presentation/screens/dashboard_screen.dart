@@ -236,13 +236,15 @@ class _KpiGrid extends StatelessWidget {
             label:    'Efetivo total',
             value:    stats.totalAnimals,
             sub:      'animais ativos',
-            trend:    '+3 este mês',
             isAccent: true,
           ),
           KpiCard(
             label: 'Prenhas',
             value: stats.pregnantCount,
-            sub:   '${(stats.pregnantCount / stats.totalAnimals * 100).round()}% do rebanho',
+            // Sem animais ativos a divisão daria NaN e `.round()` lançaria.
+            sub:   stats.totalAnimals == 0
+                ? 'sem animais ativos'
+                : '${(stats.pregnantCount / stats.totalAnimals * 100).round()}% do rebanho',
             delay: const Duration(milliseconds: 80),
           ),
           KpiCard(

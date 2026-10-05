@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/utils/id_generator.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_toast.dart';
@@ -102,7 +103,7 @@ class _AnimalExitSheetState extends ConsumerState<AnimalExitSheet> {
         return;
       }
       final sale = SaleRecord(
-        id:        DateTime.now().millisecondsSinceEpoch.toString(),
+        id:        generateId(),
         date:      _date,
         type:      _ids.length > 1 ? SaleType.lote : SaleType.individual,
         animalIds: _ids,

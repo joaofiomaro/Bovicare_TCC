@@ -18,15 +18,21 @@ npm test         # sobe o emulador, roda os testes e desliga
 O script usa `firebase emulators:exec --only firestore` apontando para o
 `../firebase.json`, então não toca em nenhum dado de produção.
 
-## O que é coberto (26 casos)
-- **Perfil:** dono lê/edita o próprio; não lê alheio; **`role` imutável**
-  (impede auto-promoção a veterinário — escalonamento de privilégio).
+## O que é coberto (51 casos)
+- **Perfil:** dono lê/edita o próprio; não lê alheio; cria só com schema
+  válido (`role` ∈ producer/vet, sem campos extras, nome obrigatório);
+  **`role` e `email` imutáveis** (impede auto-promoção a veterinário —
+  escalonamento de privilégio); `demoSeededAt` gravável pelo dono.
 - **Subcoleções** (animals/vaccinations/**sales**/**weighings**): dono
-  escreve nas próprias; bloqueado em subcoleção de outro usuário.
-- **Chamados (serviceCalls):** criação só do próprio, aberta e sem vet;
+  escreve nas próprias; bloqueado em subcoleção de outro usuário e em
+  subcoleções desconhecidas pelo app.
+- **Chamados (serviceCalls):** criação só do próprio, aberta, sem vet e sem
+  campos de conclusão; schema validado (urgência/UF/título/campos extras);
   leitura pelo dono/vet atribuído/pool aberto (vet); aceitar (open→accepted,
-  sem corrida); evoluir só pelo vet atribuído; produtor cancela o próprio;
-  `delete` sempre negado; dados de origem do produtor imutáveis.
+  sem corrida, sem alterar conteúdo, sem se passar por outro vet); evoluir só
+  pelo vet atribuído (agendar, concluir com laudo obrigatório); encerrado é
+  imutável; produtor cancela só em aberto e só o status; produtor não se
+  auto-atribui como vet; `delete` sempre negado.
 
 > Um teste deste conjunto pegou uma falha real: o wildcard recursivo
 > `match /{sub=**}` (no rules_version 2) casa **zero ou mais** segmentos e

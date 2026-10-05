@@ -1,5 +1,6 @@
 import 'package:bovicare/core/router/app_routes.dart';
 import 'package:bovicare/core/router/auth_redirect.dart';
+import 'package:bovicare/features/auth/domain/entities/user_entity.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -56,6 +57,99 @@ void main() {
       expect(
         authRedirect(isLoggedIn: true, location: AppPaths.profile),
         isNull,
+      );
+    });
+  });
+
+  group('authRedirect — guarda por papel', () {
+    test('veterinário NÃO acessa rotas do produtor → dashboard', () {
+      for (final path in [
+        AppPaths.herd,
+        AppPaths.newAnimal,
+        AppPaths.animal('123'),
+        AppPaths.brete,
+        AppPaths.vets,
+        AppPaths.vetDetail('1'),
+        AppPaths.reports,
+        AppPaths.myServiceCalls,
+        AppPaths.newServiceCall,
+      ]) {
+        expect(
+          authRedirect(isLoggedIn: true, location: path, role: UserRole.vet),
+          AppPaths.dashboard,
+          reason: 'vet em $path',
+        );
+      }
+    });
+
+    test('veterinário acessa as próprias rotas e as compartilhadas', () {
+      for (final path in [
+        AppPaths.dashboard,
+        AppPaths.profile,
+        AppPaths.vetCalls,
+        AppPaths.vetAgenda,
+      ]) {
+        expect(
+          authRedirect(isLoggedIn: true, location: path, role: UserRole.vet),
+          isNull,
+          reason: 'vet em $path',
+        );
+      }
+    });
+
+    test('produtor NÃO acessa rotas do veterinário → dashboard', () {
+      for (final path in [AppPaths.vetCalls, AppPaths.vetAgenda]) {
+        expect(
+          authRedirect(
+            isLoggedIn: true,
+            location:   path,
+            role:       UserRole.producer,
+          ),
+          AppPaths.dashboard,
+          reason: 'produtor em $path',
+        );
+      }
+    });
+
+    test('produtor acessa as próprias rotas', () {
+      for (final path in [
+        AppPaths.herd,
+        AppPaths.editAnimal('1'),
+        AppPaths.vets,
+        AppPaths.reports,
+        AppPaths.myServiceCalls,
+      ]) {
+        expect(
+          authRedirect(
+            isLoggedIn: true,
+            location:   path,
+            role:       UserRole.producer,
+          ),
+          isNull,
+          reason: 'produtor em $path',
+        );
+      }
+    });
+
+    test('papel desconhecido (perfil carregando) não restringe', () {
+      expect(
+        authRedirect(isLoggedIn: true, location: AppPaths.vetCalls),
+        isNull,
+      );
+      expect(
+        authRedirect(isLoggedIn: true, location: AppPaths.herd),
+        isNull,
+      );
+    });
+
+    test('guarda por papel não se aplica a quem não está logado', () {
+      expect(
+        authRedirect(
+          isLoggedIn: false,
+          location:   AppPaths.herd,
+          role:       UserRole.vet,
+        ),
+        AppPaths.login,
       );
     });
   });

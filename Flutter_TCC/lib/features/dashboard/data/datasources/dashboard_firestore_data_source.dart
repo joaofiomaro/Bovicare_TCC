@@ -23,6 +23,12 @@ class DashboardFirestoreDataSource with FirestoreErrorHandler {
   CollectionReference<Map<String, dynamic>> get _vaccinationsCol =>
       _firestore.collection('users/$_uid/vaccinations');
 
+  CollectionReference<Map<String, dynamic>> get _weighingsCol =>
+      _firestore.collection('users/$_uid/weighings');
+
+  CollectionReference<Map<String, dynamic>> get _salesCol =>
+      _firestore.collection('users/$_uid/sales');
+
   Future<DashboardStats> getStats() => guardFirestore(() async {
         final now = DateTime.now();
         final in30Days = now.add(const Duration(days: 30));
@@ -65,27 +71,76 @@ class DashboardFirestoreDataSource with FirestoreErrorHandler {
         );
       });
 
-  // Atividades recentes requerem audit trail ainda não implementado no esquema.
-  // Mock mantido intencionalmente — fora do escopo das ETAPAs atuais.
-  Future<List<ActivityItem>> getRecentActivities() async {
-    final now = DateTime.now();
-    return [
-      ActivityItem(
-        type:     ActivityType.vaccination,
-        title:    'Vacinação em lote — Aftosa',
-        subtitle: '12 animais',
-        date:     DateTime(now.year, now.month, now.day, 8, 14),
-      ),
-      ActivityItem(
-        type:  ActivityType.birth,
-        title: 'Parto — Mimosa #047',
-        date:  DateTime(now.year, now.month, now.day - 1, 16, 32),
-      ),
-      ActivityItem(
-        type:  ActivityType.brete,
-        title: 'Brete · Ciclo abrir/fechar',
-        date:  DateTime(now.year, now.month, now.day - 1, 14, 10),
-      ),
-    ];
+  /// Atividades recentes REAIS do usuário: últimas vacinações, pesagens e
+  /// vendas, mescladas e ordenadas da mais recente para a mais antiga.
+  /// (Substitui o mock fixo que exibia eventos fictícios como se fossem dados.)
+  Future<List<ActivityItem>> getRecentActivities({int limit = 6}) =>
+      guardFirestore(() async {
+        final results = await Future.wait([
+          _vaccinationsCol
+              .orderBy('dateIso', descending: true)
+              .limit(limit)
+              .get(),
+          _weighingsCol.orderBy('dateIso', descending: true).limit(limit).get(),
+          _salesCol.orderBy('dateIso', descending: true).limit(limit).get(),
+          _animalsCol.get(),
+        ]);
+
+        final animalNames = {
+          for (final d in results[3].docs) d.id: _animalLabel(d.data()),
+        };
+        String animalOf(Map<String, dynamic> data) =>
+            animalNames[data['animalId']] ?? 'Animal removido';
+
+        final items = <ActivityItem>[
+          for (final d in results[0].docs)
+            if (_date(d.data()) case final date?)
+              ActivityItem(
+                type:     ActivityType.vaccination,
+                title:    'Vacinação — ${d.data()['vaccineName'] ?? 'vacina'}',
+                subtitle: '${animalOf(d.data())} · ${d.data()['dose'] ?? ''}',
+                date:     date,
+              ),
+          for (final d in results[1].docs)
+            if (_date(d.data()) case final date?)
+              ActivityItem(
+                type:     ActivityType.weight,
+                title:    'Pesagem — ${animalOf(d.data())}',
+                subtitle: '${_kg(d.data()['weightKg'])} kg',
+                date:     date,
+              ),
+          for (final d in results[2].docs)
+            if (_date(d.data()) case final date?)
+              ActivityItem(
+                type:     ActivityType.other,
+                title:    'Venda — ${_heads(d.data()['headCount'])}',
+                subtitle: (d.data()['buyer'] as String?)?.trim().isNotEmpty ??
+                        false
+                    ? 'Comprador: ${d.data()['buyer']}'
+                    : null,
+                date:     date,
+              ),
+        ]..sort((a, b) => b.date.compareTo(a.date));
+
+        return items.take(limit).toList();
+      });
+
+  // ---------------------------------------------------------------------------
+
+  static DateTime? _date(Map<String, dynamic> data) =>
+      DateTime.tryParse((data['dateIso'] as String?) ?? '');
+
+  static String _animalLabel(Map<String, dynamic> data) {
+    final name   = (data['name'] as String?)?.trim();
+    final earTag = data['earTag'] ?? '?';
+    return name != null && name.isNotEmpty ? '$name — #$earTag' : '#$earTag';
+  }
+
+  static String _kg(Object? value) =>
+      value is num ? value.toStringAsFixed(0) : '?';
+
+  static String _heads(Object? value) {
+    final n = value is num ? value.toInt() : 0;
+    return '$n ${n == 1 ? 'animal' : 'animais'}';
   }
 }

@@ -9,6 +9,9 @@ import '../../domain/usecases/calculate_distance_use_case.dart';
 import '../../domain/usecases/get_vet_by_id_use_case.dart';
 import '../../domain/usecases/get_vets_use_case.dart';
 
+export '../../data/services/location_service.dart'
+    show LocationSource, UserLocation;
+
 // --- DI ---
 
 final _vetDataSourceProvider = Provider<VetInMemoryDataSource>(
@@ -25,8 +28,10 @@ final _locationServiceProvider = Provider<LocationService>(
 
 // --- Localização do usuário ---
 
-/// Retorna (lat, lng) — usa fallback Rio Claro, SP se permissão negada.
-final userLocationProvider = FutureProvider<(double, double)>((ref) {
+/// Posição do usuário com origem (GPS, última conhecida ou fallback
+/// Rio Claro, SP). Invalidar este provider força uma nova leitura do GPS e
+/// recalcula as distâncias em [vetsProvider].
+final userLocationProvider = FutureProvider<UserLocation>((ref) {
   return ref.read(_locationServiceProvider).getCurrentLocation();
 });
 
@@ -48,17 +53,17 @@ class VetsNotifier extends AsyncNotifier<List<VetEntity>> {
     final onlyAvailable = ref.watch(vetAvailableFilterProvider);
     final query         = ref.watch(vetSearchProvider);
 
-    final (repo, location) = await (
-      Future.value(ref.read(vetRepositoryProvider)),
-      ref.read(userLocationProvider.future),
-    ).wait;
+    // `watch` (não `read`): quando a localização é atualizada, a lista e as
+    // distâncias são recalculadas automaticamente.
+    final location = await ref.watch(userLocationProvider.future);
+    final repo     = ref.read(vetRepositoryProvider);
 
     final all = await GetVetsUseCase(repo).call();
 
     final withDistance = all.map((v) {
       final km = _calcDistance(
-        lat1: location.$1, lng1: location.$2,
-        lat2: v.lat,       lng2: v.lng,
+        lat1: location.lat, lng1: location.lng,
+        lat2: v.lat,        lng2: v.lng,
       );
       return v.copyWith(distanceKm: double.parse(km.toStringAsFixed(1)));
     }).toList()

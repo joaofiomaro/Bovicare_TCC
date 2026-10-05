@@ -29,6 +29,13 @@ class _VetsListScreenState extends ConsumerState<VetsListScreen> {
     super.dispose();
   }
 
+  /// Relê o GPS e recalcula distâncias/ordenação (pull-to-refresh).
+  Future<void> _refresh() async {
+    ref
+      ..invalidate(userLocationProvider)
+      ..invalidate(vetsProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
     final vets          = ref.watch(vetsProvider);
@@ -39,6 +46,7 @@ class _VetsListScreenState extends ConsumerState<VetsListScreen> {
       data: (list) => list.where((v) => v.isAvailable).length,
       orElse: () => 0,
     );
+    final usingFallback = location.valueOrNull?.isFallback ?? false;
 
     return Scaffold(
       body: Column(
@@ -46,7 +54,9 @@ class _VetsListScreenState extends ConsumerState<VetsListScreen> {
           AppHeader(
             title:    'Veterinários',
             subtitle: vets.maybeWhen(
-              data: (_) => '$availableCount disponíveis perto de você',
+              data: (_) => usingFallback
+                  ? '$availableCount disponíveis na região de referência'
+                  : '$availableCount disponíveis perto de você',
               orElse: () => null,
             ),
             actions: [
@@ -117,8 +127,8 @@ class _VetsListScreenState extends ConsumerState<VetsListScreen> {
                         data:    (loc) => vets.maybeWhen(
                           data: (list) => VetsMap(
                             vets:    list,
-                            userLat: loc.$1,
-                            userLng: loc.$2,
+                            userLat: loc.lat,
+                            userLng: loc.lng,
                           ),
                           orElse: () => const AppSkeleton(height: 180),
                         ),
@@ -127,6 +137,9 @@ class _VetsListScreenState extends ConsumerState<VetsListScreen> {
                   )
                 : const SizedBox.shrink(),
           ),
+
+          // Aviso quando a posição real não está disponível.
+          if (usingFallback) const _LocationFallbackNotice(),
 
           // Cabeçalho da lista com toggle do mapa
           Padding(
@@ -173,7 +186,7 @@ class _VetsListScreenState extends ConsumerState<VetsListScreen> {
                 title:       'Erro ao carregar',
                 subtitle:    e.toString(),
                 actionLabel: 'Tentar novamente',
-                onAction:    () => ref.invalidate(vetsProvider),
+                onAction:    _refresh,
               ),
               data: (list) {
                 if (list.isEmpty) {
@@ -193,7 +206,7 @@ class _VetsListScreenState extends ConsumerState<VetsListScreen> {
                 }
                 return RefreshIndicator(
                   color:     AppColors.brandGreen,
-                  onRefresh: () async => ref.invalidate(vetsProvider),
+                  onRefresh: _refresh,
                   child: ListView.separated(
                     padding:    const EdgeInsets.all(AppSpacing.base),
                     itemCount:  list.length,
@@ -213,6 +226,47 @@ class _VetsListScreenState extends ConsumerState<VetsListScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Aviso exibido quando o GPS está desligado/negado: o mapa e as distâncias
+/// usam a cidade de referência (Rio Claro, SP) em vez da posição real.
+class _LocationFallbackNotice extends StatelessWidget {
+  const _LocationFallbackNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.base, 0, AppSpacing.base, AppSpacing.xs,
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical:   AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color:        AppColors.amberLight,
+          borderRadius: const BorderRadius.all(Radius.circular(10)),
+          border:       Border.all(color: AppColors.amber.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.location_off_outlined, size: 16, color: AppColors.amber),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                'Localização indisponível — mostrando a região de Rio Claro, SP. '
+                'Ative o GPS e puxe a lista para atualizar.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.amber,
+                    ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

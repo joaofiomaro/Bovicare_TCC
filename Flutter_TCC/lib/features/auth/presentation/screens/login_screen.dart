@@ -33,13 +33,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   bool _validate() {
-    final emailVal = EmailInput.dirty(_emailController.text);
-    final passVal  = PasswordInput.dirty(_passwordController.text);
+    final emailVal  = EmailInput.dirty(_emailController.text.trim());
+    // No login só se exige senha preenchida: a política de tamanho vale para
+    // o cadastro; quem decide se a senha confere é o Firebase Auth.
+    final passEmpty = _passwordController.text.isEmpty;
     setState(() {
       _emailError    = emailVal.isValid ? null : 'Informe um e-mail válido.';
-      _passwordError = passVal.isValid  ? null : 'Senha deve ter ao menos 8 caracteres.';
+      _passwordError = passEmpty ? 'Informe sua senha.' : null;
     });
-    return emailVal.isValid && passVal.isValid;
+    return emailVal.isValid && !passEmpty;
   }
 
   Future<void> _onLogin() async {

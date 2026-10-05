@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/utils/validators.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_text_field.dart';
@@ -34,11 +36,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   bool _validate() {
-    final name  = _nameController.text.trim();
-    final email = _emailController.text.trim();
-    final pass  = _passwordController.text;
-    if (name.isEmpty || email.isEmpty || pass.length < 8) {
-      AppToast.error(context, 'Preencha todos os campos corretamente.');
+    final name  = RequiredInput.dirty(_nameController.text);
+    final email = EmailInput.dirty(_emailController.text.trim());
+    final pass  = PasswordInput.dirty(_passwordController.text);
+
+    final error = switch ((name.error, email.error, pass.error)) {
+      (final e?, _, _) => e.message,
+      (_, final e?, _) => e.message,
+      (_, _, final e?) => e.message,
+      _                => null,
+    };
+    if (error != null) {
+      AppToast.error(context, error);
       return false;
     }
     return true;
@@ -57,7 +66,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       context.goNamed(AppRoutes.dashboard);
     } else {
       final error = ref.read(authProvider).error;
-      AppToast.error(context, error?.toString() ?? 'Erro ao criar conta.');
+      // Só mensagens amigáveis (Failure) chegam à UI — nunca o texto bruto
+      // de uma exceção do Firebase.
+      AppToast.error(
+        context,
+        error is Failure ? error.message : 'Erro ao criar conta.',
+      );
     }
   }
 

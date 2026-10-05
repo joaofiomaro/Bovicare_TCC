@@ -3,10 +3,17 @@ rules_version = '2';
 // BoviCare — Regras de segurança do Firestore.
 // Dados privados isolados por usuário (rebanho, vacinações, vendas, pesagens,
 // perfil) e a coleção compartilhada `serviceCalls` (produtor ↔ veterinário).
+//
+// Além do controle de acesso, as regras validam o SCHEMA do que é escrito
+// (campos permitidos, tipos, tamanhos, enums): o cliente é confiável só até
+// o ponto em que alguém extrai a API key do APK e chama o Firestore direto.
+//
 // Publicar com: firebase deploy --only firestore:rules
+// Testar com:   cd firestore-tests && npm test
 service cloud.firestore {
   match /databases/{db}/documents {
 
+    // ── Helpers de identidade ─────────────────────────────────────────────────
     function isSignedIn() { return request.auth != null; }
 
     function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
@@ -19,57 +26,137 @@ service cloud.firestore {
         && get(/databases/$(db)/documents/users/$(request.auth.uid)).data.role == 'vet';
     }
 
+    // ── Helpers de schema ─────────────────────────────────────────────────────
+    function isStr(v, max) { return v is string && v.size() <= max; }
+
+    function isNonEmptyStr(v, max) {
+      return v is string && v.size() > 0 && v.size() <= max;
+    }
+
+    // Campo opcional: ausente OU string dentro do limite.
+    function optStr(data, field, max) {
+      return !(field in data) || isStr(data[field], max);
+    }
+
+    function optNum(data, field) {
+      return !(field in data) || data[field] is number;
+    }
+
+    // Chaves efetivamente alteradas num update (ignora as que não mudaram).
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
     // ── Perfil do usuário ─────────────────────────────────────────────────────
+    function validProfile(d) {
+      return d.keys().hasOnly([
+          'name', 'email', 'role', 'farmName',
+          'createdAt', 'updatedAt', 'demoSeededAt',
+        ])
+        && isNonEmptyStr(d.name, 120)
+        && isStr(d.email, 254)
+        && d.role in ['producer', 'vet']
+        && optStr(d, 'farmName', 120);
+    }
+
     match /users/{uid} {
       allow read:   if isOwner(uid);
-      allow create: if isOwner(uid);
+      allow create: if isOwner(uid) && validProfile(request.resource.data);
       // `role` é definido no cadastro e IMUTÁVEL depois — impede que um produtor
       // se autopromova a veterinário e acesse o pool de chamados alheios.
+      // `email` também é imutável: é o identificador de login (Firebase Auth).
       allow update: if isOwner(uid)
-                    && request.resource.data.role == resource.data.role;
+                    && validProfile(request.resource.data)
+                    && request.resource.data.role  == resource.data.role
+                    && request.resource.data.email == resource.data.email;
       allow delete: if isOwner(uid);
     }
 
-    // Subcoleções privadas (animals, vaccinations, sales, weighings).
+    // Subcoleções privadas — apenas as conhecidas pelo app.
     // Wildcard de NÍVEL ÚNICO ({collection}/{docId} = 2 segmentos): cobre os
     // documentos das subcoleções SEM casar o doc de perfil acima — caso
     // contrário um `allow write` recursivo (`{sub=**}`) anularia a
     // imutabilidade do `role` (vide teste de auto-promoção).
     match /users/{uid}/{collection}/{docId} {
-      allow read, write: if isOwner(uid);
+      allow read, write: if isOwner(uid)
+        && collection in ['animals', 'vaccinations', 'sales', 'weighings'];
     }
 
     // ── Chamados — coleção compartilhada produtor ↔ vet ───────────────────────
+    function validCall(d) {
+      return d.keys().hasOnly([
+          'producerId', 'producerName', 'city', 'state', 'title', 'description',
+          'urgency', 'status', 'createdAtIso', 'farmName', 'lat', 'lng',
+          'animalEarTag', 'vetId', 'vetName', 'scheduledDateIso',
+          'completedAtIso', 'resolution',
+        ])
+        && isNonEmptyStr(d.producerId, 128)
+        && isNonEmptyStr(d.producerName, 120)
+        && isNonEmptyStr(d.city, 80)
+        && d.state is string && d.state.size() == 2
+        && isNonEmptyStr(d.title, 120)
+        && isNonEmptyStr(d.description, 2000)
+        && d.urgency in ['low', 'normal', 'high']
+        && d.status in ['open', 'accepted', 'inProgress', 'completed', 'cancelled']
+        && isNonEmptyStr(d.createdAtIso, 40)
+        && optStr(d, 'farmName', 120)
+        && optStr(d, 'animalEarTag', 40)
+        && optStr(d, 'vetId', 128)
+        && optStr(d, 'vetName', 120)
+        && optStr(d, 'scheduledDateIso', 40)
+        && optStr(d, 'completedAtIso', 40)
+        && optStr(d, 'resolution', 4000)
+        && optNum(d, 'lat')
+        && optNum(d, 'lng');
+    }
+
+    function isAssignedVet() {
+      return isSignedIn()
+        && 'vetId' in resource.data
+        && resource.data.vetId == request.auth.uid;
+    }
+
     match /serviceCalls/{callId} {
-      // Produtor cria o próprio chamado, sempre aberto e sem vet pré-atribuído.
+      // Produtor cria o próprio chamado, sempre aberto, sem vet pré-atribuído
+      // e sem campos que só existem depois do atendimento.
       allow create: if isOwner(request.resource.data.producerId)
+                    && validCall(request.resource.data)
                     && request.resource.data.status == 'open'
-                    && !('vetId' in request.resource.data);
+                    && !('vetId'          in request.resource.data)
+                    && !('vetName'        in request.resource.data)
+                    && !('resolution'     in request.resource.data)
+                    && !('completedAtIso' in request.resource.data);
 
       // Leem: o produtor dono, o vet atribuído ou qualquer vet quando aberto (pool).
       allow read: if isOwner(resource.data.producerId)
-                  || (isSignedIn() && resource.data.vetId == request.auth.uid)
+                  || isAssignedVet()
                   || (resource.data.status == 'open' && isVet());
 
-      allow update: if
-        // Produtor cancela o próprio chamado enquanto ainda aberto.
+      allow update: if validCall(request.resource.data) && (
+        // Produtor cancela o próprio chamado enquanto ainda aberto — e só
+        // pode mexer no status.
         (isOwner(resource.data.producerId)
            && resource.data.status == 'open'
            && request.resource.data.status == 'cancelled'
-           && request.resource.data.producerId == resource.data.producerId)
+           && changedKeys().hasOnly(['status']))
         // Vet aceita um chamado do pool (open → accepted, assume o vínculo).
         || (isVet()
            && resource.data.status == 'open'
            && request.resource.data.status == 'accepted'
            && request.resource.data.vetId == request.auth.uid
-           && request.resource.data.producerId == resource.data.producerId)
-        // Vet atribuído evolui o atendimento — sem alterar o vínculo nem os
-        // dados de origem do produtor.
-        || (isSignedIn()
-           && resource.data.vetId == request.auth.uid
-           && request.resource.data.vetId == resource.data.vetId
-           && request.resource.data.producerId == resource.data.producerId
-           && request.resource.data.producerName == resource.data.producerName);
+           && changedKeys().hasOnly(['status', 'vetId', 'vetName']))
+        // Vet atribuído evolui o atendimento (accepted/inProgress → ... →
+        // completed), sem alterar vínculo nem dados de origem do produtor.
+        // Chamados encerrados (completed/cancelled) são imutáveis.
+        || (isAssignedVet()
+           && resource.data.status in ['accepted', 'inProgress']
+           && request.resource.data.status in ['accepted', 'inProgress', 'completed']
+           && (request.resource.data.status != 'completed'
+               || 'resolution' in request.resource.data)
+           && changedKeys().hasOnly([
+                'status', 'scheduledDateIso', 'resolution', 'completedAtIso',
+              ]))
+      );
 
       // Nunca deletar — histórico/auditoria.
       allow delete: if false;

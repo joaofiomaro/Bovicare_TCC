@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/utils/id_generator.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_chip_filter.dart';
 import '../../../../shared/widgets/app_header.dart';
@@ -45,21 +46,27 @@ class _OpenServiceCallScreenState
     final user = ref.read(authProvider).valueOrNull;
     if (user == null) return;
 
+    final uf = _state.text.trim().toUpperCase();
     if (_title.text.trim().isEmpty ||
         _description.text.trim().isEmpty ||
         _city.text.trim().isEmpty) {
       setState(() => _error = 'Preencha título, descrição e cidade.');
       return;
     }
+    // As regras do Firestore exigem UF com exatamente 2 letras.
+    if (!RegExp(r'^[A-Z]{2}$').hasMatch(uf)) {
+      setState(() => _error = 'Informe a UF com 2 letras (ex.: SP).');
+      return;
+    }
     setState(() => _error = null);
 
     final call = ServiceCall(
-      id:           DateTime.now().millisecondsSinceEpoch.toString(),
+      id:           generateId(),
       producerId:   user.id,
       producerName: user.name,
       farmName:     user.farmName,
       city:         _city.text.trim(),
-      state:        _state.text.trim().toUpperCase(),
+      state:        uf,
       title:        _title.text.trim(),
       description:  _description.text.trim(),
       animalEarTag: _earTag.text.trim().isEmpty ? null : _earTag.text.trim(),

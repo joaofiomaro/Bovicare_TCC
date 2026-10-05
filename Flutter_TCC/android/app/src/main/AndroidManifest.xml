@@ -2,12 +2,18 @@
     <!-- Permissões de localização para o mapa de veterinários -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <!-- Permissão de internet para tiles do mapa (OpenStreetMap) -->
+    <!-- Permissão de internet para tiles do mapa (OpenStreetMap) e Firebase -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!--
+        allowBackup=false: o cache offline do Firestore (dados do rebanho) e a
+        sessão do Firebase Auth ficam no armazenamento privado do app e não
+        devem ser copiados para backups na nuvem/adb.
+    -->
     <application
         android:label="BoviCare"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -45,6 +51,28 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!--
+            Package visibility (Android 11+): sem estas entradas o url_launcher
+            não consegue resolver os apps de telefone, e-mail, navegador e
+            WhatsApp usados nos botões de contato do veterinário.
+        -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="tel"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="mailto"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <category android:name="android.intent.category.BROWSABLE"/>
+            <data android:scheme="https"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="whatsapp"/>
         </intent>
     </queries>
 </manifest>

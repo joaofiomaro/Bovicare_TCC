@@ -1,0 +1,8 @@
+# Copie para android/key.properties (ignorado pelo git) e preencha.
+# Gere o keystore com:
+#   keytool -genkey -v -keystore ~/bovicare-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias bovicare
+# NUNCA versione o .jks nem este arquivo preenchido.
+storePassword=SENHA_DO_KEYSTORE
+keyPassword=SENHA_DA_CHAVE
+keyAlias=bovicare
+storeFile=C:/Users/SEU_USUARIO/bovicare-release.jks

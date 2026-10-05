@@ -7,7 +7,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		<string>Bovicare</string>
+		<string>BoviCare</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
@@ -24,8 +24,44 @@
 		<string>????</string>
 		<key>CFBundleVersion</key>
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
+		<!--
+			Google Sign-In (iOS): o app precisa registrar o esquema de URL com o
+			client ID invertido para receber o retorno do fluxo OAuth. O valor
+			corresponde ao iosClientId de lib/firebase_options.dart.
+		-->
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>com.googleusercontent.apps.905084887067-bh7b57kdlq3d8n0j5netjparetharv4b</string>
+				</array>
+			</dict>
+		</array>
+		<key>GIDClientID</key>
+		<string>905084887067-bh7b57kdlq3d8n0j5netjparetharv4b.apps.googleusercontent.com</string>
+		<!--
+			url_launcher: esquemas consultados pelos botões de contato do
+			veterinário (ligar, e-mail, WhatsApp, navegador).
+		-->
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>tel</string>
+			<string>mailto</string>
+			<string>https</string>
+			<string>whatsapp</string>
+		</array>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
+		<!--
+			Localização (geolocator): sem esta descrição o iOS encerra o app ao
+			pedir permissão. Usada apenas para centralizar o mapa e ordenar os
+			veterinários por distância — nunca é enviada ao servidor.
+		-->
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>O BoviCare usa sua localização para mostrar os veterinários mais próximos no mapa.</string>
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>
@@ -53,18 +89,15 @@
 		<string>LaunchScreen</string>
 		<key>UIMainStoryboardFile</key>
 		<string>Main</string>
+		<!-- O app trava em retrato (main.dart) — o Info.plist reflete isso. -->
 		<key>UISupportedInterfaceOrientations</key>
 		<array>
 			<string>UIInterfaceOrientationPortrait</string>
-			<string>UIInterfaceOrientationLandscapeLeft</string>
-			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
 		<key>UISupportedInterfaceOrientations~ipad</key>
 		<array>
 			<string>UIInterfaceOrientationPortrait</string>
 			<string>UIInterfaceOrientationPortraitUpsideDown</string>
-			<string>UIInterfaceOrientationLandscapeLeft</string>
-			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>

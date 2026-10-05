@@ -71,7 +71,7 @@ class ProfileScreen extends ConsumerWidget {
                     iconBg:    AppColors.dangerLight,
                     iconColor: AppColors.danger,
                     title:     'Excluir conta',
-                    subtitle:  '30 dias de carência para reverter',
+                    subtitle:  'Remove a conta e todos os seus dados',
                     onTap:     () => _deleteAccount(context, ref),
                   ),
 
@@ -138,11 +138,15 @@ class ProfileScreen extends ConsumerWidget {
       iconColor:      AppColors.danger,
     );
     if (confirmed != true || !context.mounted) return;
-    await ref.read(authProvider.notifier).deleteAccount();
-    if (context.mounted) {
-      AppToast.info(context, 'Solicitação de exclusão registrada.');
-      context.goNamed(AppRoutes.login);
+    final error = await ref.read(authProvider.notifier).deleteAccount();
+    if (!context.mounted) return;
+    if (error != null) {
+      // Ex.: Firebase exige login recente — o usuário sai, entra e repete.
+      AppToast.error(context, error);
+      return;
     }
+    AppToast.success(context, 'Conta e dados excluídos.');
+    context.goNamed(AppRoutes.login);
   }
 }
 
@@ -474,10 +478,14 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
           ? null
           : _farmController.text.trim(),
     );
-    await widget.ref.read(authProvider.notifier).updateProfile(updated);
-    if (mounted) {
+    final ok = await widget.ref.read(authProvider.notifier).updateProfile(updated);
+    if (!mounted) return;
+    if (ok) {
       Navigator.of(context).pop();
       AppToast.success(context, 'Perfil atualizado!');
+    } else {
+      setState(() => _saving = false);
+      AppToast.error(context, 'Não foi possível salvar. Tente novamente.');
     }
   }
 
