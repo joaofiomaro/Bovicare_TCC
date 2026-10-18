@@ -7,6 +7,7 @@ import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_skeleton.dart';
 import '../../domain/entities/vet_entity.dart';
+import '../../domain/repositories/vet_repository.dart';
 import '../providers/vets_provider.dart';
 import '../widgets/contact_buttons.dart';
 
@@ -132,9 +133,18 @@ class _VetHeader extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 8),
-          AppBadge(
-            label: vet.isAvailable ? 'Disponível agora' : 'Ocupado',
-            type:  vet.isAvailable ? BadgeType.success : BadgeType.warning,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppBadge(
+                label: vet.isAvailable ? 'Disponível agora' : 'Ocupado',
+                type:  vet.isAvailable ? BadgeType.success : BadgeType.warning,
+              ),
+              if (vet.isDemo) ...[
+                const SizedBox(width: 6),
+                const AppBadge(label: 'Perfil de demonstração'),
+              ],
+            ],
           ),
         ],
       ),

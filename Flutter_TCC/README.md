@@ -16,7 +16,7 @@ Aplicativo mobile de gestão de rebanho bovino desenvolvido como TCC (Trabalho d
 | Banco de dados | Firestore (offline-first, persistência nativa) |
 | UI | Material 3, Plus Jakarta Sans, flutter_animate |
 | Mapas | flutter_map + OpenStreetMap (sem chave de API) |
-| IoT | MQTT (brete ESP32 — aguarda hardware) |
+| IoT | MQTT (brete ESP32) com modo simulação sem hardware |
 | Qualidade | very_good_analysis, mocktail, flutter_test |
 
 ---
@@ -40,7 +40,10 @@ lib/
 │   ├── herd/       # Rebanho: CRUD, ficha (4 tabs), baixa (venda/óbito), arquivados
 │   ├── vaccination/# Registros sanitários (Firestore)
 │   ├── brete/      # Painel IoT ESP32 (placeholder)
-│   ├── vets/       # Veterinários (in-memory)
+│   ├── vets/       # Diretório de veterinários (Firestore + demonstrativos)
+│   ├── health/     # Manejos: vermifugação, medicação, observação, reprodução
+│   ├── alerts/     # Central de alertas (vacinas, partos, carência)
+│   ├── settings/   # Preferências de alertas e consentimentos LGPD
 │   ├── weighing/   # Pesagens e ganho de peso (GMD)
 │   ├── service_call/# Chamados produtor↔vet (coleção compartilhada)
 │   ├── reports/    # Relatórios por tipo e período
@@ -134,7 +137,7 @@ flutter test test/widget/
 flutter test --coverage
 ```
 
-**159 testes Flutter** (unit + widget) verdes.
+**216 testes Flutter** (unit + widget) verdes.
 
 ### Testes das Security Rules (emulador)
 
@@ -142,9 +145,9 @@ Validam as regras do Firestore de forma reproduzível (não tocam produção):
 ```bash
 cd firestore-tests
 npm install      # primeira vez
-npm test         # sobe o emulador, roda 26 casos e desliga
+npm test         # sobe o emulador, roda 61 casos e desliga
 ```
-Requer Java 11+ (emulador) e Firebase CLI. Detalhes em `firestore-tests/README.md`.
+Requer Java 21+ (emulador) e Firebase CLI. Detalhes em `firestore-tests/README.md`.
 
 ---
 
@@ -164,7 +167,7 @@ O projeto usa `very_good_analysis` com regras rigorosas. Todo PR deve manter `fl
 | Tela | Descrição | Status |
 |---|---|---|
 | Splash | Redirect automático por estado de auth | ✅ |
-| Login | E-mail/senha + Google Sign-In | ✅ |
+| Login | E-mail/senha + Google Sign-In, esqueci minha senha, escolha de papel no 1º acesso Google | ✅ |
 | Cadastro | Produtor ou veterinário | ✅ |
 | Dashboard | KPIs reais (total, prenhas, alertas, vacinas) | ✅ |
 | Rebanho | CRUD completo, filtros, busca live, modo seleção | ✅ |
@@ -172,14 +175,16 @@ O projeto usa `very_good_analysis` com regras rigorosas. Todo PR deve manter `fl
 | Cadastro/Edição de Animal | Formulário reutilizável, RFID simulado, upsert | ✅ |
 | Arquivados | Animais vendidos/óbito (histórico preservado) | ✅ |
 | Vacinação | Formulário + cálculo de carência MAPA | ✅ |
-| Brete IoT | Painel MQTT (aguarda hardware ESP32) | ⏸️ |
-| Veterinários | Mapa OSM, filtros, botões de contato | ✅ |
+| Brete IoT | Porteira, emergência, sensores e RFID via MQTT; simulação sem hardware | ✅ |
+| Veterinários | Mapa OSM, filtros, contato; perfis reais publicados pelos vets | ✅ |
+| Manejos | Vermifugação, medicação (carência), observação, prenhez/parto/perda | ✅ |
+| Alertas | Vacinas, partos previstos e carência, com antecedência configurável | ✅ |
 | Baixa de rebanho | Venda/óbito, individual e em lote (batch atômico) | ✅ |
 | Pesagens | Histórico + GMD por animal | ✅ |
-| Chamados | Produtor abre; vet aceita (transação), evolui e conclui com laudo | ✅ |
+| Chamados | Tempo real; produtor abre (com localização opcional da fazenda); vet aceita (transação), evolui e conclui com laudo | ✅ |
 | Dashboard do vet | Tabs e KPIs por papel (`tabsForRole`) | ✅ |
-| Relatórios | Sanitário, reprodutivo, financeiro (+GMD), vendas, inventário | ✅ |
-| Perfil | Editar dados, dark mode, LGPD, logout | ✅ |
+| Relatórios | Sanitário, reprodutivo, financeiro (+GMD), vendas, inventário; exportação PDF/CSV | ✅ |
+| Perfil | Editar dados, dark mode, consentimentos e exportação de dados (LGPD), sincronização, logout | ✅ |
 
 ---
 
@@ -194,7 +199,7 @@ O projeto usa `very_good_analysis` com regras rigorosas. Todo PR deve manter `fl
 - **`role` e `email` imutáveis** após o cadastro — fecha escalonamento de privilégio
   (produtor não vira veterinário para acessar chamados alheios); `role` só aceita
   `producer`/`vet`; subcoleções limitadas às conhecidas pelo app
-- **51 testes automatizados de regras** (`firestore-tests/`) validam cada cenário de acesso
+- **61 testes automatizados de regras** (`firestore-tests/`) validam cada cenário de acesso
 - Auth guard no router — rotas protegidas redirecionam para `/login`; **guarda por papel**
   (vet não abre telas do produtor e vice-versa)
 - IDs de documentos gerados com `Random.secure` (20 chars, formato Firestore) — nunca

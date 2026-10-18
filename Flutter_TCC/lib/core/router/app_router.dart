@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/alerts/presentation/screens/alerts_screen.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../../features/auth/presentation/screens/complete_profile_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
@@ -23,8 +25,11 @@ import '../../features/service_call/presentation/screens/open_service_call_scree
 import '../../features/service_call/presentation/screens/producer_calls_screen.dart';
 import '../../features/service_call/presentation/screens/vet_agenda_screen.dart';
 import '../../features/service_call/presentation/screens/vet_calls_screen.dart';
+import '../../features/settings/presentation/screens/alert_settings_screen.dart';
+import '../../features/settings/presentation/screens/consents_screen.dart';
 import '../../features/vaccination/presentation/screens/vaccination_screen.dart';
 import '../../features/vets/presentation/screens/vet_detail_screen.dart';
+import '../../features/vets/presentation/screens/vet_professional_profile_screen.dart';
 import '../../features/vets/presentation/screens/vets_list_screen.dart';
 import '../../shared/widgets/app_shell.dart';
 import 'app_routes.dart';
@@ -40,6 +45,9 @@ class _AuthChangeListenable extends ChangeNotifier {
 
   late final StreamSubscription<User?> _sub;
 
+  /// Força o GoRouter a reavaliar o redirect.
+  void refresh() => notifyListeners();
+
   @override
   void dispose() {
     _sub.cancel();
@@ -50,7 +58,11 @@ class _AuthChangeListenable extends ChangeNotifier {
 /// Provider do GoRouter — criado uma única vez via Riverpod.
 final appRouterProvider = Provider<GoRouter>((ref) {
   final listenable = _AuthChangeListenable();
-  ref.onDispose(listenable.dispose);
+  ref
+    ..onDispose(listenable.dispose)
+    // O redirect também depende do perfil (papel / perfil pendente): reavalia
+    // quando o estado de auth do app muda, não só o do Firebase.
+    ..listen(authProvider, (_, __) => listenable.refresh());
 
   return GoRouter(
     initialLocation:    AppPaths.splash,
@@ -60,12 +72,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable:  listenable,
     // Redirect global — chamado em cada navegação e ao mudar estado de auth.
     // Delega à função pura [authRedirect] (testável isoladamente).
-    redirect: (_, state) => authRedirect(
-      isLoggedIn: FirebaseAuth.instance.currentUser != null,
-      location:   state.matchedLocation,
-      // O papel só é conhecido após carregar o perfil; até lá não restringe.
-      role: ref.read(authProvider).valueOrNull?.role,
-    ),
+    redirect: (_, state) {
+      final isLoggedIn = FirebaseAuth.instance.currentUser != null;
+      final auth = ref.read(authProvider);
+      return authRedirect(
+        isLoggedIn: isLoggedIn,
+        location:   state.matchedLocation,
+        // O papel só é conhecido após carregar o perfil; até lá não restringe.
+        role: auth.valueOrNull?.role,
+        // Logado no Firebase, perfil já consultado e inexistente.
+        needsProfile: isLoggedIn &&
+            !auth.isLoading &&
+            !auth.hasError &&
+            auth.valueOrNull == null,
+      );
+    },
     routes: [
       GoRoute(
         path:    AppPaths.splash,
@@ -82,6 +103,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name:        AppRoutes.register,
         pageBuilder: (_, state) =>
             _slideTransition(state, const RegisterScreen()),
+      ),
+      GoRoute(
+        path:        AppPaths.completeProfile,
+        name:        AppRoutes.completeProfile,
+        pageBuilder: (_, state) =>
+            _fadeTransition(state, const CompleteProfileScreen()),
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
@@ -100,7 +127,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path:        'new',
                 name:        AppRoutes.newAnimal,
                 pageBuilder: (_, state) =>
-                    _slideTransition(state, const AnimalFormScreen()),
+                    _slideTransition(
+                  state,
+                  // Tag vinda do painel do brete (extra), se houver.
+                  AnimalFormScreen(
+                    initialRfid: state.extra is String ? state.extra! as String : null,
+                  ),
+                ),
               ),
               GoRoute(
                 path:        'archived',
@@ -177,6 +210,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path:    AppPaths.profile,
             name:    AppRoutes.profile,
             builder: (_, __) => const ProfileScreen(),
+            routes: [
+              GoRoute(
+                path:        'alerts',
+                name:        AppRoutes.alertSettings,
+                pageBuilder: (_, state) =>
+                    _slideTransition(state, const AlertSettingsScreen()),
+              ),
+              GoRoute(
+                path:        'consents',
+                name:        AppRoutes.consents,
+                pageBuilder: (_, state) =>
+                    _slideTransition(state, const ConsentsScreen()),
+              ),
+              GoRoute(
+                path:        'professional',
+                name:        AppRoutes.vetProfessionalProfile,
+                pageBuilder: (_, state) => _slideTransition(
+                  state,
+                  const VetProfessionalProfileScreen(),
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path:        AppPaths.alerts,
+            name:        AppRoutes.alerts,
+            pageBuilder: (_, state) =>
+                _slideTransition(state, const AlertsScreen()),
           ),
           // Chamados — veterinário
           GoRoute(

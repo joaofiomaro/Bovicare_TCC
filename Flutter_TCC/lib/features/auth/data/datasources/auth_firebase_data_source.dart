@@ -25,6 +25,8 @@ class AuthFirebaseDataSource {
     'vaccinations',
     'sales',
     'weighings',
+    'healthEvents',
+    'settings',
   ];
 
   /// Janela em que o Firebase aceita operações sensíveis (`user.delete()`)
@@ -37,7 +39,7 @@ class AuthFirebaseDataSource {
         email: email,
         password: password,
       );
-      return _fetchOrCreateUserDoc(result.user!);
+      return await _fetchUserDoc(result.user!);
     } on FirebaseAuthException catch (e) {
       throw AuthFailure(_mapFirebaseError(e.code));
     }
@@ -55,7 +57,9 @@ class AuthFirebaseDataSource {
         idToken: googleAuth.idToken,
       );
       final result = await _auth.signInWithCredential(credential);
-      return _fetchOrCreateUserDoc(result.user!);
+      return await _fetchUserDoc(result.user!);
+    } on Failure {
+      rethrow;
     } on FirebaseAuthException catch (e) {
       throw AuthFailure(_mapFirebaseError(e.code));
     } on Exception catch (_) {
@@ -165,6 +169,9 @@ class AuthFirebaseDataSource {
       for (final name in _privateCollections) {
         await _deleteCollection(userDoc.collection(name));
       }
+      // Perfil público de veterinário (se publicado). Apagar doc
+      // inexistente é permitido e não falha.
+      await _firestore.doc('vets/${user.uid}').delete();
       await userDoc.delete();
       await user.delete();
     } on FirebaseAuthException catch (e) {
@@ -187,25 +194,59 @@ class AuthFirebaseDataSource {
   DocumentReference<Map<String, dynamic>> _userDoc(String uid) =>
       _firestore.collection('users').doc(uid);
 
-  /// Primeiro login via Google: cria o documento do usuário se não existir.
-  /// Contas criadas por este caminho entram como produtor (papel imutável);
-  /// veterinários devem usar o cadastro por e-mail para escolher o papel.
-  Future<UserModel> _fetchOrCreateUserDoc(User user) async {
+  /// Perfil do usuário autenticado. Se ainda não existir (primeiro login com
+  /// Google ou cadastro interrompido), exige que ele escolha o papel antes de
+  /// entrar — o papel é imutável depois (regras do Firestore).
+  Future<UserModel> _fetchUserDoc(User user) async {
     final doc = await _userDoc(user.uid).get();
     if (doc.exists) return UserModel.fromFirestore(doc);
+    throw const ProfileSetupRequiredFailure();
+  }
+
+  /// Cria o perfil do usuário já autenticado com o papel escolhido.
+  /// Idempotente: se o perfil já existir, apenas o devolve (nunca sobrescreve
+  /// o papel).
+  Future<UserModel> completeProfile({
+    required String name,
+    required String role,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) throw const AuthFailure();
+    final ref = _userDoc(user.uid);
+    final existing = await ref.get();
+    if (existing.exists) return UserModel.fromFirestore(existing);
 
     final model = UserModel(
-      id: user.uid,
-      name: user.displayName ?? user.email!.split('@').first,
+      id:    user.uid,
+      name:  name.trim().isEmpty
+          ? (user.displayName ?? user.email!.split('@').first)
+          : name.trim(),
       email: user.email!,
-      role: 'producer',
+      role:  role,
     );
-    await _userDoc(user.uid).set({
-      ...model.toFirestore(),
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-    return model;
+    try {
+      await ref.set({
+        ...model.toFirestore(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      return model;
+    } on FirebaseException {
+      throw const ServerFailure('Não foi possível concluir o cadastro.');
+    }
+  }
+
+  /// Envia o e-mail de redefinição de senha do Firebase Auth.
+  /// Por segurança, o resultado não revela se o e-mail tem conta.
+  Future<void> sendPasswordReset(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      // user-not-found é tratado como sucesso para não permitir descobrir
+      // quais e-mails estão cadastrados (enumeração de contas).
+      if (e.code == 'user-not-found') return;
+      throw AuthFailure(_mapFirebaseError(e.code));
+    }
   }
 
   Future<void> _deleteCollection(CollectionReference<Object?> collection) async {

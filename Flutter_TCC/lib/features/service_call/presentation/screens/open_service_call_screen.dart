@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/utils/id_generator.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -9,6 +10,7 @@ import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../vets/presentation/providers/vets_provider.dart';
 import '../../domain/entities/service_call.dart';
 import '../providers/service_calls_provider.dart';
 
@@ -31,6 +33,38 @@ class _OpenServiceCallScreenState
 
   ServiceUrgency _urgency = ServiceUrgency.normal;
   String? _error;
+
+  /// Anexar a posição atual (a fazenda) para o vet abrir a rota no mapa.
+  bool _shareLocation = false;
+  bool _locating      = false;
+  UserLocation? _location;
+
+  Future<void> _toggleLocation(bool share) async {
+    if (!share) {
+      setState(() {
+        _shareLocation = false;
+        _location      = null;
+      });
+      return;
+    }
+    setState(() => _locating = true);
+    ref.invalidate(userLocationProvider);
+    final loc = await ref.read(userLocationProvider.future);
+    if (!mounted) return;
+    setState(() => _locating = false);
+    if (loc.isFallback) {
+      AppToast.error(
+        context,
+        'Localização indisponível. Ative o GPS ou o consentimento em '
+        'Perfil › Meus consentimentos.',
+      );
+      return;
+    }
+    setState(() {
+      _shareLocation = true;
+      _location      = loc;
+    });
+  }
 
   @override
   void dispose() {
@@ -70,6 +104,8 @@ class _OpenServiceCallScreenState
       title:        _title.text.trim(),
       description:  _description.text.trim(),
       animalEarTag: _earTag.text.trim().isEmpty ? null : _earTag.text.trim(),
+      lat:          _shareLocation ? _location?.lat : null,
+      lng:          _shareLocation ? _location?.lng : null,
       urgency:      _urgency,
       status:       ServiceStatus.open,
       createdAt:    DateTime.now(),
@@ -139,7 +175,22 @@ class _OpenServiceCallScreenState
                     label:      'Brinco do animal (opcional)',
                     controller: _earTag,
                   ),
-                  const SizedBox(height: AppSpacing.base),
+                  SwitchListTile(
+                    contentPadding:   EdgeInsets.zero,
+                    value:            _shareLocation,
+                    activeThumbColor: AppColors.brandGreen,
+                    onChanged:        _locating ? null : _toggleLocation,
+                    title: const Text('Enviar a localização da fazenda'),
+                    subtitle: Text(
+                      _locating
+                          ? 'Obtendo localização…'
+                          : _shareLocation
+                              ? 'Posição atual anexada — o veterinário poderá abrir a rota.'
+                              : 'Use estando na fazenda. Compartilhada só com o '
+                                  'veterinário que atender.',
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                     'Urgência',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(

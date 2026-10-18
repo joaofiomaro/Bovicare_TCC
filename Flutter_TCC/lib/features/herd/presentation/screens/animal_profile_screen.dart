@@ -11,17 +11,61 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_progress_bar.dart';
 import '../../../../shared/widgets/app_skeleton.dart';
-import '../../../../shared/widgets/app_toast.dart';
 import '../../../dashboard/domain/entities/activity_item.dart';
 import '../../../dashboard/presentation/widgets/activity_timeline.dart';
+import '../../../health/domain/entities/health_event.dart';
+import '../../../health/presentation/providers/health_events_provider.dart';
+import '../../../health/presentation/widgets/health_event_sheet.dart';
+import '../../../health/presentation/widgets/health_event_tile.dart';
+import '../../../health/presentation/widgets/pregnancy_sheet.dart';
 import '../../../vaccination/domain/entities/vaccination_record.dart';
 import '../../../vaccination/presentation/providers/vaccinations_provider.dart';
+import '../../../weighing/presentation/providers/weighings_provider.dart';
 import '../../../weighing/presentation/widgets/weighing_form_sheet.dart';
 import '../../../weighing/presentation/widgets/weight_evolution_section.dart';
 import '../../domain/entities/animal_entity.dart';
 import '../extensions/animal_status_visuals.dart';
 import '../providers/animals_provider.dart';
 import '../widgets/animal_exit_sheet.dart';
+
+/// Linha do tempo completa do animal: vacinações, manejos (tratamentos,
+/// observações, reprodução) e pesagens, da mais recente para a mais antiga.
+final animalTimelineProvider = FutureProvider.autoDispose
+    .family<List<ActivityItem>, String>((ref, animalId) async {
+  final (vaccinations, events, weighings) = await (
+    ref.watch(vaccinationsProvider(animalId).future),
+    ref.watch(animalHealthEventsProvider(animalId).future),
+    ref.watch(animalWeighingsProvider(animalId).future),
+  ).wait;
+
+  return [
+    for (final v in vaccinations)
+      ActivityItem(
+        type:     ActivityType.vaccination,
+        title:    '${v.vaccineName} — ${v.dose}',
+        subtitle: v.lot != null ? 'Lote ${v.lot}' : null,
+        date:     v.date,
+      ),
+    for (final e in events)
+      ActivityItem(
+        type: e.type == HealthEventType.birth
+            ? ActivityType.birth
+            : ActivityType.other,
+        title: e.type == HealthEventType.observation || e.type.isReproductive
+            ? e.title
+            : '${e.type.label} — ${e.title}',
+        subtitle: e.notes,
+        date:     e.date,
+      ),
+    for (final w in weighings)
+      ActivityItem(
+        type:     ActivityType.weight,
+        title:    'Pesagem — ${w.weightKg.toStringAsFixed(0)} kg',
+        subtitle: w.notes,
+        date:     w.date,
+      ),
+  ]..sort((a, b) => b.date.compareTo(a.date));
+});
 
 class AnimalProfileScreen extends ConsumerWidget {
   const AnimalProfileScreen({required this.animalId, super.key});
@@ -253,18 +297,8 @@ class _ResumoTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final recentEvents = ref.watch(vaccinationsProvider(animal.id)).maybeWhen(
-          data: (records) => records
-              .take(3)
-              .map(
-                (r) => ActivityItem(
-                  type:     ActivityType.vaccination,
-                  title:    '${r.vaccineName} — ${r.dose}',
-                  subtitle: r.lot != null ? 'Lote ${r.lot}' : null,
-                  date:     r.date,
-                ),
-              )
-              .toList(),
+    final recentEvents = ref.watch(animalTimelineProvider(animal.id)).maybeWhen(
+          data:   (items) => items.take(3).toList(),
           orElse: () => <ActivityItem>[],
         );
 
@@ -385,11 +419,15 @@ class _ActionGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final actions = [
       _ActionItem(icon: Icons.vaccines_outlined,        label: 'Vacinação',    onTap: () => context.goNamed(AppRoutes.vaccination, pathParameters: {'id': animal.id})),
-      _ActionItem(icon: Icons.medication_liquid_outlined, label: 'Vermifugação', onTap: () => AppToast.info(context, 'Em breve')),
-      _ActionItem(icon: Icons.medication_outlined,        label: 'Medicação',    onTap: () => AppToast.info(context, 'Em breve')),
-      _ActionItem(icon: Icons.edit_note_rounded,         label: 'Observação',   onTap: () => AppToast.info(context, 'Em breve')),
+      _ActionItem(icon: Icons.medication_liquid_outlined, label: 'Vermifugação', onTap: () => showHealthEventSheet(context, animalId: animal.id, type: HealthEventType.deworming)),
+      _ActionItem(icon: Icons.medication_outlined,        label: 'Medicação',    onTap: () => showHealthEventSheet(context, animalId: animal.id, type: HealthEventType.medication)),
+      _ActionItem(icon: Icons.edit_note_rounded,         label: 'Observação',   onTap: () => showHealthEventSheet(context, animalId: animal.id, type: HealthEventType.observation)),
       _ActionItem(icon: Icons.monitor_weight_outlined,   label: 'Pesar',        onTap: () => showWeighingSheet(context, animalId: animal.id, currentWeight: animal.weightKg)),
-      _ActionItem(icon: Icons.favorite_border_rounded,   label: 'Prenhez',      onTap: () => AppToast.info(context, 'Em breve')),
+      _ActionItem(
+        icon:  Icons.favorite_border_rounded,
+        label: animal.status == AnimalStatus.pregnant ? 'Parto' : 'Prenhez',
+        onTap: () => showPregnancySheet(context, animal: animal),
+      ),
     ];
 
     return Padding(
@@ -460,32 +498,43 @@ class _SanitarioTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final vaccinations = ref.watch(vaccinationsProvider(animalId));
+    final events       = ref.watch(animalHealthEventsProvider(animalId));
 
-    return vaccinations.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error:   (e, _) => AppEmptyState(
+    if (vaccinations.isLoading || events.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final error = vaccinations.error ?? events.error;
+    if (error != null) {
+      return AppEmptyState(
         icon:     Icons.error_outline_rounded,
         title:    'Erro ao carregar',
-        subtitle: e.toString(),
+        subtitle: error.toString(),
+      );
+    }
+
+    // Vacinas e tratamentos (vermífugo/medicação) numa única lista por data.
+    final items = <(DateTime, Widget)>[
+      for (final v in vaccinations.value ?? const <VaccinationRecord>[])
+        (v.date, _VaccinationTile(record: v)),
+      for (final e in events.value ?? const <HealthEvent>[])
+        if (e.type.isTreatment) (e.date, HealthEventTile(event: e)),
+    ]..sort((a, b) => b.$1.compareTo(a.$1));
+
+    if (items.isEmpty) {
+      return const AppEmptyState(
+        icon:     Icons.vaccines_outlined,
+        title:    'Sem registros sanitários',
+        subtitle: 'Registre vacinação, vermifugação ou medicação pelo Resumo.',
+      );
+    }
+    return ListView.separated(
+      padding:     const EdgeInsets.symmetric(
+        horizontal: AppSpacing.base,
+        vertical:   AppSpacing.base,
       ),
-      data: (records) {
-        if (records.isEmpty) {
-          return const AppEmptyState(
-            icon:     Icons.vaccines_outlined,
-            title:    'Sem vacinações registradas',
-            subtitle: 'Registre a primeira vacinação pelo Resumo do animal.',
-          );
-        }
-        return ListView.separated(
-          padding:     const EdgeInsets.symmetric(
-            horizontal: AppSpacing.base,
-            vertical:   AppSpacing.base,
-          ),
-          itemCount:   records.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
-          itemBuilder:  (_, i) => _VaccinationTile(record: records[i]),
-        );
-      },
+      itemCount:   items.length,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder:  (_, i) => items[i].$2,
     );
   }
 }
@@ -590,25 +639,68 @@ class _VaccinationTile extends StatelessWidget {
 
 // ── Tab: Reprodução ───────────────────────────────────────────────────────────
 
-class _ReproducaoTab extends StatelessWidget {
+class _ReproducaoTab extends ConsumerWidget {
   const _ReproducaoTab({required this.animal});
   final AnimalEntity animal;
 
   @override
-  Widget build(BuildContext context) {
-    if (animal.status != AnimalStatus.pregnant || animal.pregnancyDate == null) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (animal.sex != AnimalSex.female) {
       return const AppEmptyState(
         icon:     Icons.child_friendly_outlined,
         title:    'Sem dados reprodutivos',
-        subtitle: 'Registre uma prenhez no Resumo do animal.',
+        subtitle: 'O controle reprodutivo é feito nas fêmeas.',
       );
     }
+
+    final reproEvents = ref.watch(animalHealthEventsProvider(animal.id)).maybeWhen(
+          data:   (list) => list.where((e) => e.type.isReproductive).toList(),
+          orElse: () => const <HealthEvent>[],
+        );
+    final isPregnant =
+        animal.status == AnimalStatus.pregnant && animal.pregnancyDate != null;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.base),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.base),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (isPregnant) ...[
+            _PregnancyCard(animal: animal),
+            const SizedBox(height: AppSpacing.base),
+          ],
+          if (!animal.isArchived)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
+              child: AppButton(
+                label:     isPregnant ? 'Registrar parto ou perda' : 'Registrar prenhez',
+                icon:      isPregnant
+                    ? Icons.child_friendly_outlined
+                    : Icons.favorite_border_rounded,
+                variant:   AppButtonVariant.outline,
+                onPressed: () => showPregnancySheet(context, animal: animal),
+              ),
+            ),
+          const SizedBox(height: AppSpacing.xl),
+          const _SectionLabel('Histórico reprodutivo'),
           const SizedBox(height: AppSpacing.sm),
-          _PregnancyCard(animal: animal),
+          if (reproEvents.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(AppSpacing.base),
+              child: Text(
+                'Nenhum evento reprodutivo registrado.',
+                style: TextStyle(color: AppColors.mutedGreen),
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
+              child: Column(
+                children: [
+                  for (final e in reproEvents) HealthEventTile(event: e),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -623,35 +715,26 @@ class _HistoricoTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final vaccinations = ref.watch(vaccinationsProvider(animal.id));
+    final timeline = ref.watch(animalTimelineProvider(animal.id));
 
-    return vaccinations.when(
+    return timeline.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error:   (_, __) => const SizedBox.shrink(),
-      data: (records) {
-        // Converte VaccinationRecord → ActivityItem para reutilizar a timeline.
-        final vaccinationEvents = records.map(
-          (r) => ActivityItem(
-            type:     ActivityType.vaccination,
-            title:    '${r.vaccineName} — ${r.dose}',
-            subtitle: r.lot != null ? 'Lote ${r.lot}' : null,
-            date:     r.date,
-          ),
-        );
-
-        // Eventos estáticos do animal (prenhez, etc.) mesclados com vacinações.
-        final staticEvents = <ActivityItem>[
-          if (animal.status == AnimalStatus.pregnant &&
+      data: (events) {
+        // Animais prenhes cadastrados antes do registro reprodutivo não têm
+        // evento de prenhez — exibe a data de cobertura como referência.
+        final hasDiagnosis = events.any((e) => e.title.startsWith('Prenhez'));
+        final all = [
+          ...events,
+          if (!hasDiagnosis &&
+              animal.status == AnimalStatus.pregnant &&
               animal.pregnancyDate != null)
             ActivityItem(
               type:  ActivityType.birth,
               title: 'Prenhez constatada',
               date:  animal.pregnancyDate!,
             ),
-        ];
-
-        final all = [...vaccinationEvents, ...staticEvents]
-          ..sort((a, b) => b.date.compareTo(a.date));
+        ]..sort((a, b) => b.date.compareTo(a.date));
 
         if (all.isEmpty) {
           return const AppEmptyState(

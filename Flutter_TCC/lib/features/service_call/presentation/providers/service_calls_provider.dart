@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/datasources/service_call_firestore_data_source.dart';
 import '../../data/repositories/service_call_repository_impl.dart';
@@ -8,7 +9,6 @@ import '../../domain/repositories/service_call_repository.dart';
 import '../../domain/usecases/accept_call_use_case.dart';
 import '../../domain/usecases/advance_call_use_case.dart';
 import '../../domain/usecases/cancel_call_use_case.dart';
-import '../../domain/usecases/get_calls_use_cases.dart';
 import '../../domain/usecases/open_service_call_use_case.dart';
 
 // --- DI ---
@@ -25,26 +25,26 @@ final serviceCallRepositoryProvider = Provider<ServiceCallRepository>(
 
 // --- Listas ---
 
-/// Pool de chamados abertos (visão do vet).
-final openCallsProvider = FutureProvider<List<ServiceCall>>((ref) {
-  final repo = ref.read(serviceCallRepositoryProvider);
-  return GetOpenCallsUseCase(repo).call();
+/// Pool de chamados abertos (visão do vet) — tempo real.
+/// Só veterinários consultam o pool (as regras negam a produtores).
+final openCallsProvider = StreamProvider<List<ServiceCall>>((ref) {
+  final user = ref.watch(authProvider).valueOrNull;
+  if (user == null || user.role != UserRole.vet) return Stream.value(const []);
+  return ref.read(serviceCallRepositoryProvider).watchOpen();
 });
 
-/// Chamados atribuídos ao vet logado.
-final vetCallsProvider = FutureProvider<List<ServiceCall>>((ref) {
+/// Chamados atribuídos ao vet logado — tempo real.
+final vetCallsProvider = StreamProvider<List<ServiceCall>>((ref) {
   final uid = ref.watch(authProvider).valueOrNull?.id;
-  if (uid == null) return Future.value(const []);
-  final repo = ref.read(serviceCallRepositoryProvider);
-  return GetVetCallsUseCase(repo).call(uid);
+  if (uid == null) return Stream.value(const []);
+  return ref.read(serviceCallRepositoryProvider).watchForVet(uid);
 });
 
-/// Chamados abertos pelo produtor logado.
-final producerCallsProvider = FutureProvider<List<ServiceCall>>((ref) {
+/// Chamados abertos pelo produtor logado — tempo real.
+final producerCallsProvider = StreamProvider<List<ServiceCall>>((ref) {
   final uid = ref.watch(authProvider).valueOrNull?.id;
-  if (uid == null) return Future.value(const []);
-  final repo = ref.read(serviceCallRepositoryProvider);
-  return GetProducerCallsUseCase(repo).call(uid);
+  if (uid == null) return Stream.value(const []);
+  return ref.read(serviceCallRepositoryProvider).watchForProducer(uid);
 });
 
 // --- Ações (abrir / aceitar / evoluir / cancelar) ---

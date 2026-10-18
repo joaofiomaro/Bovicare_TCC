@@ -202,6 +202,97 @@ describe('Subcoleções privadas (animals/vaccinations/sales/weighings)', () => 
       setDoc(doc(asProd1(), 'users/prod1/secrets/x'), { any: 1 }),
     );
   });
+
+  test('dono registra eventos de manejo (healthEvents)', async () => {
+    await assertSucceeds(
+      setDoc(doc(asProd1(), 'users/prod1/healthEvents/h1'), {
+        animalId: 'a1',
+        type: 'deworming',
+        title: 'Ivermectina',
+        withdrawalDays: 35,
+      }),
+    );
+  });
+
+  test('NÃO lê manejos de outro produtor', async () => {
+    await assertFails(getDoc(doc(asProd2(), 'users/prod1/healthEvents/h1')));
+  });
+
+  test('dono salva configurações de alertas e consentimentos', async () => {
+    await assertSucceeds(
+      setDoc(doc(asProd1(), 'users/prod1/settings/alerts'), { leadDays: 15 }),
+    );
+    await assertSucceeds(
+      setDoc(doc(asProd1(), 'users/prod1/settings/consents'), {
+        location: { granted: false },
+      }),
+    );
+  });
+
+  test('NÃO cria documento de configuração desconhecido', async () => {
+    await assertFails(
+      setDoc(doc(asProd1(), 'users/prod1/settings/admin'), { x: 1 }),
+    );
+  });
+});
+
+/** Perfil profissional público válido. */
+function vetProfile(overrides = {}) {
+  return {
+    name: 'Dra. Ana',
+    crmv: 'CRMV-SP 12345',
+    specialties: ['Reprodução'],
+    phone: '+5519999990000',
+    city: 'Rio Claro',
+    state: 'SP',
+    lat: -22.41,
+    lng: -47.56,
+    isAvailable: true,
+    coverageRadiusKm: 50,
+    ...overrides,
+  };
+}
+
+describe('Diretório de veterinários (vets)', () => {
+  test('vet publica o próprio perfil', async () => {
+    await assertSucceeds(setDoc(doc(asVet1(), 'vets/vet1'), vetProfile()));
+  });
+
+  test('🔒 produtor NÃO publica perfil de veterinário', async () => {
+    await assertFails(setDoc(doc(asProd1(), 'vets/prod1'), vetProfile()));
+  });
+
+  test('🔒 vet NÃO publica perfil em nome de outro vet', async () => {
+    await assertFails(setDoc(doc(asVet1(), 'vets/vet2'), vetProfile()));
+  });
+
+  test('NÃO publica perfil com campos inválidos', async () => {
+    await assertFails(
+      setDoc(doc(asVet1(), 'vets/vet1'), vetProfile({ specialties: [] })),
+    );
+    await assertFails(
+      setDoc(doc(asVet1(), 'vets/vet1'), vetProfile({ coverageRadiusKm: 9999 })),
+    );
+    await assertFails(
+      setDoc(doc(asVet1(), 'vets/vet1'), vetProfile({ verified: true })),
+    );
+  });
+
+  test('qualquer usuário logado consulta o diretório; anônimo não', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'vets/vet1'), vetProfile());
+    });
+    await assertSucceeds(getDoc(doc(asProd1(), 'vets/vet1')));
+    await assertFails(getDoc(doc(asAnon(), 'vets/vet1')));
+  });
+
+  test('vet retira o próprio perfil; outro usuário não', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'vets/vet1'), vetProfile());
+    });
+    await assertFails(deleteDoc(doc(asVet2(), 'vets/vet1')));
+    await assertSucceeds(deleteDoc(doc(asVet1(), 'vets/vet1')));
+  });
 });
 
 describe('Chamados — criação', () => {

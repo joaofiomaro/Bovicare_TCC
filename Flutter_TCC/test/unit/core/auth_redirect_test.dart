@@ -142,6 +142,59 @@ void main() {
       );
     });
 
+    test('perfil pendente leva à tela "Complete seu cadastro"', () {
+      expect(
+        authRedirect(
+          isLoggedIn:   true,
+          location:     AppPaths.dashboard,
+          needsProfile: true,
+        ),
+        AppPaths.completeProfile,
+      );
+      expect(
+        authRedirect(
+          isLoggedIn:   true,
+          location:     AppPaths.completeProfile,
+          needsProfile: true,
+        ),
+        isNull,
+      );
+    });
+
+    test('perfil completo não fica preso na tela de completar cadastro', () {
+      expect(
+        authRedirect(isLoggedIn: true, location: AppPaths.completeProfile),
+        AppPaths.dashboard,
+      );
+      expect(
+        authRedirect(isLoggedIn: false, location: AppPaths.completeProfile),
+        AppPaths.login,
+      );
+    });
+
+    test('alertas são do produtor e perfil profissional é do vet', () {
+      expect(
+        authRedirect(isLoggedIn: true, location: AppPaths.alerts, role: UserRole.vet),
+        AppPaths.dashboard,
+      );
+      expect(
+        authRedirect(
+          isLoggedIn: true,
+          location:   AppPaths.vetProfessionalProfile,
+          role:       UserRole.producer,
+        ),
+        AppPaths.dashboard,
+      );
+      expect(
+        authRedirect(
+          isLoggedIn: true,
+          location:   AppPaths.vetProfessionalProfile,
+          role:       UserRole.vet,
+        ),
+        isNull,
+      );
+    });
+
     test('guarda por papel não se aplica a quem não está logado', () {
       expect(
         authRedirect(

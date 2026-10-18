@@ -1,5 +1,7 @@
 import '../../../../core/extensions/datetime_ext.dart';
 import '../../../../core/extensions/num_ext.dart';
+import '../../../health/domain/entities/health_event.dart';
+import '../../../health/domain/repositories/health_event_repository.dart';
 import '../../../herd/domain/entities/animal_entity.dart';
 import '../../../herd/domain/entities/sale_record.dart';
 import '../../../herd/domain/repositories/animal_repository.dart';
@@ -19,13 +21,18 @@ class GenerateReportUseCase {
     this._animals,
     this._vaccinations,
     this._sales,
-    this._weighings,
-  );
+    this._weighings, {
+    this.healthEvents,
+  });
 
   final AnimalRepository      _animals;
   final VaccinationRepository _vaccinations;
   final SaleRepository        _sales;
   final WeighingRepository    _weighings;
+
+  /// Opcional: quando presente, o relatório sanitário inclui vermifugações e
+  /// medicações além das vacinas.
+  final HealthEventRepository? healthEvents;
 
   Future<ReportData> call(ReportType type, ReportFilter filter) async {
     final (start, end) = filter.dateRange;
@@ -48,29 +55,52 @@ class GenerateReportUseCase {
     final animals  = await _animals.getAll();
     final animalMap = {for (final a in animals) a.id: a};
     final allVacs  = await _vaccinations.getAll();
+    final treatments = healthEvents == null
+        ? const <HealthEvent>[]
+        : (await healthEvents!.getAll()).where((e) => e.type.isTreatment);
 
-    final rows = allVacs
-        .where((v) =>
-            !v.date.isBefore(start) && !v.date.isAfter(end))
-        .map((v) {
-          final a        = animalMap[v.animalId];
-          final carencia = v.quarantineDays > 0
-              ? v.date.add(Duration(days: v.quarantineDays)).toBrDate
-              : '—';
-          return [
-            a?.displayName ?? v.animalId,
+    bool inPeriod(DateTime d) => !d.isBefore(start) && !d.isAfter(end);
+    String animalName(String id) => animalMap[id]?.displayName ?? id;
+
+    // (data, linha) — ordenado do mais recente para o mais antigo.
+    final dated = <(DateTime, List<String>)>[
+      for (final v in allVacs.where((v) => inPeriod(v.date)))
+        (
+          v.date,
+          [
+            animalName(v.animalId),
             v.vaccineName,
             v.dose,
             v.date.toBrDate,
-            carencia,
+            if (v.quarantineDays > 0)
+              v.date.add(Duration(days: v.quarantineDays)).toBrDate
+            else
+              '—',
             v.lot ?? '—',
-          ];
-        })
-        .toList();
+            'Vacinação',
+          ],
+        ),
+      for (final e in treatments.where((e) => inPeriod(e.date)))
+        (
+          e.date,
+          [
+            animalName(e.animalId),
+            e.title,
+            e.dose ?? '—',
+            e.date.toBrDate,
+            e.withdrawalEnd?.toBrDate ?? '—',
+            '—',
+            e.type.label,
+          ],
+        ),
+    ]..sort((a, b) => b.$1.compareTo(a.$1));
+    final rows = [for (final d in dated) d.$2];
 
     return ReportData(
       type:         ReportType.sanitary,
-      headers:      ['Animal', 'Vacina', 'Dose', 'Data', 'Carência', 'Lote'],
+      headers:      [
+        'Animal', 'Vacina / produto', 'Dose', 'Data', 'Carência', 'Lote', 'Tipo',
+      ],
       rows:         rows,
       generatedAt:  DateTime.now(),
       periodStart:  start,

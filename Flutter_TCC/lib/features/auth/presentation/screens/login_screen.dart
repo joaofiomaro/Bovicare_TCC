@@ -8,6 +8,7 @@ import '../../../../core/errors/failures.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_sheet_container.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../providers/auth_provider.dart';
@@ -59,6 +60,60 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ? error.message
           : 'Erro ao fazer login.';
       AppToast.error(context, msg);
+    }
+  }
+
+  Future<void> _showForgotPassword() async {
+    final controller = TextEditingController(text: _emailController.text.trim());
+    final email = await showModalBottomSheet<String>(
+      context:            context,
+      isScrollControlled: true,
+      backgroundColor:    Colors.transparent,
+      builder: (ctx) => AppSheetContainer(
+        children: [
+          Text('Redefinir senha', style: Theme.of(ctx).textTheme.titleLarge),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Enviaremos um link para o seu e-mail para criar uma nova senha.',
+            style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                  color: AppColors.mutedGreen,
+                ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          AppTextField(
+            label:        'E-mail',
+            controller:   controller,
+            keyboardType: TextInputType.emailAddress,
+            prefixIcon:   Icons.email_outlined,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          AppButton(
+            label:     'Enviar link',
+            icon:      Icons.send_rounded,
+            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (email == null || !mounted) return;
+
+    if (!EmailInput.dirty(email).isValid) {
+      AppToast.error(context, 'Informe um e-mail válido.');
+      return;
+    }
+    final error =
+        await ref.read(authProvider.notifier).sendPasswordReset(email);
+    if (!mounted) return;
+    if (error != null) {
+      AppToast.error(context, error);
+    } else {
+      // Mesma mensagem com ou sem conta: não revela e-mails cadastrados.
+      AppToast.success(
+        context,
+        'Se houver uma conta com este e-mail, você receberá o link em instantes.',
+      );
     }
   }
 
@@ -151,7 +206,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onSubmitted: (_) => _onLogin(),
                         prefixIcon: Icons.lock_outline,
                       ),
-                      const SizedBox(height: AppSpacing.x2l),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _showForgotPassword,
+                          child: const Text(
+                            'Esqueci minha senha',
+                            style: TextStyle(color: AppColors.brandGreen),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.base),
                       AppButton(
                         label: 'Entrar',
                         onPressed: _onLogin,

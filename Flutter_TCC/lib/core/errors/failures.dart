@@ -31,6 +31,14 @@ final class AuthFailure extends Failure {
   const AuthFailure([super.message = 'Sessão expirada. Faça login novamente.']);
 }
 
+/// Usuário autenticado (ex.: primeiro login com Google) ainda sem perfil no
+/// Firestore — precisa escolher o papel (produtor/veterinário).
+final class ProfileSetupRequiredFailure extends Failure {
+  const ProfileSetupRequiredFailure([
+    super.message = 'Complete seu cadastro para continuar.',
+  ]);
+}
+
 /// Falha inesperada — catchall para erros não mapeados.
 final class UnknownFailure extends Failure {
   const UnknownFailure([super.message = 'Ocorreu um erro inesperado.']);

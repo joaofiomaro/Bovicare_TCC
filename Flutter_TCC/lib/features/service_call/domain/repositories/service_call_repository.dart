@@ -13,6 +13,11 @@ abstract interface class ServiceCallRepository {
   /// Chamados abertos por um produtor.
   Future<List<ServiceCall>> getForProducer(String producerId);
 
+  /// Versões em tempo real das consultas acima.
+  Stream<List<ServiceCall>> watchOpen();
+  Stream<List<ServiceCall>> watchForVet(String vetId);
+  Stream<List<ServiceCall>> watchForProducer(String producerId);
+
   /// Vet assume um chamado do pool (open → accepted), de forma atômica:
   /// só aplica se ainda estiver aberto (evita corrida entre dois vets).
   Future<void> accept({

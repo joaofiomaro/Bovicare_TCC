@@ -74,5 +74,10 @@
             <action android:name="android.intent.action.VIEW"/>
             <data android:scheme="whatsapp"/>
         </intent>
+        <!-- Abrir a fazenda do chamado no app de mapas. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="geo"/>
+        </intent>
     </queries>
 </manifest>

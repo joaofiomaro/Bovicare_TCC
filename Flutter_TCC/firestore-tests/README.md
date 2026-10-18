@@ -6,7 +6,7 @@ runner nativo do Node (`node --test`).
 
 ## Pré-requisitos
 - Node.js 18+ e npm
-- Java 11+ (o emulador do Firestore é uma aplicação Java)
+- Java 21+ (exigido pelo firebase-tools atual para o emulador)
 - Firebase CLI no PATH (`npm i -g firebase-tools`)
 
 ## Como rodar
@@ -18,7 +18,7 @@ npm test         # sobe o emulador, roda os testes e desliga
 O script usa `firebase emulators:exec --only firestore` apontando para o
 `../firebase.json`, então não toca em nenhum dado de produção.
 
-## O que é coberto (51 casos)
+## O que é coberto (61 casos)
 - **Perfil:** dono lê/edita o próprio; não lê alheio; cria só com schema
   válido (`role` ∈ producer/vet, sem campos extras, nome obrigatório);
   **`role` e `email` imutáveis** (impede auto-promoção a veterinário —
@@ -33,6 +33,11 @@ O script usa `firebase emulators:exec --only firestore` apontando para o
   pelo vet atribuído (agendar, concluir com laudo obrigatório); encerrado é
   imutável; produtor cancela só em aberto e só o status; produtor não se
   auto-atribui como vet; `delete` sempre negado.
+- **Manejos e configurações:** dono grava `healthEvents` e `settings`;
+  outro usuário não lê; só os documentos `alerts` e `consents`.
+- **Diretório de veterinários (`vets`):** só o próprio vet publica, edita
+  ou retira; produtor não publica; schema validado (especialidades, raio,
+  campos extras); qualquer logado lê, anônimo não.
 
 > Um teste deste conjunto pegou uma falha real: o wildcard recursivo
 > `match /{sub=**}` (no rules_version 2) casa **zero ou mais** segmentos e

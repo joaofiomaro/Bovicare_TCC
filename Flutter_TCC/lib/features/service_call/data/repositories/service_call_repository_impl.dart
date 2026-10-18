@@ -29,6 +29,21 @@ class ServiceCallRepositoryImpl implements ServiceCallRepository {
           .toList();
 
   @override
+  Stream<List<ServiceCall>> watchOpen() => _dataSource
+      .watchOpen()
+      .map((list) => list.map((m) => m.toEntity()).toList());
+
+  @override
+  Stream<List<ServiceCall>> watchForVet(String vetId) => _dataSource
+      .watchForVet(vetId)
+      .map((list) => list.map((m) => m.toEntity()).toList());
+
+  @override
+  Stream<List<ServiceCall>> watchForProducer(String producerId) => _dataSource
+      .watchForProducer(producerId)
+      .map((list) => list.map((m) => m.toEntity()).toList());
+
+  @override
   Future<void> accept({
     required String callId,
     required String vetId,

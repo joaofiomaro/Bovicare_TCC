@@ -10,6 +10,7 @@ import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_toast.dart';
+import '../../../brete/presentation/providers/brete_provider.dart';
 import '../../domain/entities/animal_entity.dart';
 import '../providers/animals_provider.dart';
 
@@ -18,10 +19,13 @@ import '../providers/animals_provider.dart';
 /// - `initial == null` → modo **cadastro** (gera novo id).
 /// - `initial != null` → modo **edição** (preserva id, status e prenhez).
 class AnimalFormScreen extends ConsumerStatefulWidget {
-  const AnimalFormScreen({this.initial, super.key});
+  const AnimalFormScreen({this.initial, this.initialRfid, super.key});
 
   /// Animal a editar; nulo para um novo cadastro.
   final AnimalEntity? initial;
+
+  /// Tag lida no brete (cadastro a partir do painel do brete).
+  final String? initialRfid;
 
   bool get isEditing => initial != null;
 
@@ -58,6 +62,7 @@ class _AnimalFormScreenState extends ConsumerState<AnimalFormScreen> {
       _birthDate = initial.birthDate;
       _rfid      = initial.rfid;
     }
+    _rfid ??= widget.initialRfid;
   }
 
   @override
@@ -74,18 +79,20 @@ class _AnimalFormScreenState extends ConsumerState<AnimalFormScreen> {
     return kg % 1 == 0 ? kg.toInt().toString() : kg.toString();
   }
 
-  // Simula leitura de RFID do brete — em produção integraria com MqttService.
-  Future<void> _simulateRfid() async {
+  /// Lê a tag pelo brete (MQTT) ou, sem hardware, pela simulação.
+  Future<void> _readRfid() async {
     setState(() => _isScanning = true);
-    await Future<void>.delayed(const Duration(milliseconds: 1600));
+    final tag = await ref.read(breteGatewayProvider).readNextRfid();
     if (!mounted) return;
-    final tag =
-        '9001150${DateTime.now().millisecondsSinceEpoch.toString().substring(6)}';
     setState(() {
-      _rfid       = tag;
       _isScanning = false;
+      if (tag != null) _rfid = tag;
     });
-    AppToast.success(context, 'RFID lido: $tag');
+    if (tag == null) {
+      AppToast.error(context, 'Nenhuma tag lida. Aproxime o animal do leitor.');
+    } else {
+      AppToast.success(context, 'RFID lido: $tag');
+    }
   }
 
   Future<void> _pickDate() async {
@@ -203,7 +210,7 @@ class _AnimalFormScreenState extends ConsumerState<AnimalFormScreen> {
                   _RfidScanner(
                     rfid:     _rfid,
                     scanning: _isScanning,
-                    onScan:   _simulateRfid,
+                    onScan:   _readRfid,
                   ),
                   const SizedBox(height: AppSpacing.base),
 

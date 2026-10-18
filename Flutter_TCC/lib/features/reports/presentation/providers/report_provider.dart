@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../health/presentation/providers/health_events_provider.dart';
 import '../../../herd/presentation/providers/animals_provider.dart';
 import '../../../herd/presentation/providers/sales_provider.dart';
 import '../../../vaccination/presentation/providers/vaccinations_provider.dart';
@@ -26,6 +27,7 @@ class ReportNotifier extends AsyncNotifier<ReportData?> {
         ref.read(vaccinationRepositoryProvider),
         ref.read(saleRepositoryProvider),
         ref.read(weighingRepositoryProvider),
+        healthEvents: ref.read(healthEventRepositoryProvider),
       );
       return useCase.call(type, filter);
     });

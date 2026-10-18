@@ -53,4 +53,17 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> deleteAccount() => _dataSource.deleteAccount();
+
+  @override
+  Future<UserEntity> completeProfile({
+    required String name,
+    required UserRole role,
+  }) async {
+    final model = await _dataSource.completeProfile(name: name, role: role.name);
+    return model.toEntity();
+  }
+
+  @override
+  Future<void> sendPasswordReset(String email) =>
+      _dataSource.sendPasswordReset(email);
 }

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../core/errors/firestore_error_mapper.dart';
+import '../../../health/domain/entities/health_event.dart';
 import '../../domain/entities/activity_item.dart';
 import '../../domain/entities/dashboard_stats.dart';
 
@@ -84,6 +85,11 @@ class DashboardFirestoreDataSource with FirestoreErrorHandler {
           _weighingsCol.orderBy('dateIso', descending: true).limit(limit).get(),
           _salesCol.orderBy('dateIso', descending: true).limit(limit).get(),
           _animalsCol.get(),
+          _firestore
+              .collection('users/$_uid/healthEvents')
+              .orderBy('dateIso', descending: true)
+              .limit(limit)
+              .get(),
         ]);
 
         final animalNames = {
@@ -120,6 +126,16 @@ class DashboardFirestoreDataSource with FirestoreErrorHandler {
                     : null,
                 date:     date,
               ),
+          for (final d in results[4].docs)
+            if (_date(d.data()) case final date?)
+              ActivityItem(
+                type:     d.data()['type'] == 'birth'
+                    ? ActivityType.birth
+                    : ActivityType.other,
+                title:    _healthTitle(d.data()),
+                subtitle: animalOf(d.data()),
+                date:     date,
+              ),
         ]..sort((a, b) => b.date.compareTo(a.date));
 
         return items.take(limit).toList();
@@ -134,6 +150,12 @@ class DashboardFirestoreDataSource with FirestoreErrorHandler {
     final name   = (data['name'] as String?)?.trim();
     final earTag = data['earTag'] ?? '?';
     return name != null && name.isNotEmpty ? '$name — #$earTag' : '#$earTag';
+  }
+
+  static String _healthTitle(Map<String, dynamic> data) {
+    final type  = HealthEventType.values.asNameMap()[data['type']];
+    final title = (data['title'] as String?) ?? 'Manejo';
+    return type != null && type.isTreatment ? '${type.label} — $title' : title;
   }
 
   static String _kg(Object? value) =>

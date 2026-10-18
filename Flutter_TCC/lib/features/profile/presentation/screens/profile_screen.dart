@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/theme_provider.dart';
+import '../../../../core/utils/file_share_service.dart';
 import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_bottom_sheet.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -14,6 +15,8 @@ import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../data/user_data_export_service.dart';
+import '../widgets/sync_card.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -41,12 +44,21 @@ class ProfileScreen extends ConsumerWidget {
                     subtitle: 'Nome, e-mail, propriedade',
                     onTap:    () => _showEditProfile(context, ref, user),
                   ),
-                  _SettingsRow(
-                    icon:     Icons.notifications_outlined,
-                    title:    'Configurar alertas',
-                    subtitle: 'Antecedência e categorias',
-                    onTap:    () => AppToast.info(context, 'Em breve.'),
-                  ),
+                  if (user?.role == UserRole.vet)
+                    _SettingsRow(
+                      icon:     Icons.medical_services_outlined,
+                      title:    'Perfil profissional',
+                      subtitle: 'CRMV, especialidades e área de atendimento',
+                      onTap:    () =>
+                          context.pushNamed(AppRoutes.vetProfessionalProfile),
+                    )
+                  else
+                    _SettingsRow(
+                      icon:     Icons.notifications_outlined,
+                      title:    'Configurar alertas',
+                      subtitle: 'Antecedência e categorias',
+                      onTap:    () => context.pushNamed(AppRoutes.alertSettings),
+                    ),
                   _ThemeToggleRow(isDark: isDark, ref: ref),
 
                   const _SectionLabel('Privacidade — LGPD'),
@@ -56,15 +68,15 @@ class ProfileScreen extends ConsumerWidget {
                     iconColor: AppColors.info,
                     title:     'Meus consentimentos',
                     subtitle:  'Visualizar e revogar por finalidade',
-                    onTap:     () => AppToast.info(context, 'Em breve.'),
+                    onTap:     () => context.pushNamed(AppRoutes.consents),
                   ),
                   _SettingsRow(
                     icon:      Icons.download_outlined,
                     iconBg:    AppColors.infoLight,
                     iconColor: AppColors.info,
                     title:     'Exportar meus dados',
-                    subtitle:  'Portabilidade — JSON e PDF',
-                    onTap:     () => AppToast.info(context, 'Em breve.'),
+                    subtitle:  'Portabilidade — arquivo JSON',
+                    onTap:     () => _exportData(context),
                   ),
                   _SettingsRow(
                     icon:      Icons.delete_outline_rounded,
@@ -76,7 +88,7 @@ class ProfileScreen extends ConsumerWidget {
                   ),
 
                   const _SectionLabel('Sincronização'),
-                  const _SyncCard(),
+                  const SyncCard(),
 
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
@@ -110,6 +122,31 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor:    Colors.transparent,
       builder: (_) => _EditProfileSheet(user: user, ref: ref),
     );
+  }
+
+  /// Gera o JSON com todos os dados do usuário e abre o compartilhamento.
+  Future<void> _exportData(BuildContext context) async {
+    AppToast.info(context, 'Preparando seus dados…');
+    try {
+      final bytes = await UserDataExportService().exportJsonBytes();
+      final today = DateTime.now();
+      final stamp = '${today.year}'
+          '${today.month.toString().padLeft(2, '0')}'
+          '${today.day.toString().padLeft(2, '0')}';
+      await FileShareService.shareBytes(
+        bytes:    bytes,
+        fileName: 'bovicare_meus_dados_$stamp.json',
+        mimeType: 'application/json',
+        subject:  'BoviCare — meus dados',
+      );
+    } on Exception catch (_) {
+      if (context.mounted) {
+        AppToast.error(
+          context,
+          'Não foi possível exportar. Verifique a conexão e tente novamente.',
+        );
+      }
+    }
   }
 
   Future<void> _logout(BuildContext context, WidgetRef ref) async {
@@ -329,107 +366,6 @@ class _ThemeToggleRow extends StatelessWidget {
             activeTrackColor:   AppColors.brandLight,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SyncCard extends StatefulWidget {
-  const _SyncCard();
-
-  @override
-  State<_SyncCard> createState() => _SyncCardState();
-}
-
-class _SyncCardState extends State<_SyncCard> {
-  bool _syncing = false;
-
-  Future<void> _sync() async {
-    setState(() => _syncing = true);
-    await Future<void>.delayed(const Duration(milliseconds: 1200));
-    if (!mounted) return;
-    setState(() => _syncing = false);
-    AppToast.success(context, 'Dados sincronizados com sucesso!');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.base,
-        vertical:   AppSpacing.xs,
-      ),
-      child: Container(
-        padding:    const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color:        isDark ? AppColors.darkSurface : AppColors.white,
-          borderRadius: const BorderRadius.all(Radius.circular(12)),
-          border:       Border.all(
-            color: isDark ? AppColors.darkBorder : AppColors.ghostGreen,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width:  40,
-              height: 40,
-              decoration: const BoxDecoration(
-                color:        AppColors.brandLight,
-                borderRadius: BorderRadius.all(Radius.circular(10)),
-              ),
-              child: const Icon(
-                Icons.sync_rounded,
-                color: AppColors.brandGreen,
-                size:  20,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Última sincronização',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          )),
-                  Text('Há pouco · 0 pendentes',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.mutedGreen,
-                          )),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            SizedBox(
-              width:  56,
-              height: 32,
-              child: _syncing
-                  ? const Center(
-                      child: SizedBox(
-                        width:  18,
-                        height: 18,
-                        child:  CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color:       AppColors.brandGreen,
-                        ),
-                      ),
-                    )
-                  : OutlinedButton(
-                      onPressed: _sync,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.brandGreen,
-                        side:    const BorderSide(color: AppColors.brandGreen),
-                        padding: EdgeInsets.zero,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(8)),
-                        ),
-                      ),
-                      child: const Text('Sync', style: TextStyle(fontSize: 12)),
-                    ),
-            ),
-          ],
-        ),
       ),
     );
   }

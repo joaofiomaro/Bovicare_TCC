@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../settings/presentation/providers/settings_provider.dart';
+import '../../data/datasources/vet_firestore_data_source.dart';
 import '../../data/datasources/vet_in_memory_data_source.dart';
 import '../../data/repositories/vet_repository_impl.dart';
 import '../../data/services/location_service.dart';
@@ -14,15 +17,11 @@ export '../../data/services/location_service.dart'
 
 // --- DI ---
 
-final _vetDataSourceProvider = Provider<VetInMemoryDataSource>(
-  (_) => VetInMemoryDataSource(),
-);
-
 final vetRepositoryProvider = Provider<VetRepository>(
-  (ref) => VetRepositoryImpl(ref.watch(_vetDataSourceProvider)),
+  (_) => VetRepositoryImpl(VetFirestoreDataSource(), VetInMemoryDataSource()),
 );
 
-final _locationServiceProvider = Provider<LocationService>(
+final locationServiceProvider = Provider<LocationService>(
   (_) => LocationService(),
 );
 
@@ -32,7 +31,15 @@ final _locationServiceProvider = Provider<LocationService>(
 /// Rio Claro, SP). Invalidar este provider força uma nova leitura do GPS e
 /// recalcula as distâncias em [vetsProvider].
 final userLocationProvider = FutureProvider<UserLocation>((ref) {
-  return ref.read(_locationServiceProvider).getCurrentLocation();
+  // Consentimento revogado (LGPD): não lê o GPS nem pede permissão.
+  if (!ref.watch(locationConsentProvider)) {
+    return const UserLocation(
+      lat:    LocationService.defaultLat,
+      lng:    LocationService.defaultLng,
+      source: LocationSource.disabledByUser,
+    );
+  }
+  return ref.read(locationServiceProvider).getCurrentLocation();
 });
 
 // --- Filtros ---
@@ -111,3 +118,41 @@ final vetOptionsProvider = FutureProvider<List<String>>((ref) async {
     for (final v in vets) '${v.name} — CRMV ${v.crmv}',
   ];
 });
+
+// --- Perfil profissional do veterinário logado ---
+
+/// Perfil público do vet logado (null = não publicado).
+final myVetProfileProvider = FutureProvider.autoDispose<VetEntity?>((ref) {
+  final uid = ref.watch(authProvider).valueOrNull?.id;
+  if (uid == null) return Future.value();
+  return ref.read(vetRepositoryProvider).getMyProfile(uid);
+});
+
+class VetProfileActionsNotifier extends AsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
+
+  Future<bool> publish(VetEntity profile) => _run(
+        () => ref.read(vetRepositoryProvider).saveMyProfile(profile),
+      );
+
+  Future<bool> unpublish(String uid) => _run(
+        () => ref.read(vetRepositoryProvider).deleteMyProfile(uid),
+      );
+
+  Future<bool> _run(Future<void> Function() action) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(action);
+    if (state.hasError) return false;
+    ref
+      ..invalidate(myVetProfileProvider)
+      ..invalidate(vetsProvider)
+      ..invalidate(vetOptionsProvider);
+    return true;
+  }
+}
+
+final vetProfileActionsProvider =
+    AsyncNotifierProvider<VetProfileActionsNotifier, void>(
+  VetProfileActionsNotifier.new,
+);

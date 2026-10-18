@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../data/datasources/vaccination_firestore_data_source.dart';
 import '../../data/repositories/vaccination_repository_impl.dart';
 import '../../domain/entities/vaccination_record.dart';
@@ -26,6 +27,11 @@ final vaccinationsProvider = FutureProvider.autoDispose
   return GetAnimalVaccinationsUseCase(repo).call(animalId);
 });
 
+/// Todas as vacinações do usuário — base de alertas (dose/carência).
+final allVaccinationsProvider = FutureProvider<List<VaccinationRecord>>((ref) {
+  return ref.read(vaccinationRepositoryProvider).getAll();
+});
+
 // --- Notifier para submissão do formulário ---
 
 class VaccinationFormNotifier extends AsyncNotifier<void> {
@@ -38,7 +44,10 @@ class VaccinationFormNotifier extends AsyncNotifier<void> {
       final repo = ref.read(vaccinationRepositoryProvider);
       await RegisterVaccinationUseCase(repo).call(record);
       // Invalida o cache para que a tab Sanitário recarregue.
-      ref.invalidate(vaccinationsProvider(record.animalId));
+      ref
+        ..invalidate(vaccinationsProvider(record.animalId))
+        ..invalidate(allVaccinationsProvider)
+        ..invalidate(dashboardProvider);
     });
     return !state.hasError;
   }

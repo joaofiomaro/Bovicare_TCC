@@ -5,6 +5,7 @@ abstract final class AppRoutes {
   static const String splash   = 'splash';
   static const String login    = 'login';
   static const String register = 'register';
+  static const String completeProfile = 'complete-profile';
 
   // Dashboard
   static const String dashboard = 'dashboard';
@@ -36,7 +37,13 @@ abstract final class AppRoutes {
   static const String reports = 'reports';
 
   // Profile
-  static const String profile = 'profile';
+  static const String profile                = 'profile';
+  static const String alertSettings          = 'alert-settings';
+  static const String consents               = 'consents';
+  static const String vetProfessionalProfile = 'vet-professional-profile';
+
+  // Alertas
+  static const String alerts = 'alerts';
 }
 
 /// Paths absolutos das rotas para uso com GoRouter.
@@ -44,6 +51,7 @@ abstract final class AppPaths {
   static const String splash   = '/';
   static const String login    = '/login';
   static const String register = '/register';
+  static const String completeProfile = '/complete-profile';
 
   static const String dashboard = '/dashboard';
   static const String herd            = '/herd';
@@ -58,6 +66,10 @@ abstract final class AppPaths {
   static String vetDetail(String id) => '/vets/$id';
   static const String reports  = '/reports';
   static const String profile  = '/profile';
+  static const String alertSettings          = '/profile/alerts';
+  static const String consents               = '/profile/consents';
+  static const String vetProfessionalProfile = '/profile/professional';
+  static const String alerts   = '/alerts';
 
   static const String vetCalls       = '/calls';
   static const String vetAgenda      = '/agenda';

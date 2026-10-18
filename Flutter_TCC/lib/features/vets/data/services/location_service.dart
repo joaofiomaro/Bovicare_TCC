@@ -11,6 +11,9 @@ enum LocationSource {
   /// Posição padrão do protótipo — permissão negada, serviço desligado ou
   /// plataforma sem suporte.
   fallback,
+
+  /// O usuário revogou o consentimento de localização no app (LGPD).
+  disabledByUser,
 }
 
 /// Localização do usuário com metadado de origem. A UI usa [isFallback] para
@@ -26,7 +29,10 @@ class UserLocation {
   final double lng;
   final LocationSource source;
 
-  bool get isFallback => source == LocationSource.fallback;
+  /// Posição real indisponível (padrão ou desativada pelo usuário).
+  bool get isFallback =>
+      source == LocationSource.fallback ||
+      source == LocationSource.disabledByUser;
 }
 
 /// Wrapper sobre geolocator com fallback seguro para localização padrão.

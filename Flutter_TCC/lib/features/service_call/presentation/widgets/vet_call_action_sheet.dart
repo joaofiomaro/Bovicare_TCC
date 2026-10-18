@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radius.dart';
@@ -55,6 +56,25 @@ class _VetCallActionSheetState extends ConsumerState<_VetCallActionSheet> {
       Navigator.of(context).pop();
     } else {
       AppToast.error(context, 'Não foi possível concluir a ação.');
+    }
+  }
+
+  /// Abre a posição da fazenda no app de mapas (geo:) ou, sem app, no
+  /// OpenStreetMap pelo navegador.
+  Future<void> _openMap() async {
+    final lat = call.lat!;
+    final lng = call.lng!;
+    final geo = Uri.parse('geo:$lat,$lng?q=$lat,$lng');
+    final web = Uri.parse(
+      'https://www.openstreetmap.org/?mlat=$lat&mlon=$lng#map=15/$lat/$lng',
+    );
+    final opened = await launchUrl(geo, mode: LaunchMode.externalApplication)
+        .catchError((Object _) => false);
+    if (!opened) {
+      final ok = await launchUrl(web, mode: LaunchMode.externalApplication);
+      if (!ok && mounted) {
+        AppToast.error(context, 'Não foi possível abrir o mapa.');
+      }
     }
   }
 
@@ -154,6 +174,15 @@ class _VetCallActionSheetState extends ConsumerState<_VetCallActionSheet> {
                   color: AppColors.mutedGreen,
                 ),
           ),
+          if (call.lat != null && call.lng != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            AppButton(
+              label:     'Ver fazenda no mapa',
+              icon:      Icons.map_outlined,
+              variant:   AppButtonVariant.outline,
+              onPressed: _openMap,
+            ),
+          ],
           const SizedBox(height: AppSpacing.xl),
 
           ..._actions(isSubmitting),

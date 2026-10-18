@@ -139,7 +139,11 @@ class _VetsListScreenState extends ConsumerState<VetsListScreen> {
           ),
 
           // Aviso quando a posição real não está disponível.
-          if (usingFallback) const _LocationFallbackNotice(),
+          if (usingFallback)
+            _LocationFallbackNotice(
+              disabledByUser: location.valueOrNull?.source ==
+                  LocationSource.disabledByUser,
+            ),
 
           // Cabeçalho da lista com toggle do mapa
           Padding(
@@ -234,7 +238,10 @@ class _VetsListScreenState extends ConsumerState<VetsListScreen> {
 /// Aviso exibido quando o GPS está desligado/negado: o mapa e as distâncias
 /// usam a cidade de referência (Rio Claro, SP) em vez da posição real.
 class _LocationFallbackNotice extends StatelessWidget {
-  const _LocationFallbackNotice();
+  const _LocationFallbackNotice({required this.disabledByUser});
+
+  /// Consentimento de localização revogado em "Meus consentimentos".
+  final bool disabledByUser;
 
   @override
   Widget build(BuildContext context) {
@@ -258,8 +265,11 @@ class _LocationFallbackNotice extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
-                'Localização indisponível — mostrando a região de Rio Claro, SP. '
-                'Ative o GPS e puxe a lista para atualizar.',
+                disabledByUser
+                    ? 'Localização desativada em Meus consentimentos — '
+                        'mostrando a região de Rio Claro, SP.'
+                    : 'Localização indisponível — mostrando a região de '
+                        'Rio Claro, SP. Ative o GPS e puxe a lista para atualizar.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.amber,
                     ),

@@ -16,4 +16,14 @@ abstract interface class AuthRepository {
   Future<UserEntity?> getCurrentUser();
   Future<void> updateProfile(UserEntity updated);
   Future<void> deleteAccount();
+
+  /// Cria o perfil (papel) do usuário já autenticado — primeiro login com
+  /// Google ou cadastro interrompido.
+  Future<UserEntity> completeProfile({
+    required String name,
+    required UserRole role,
+  });
+
+  /// Envia o e-mail de redefinição de senha.
+  Future<void> sendPasswordReset(String email);
 }

@@ -1,11 +1,11 @@
 import '../models/vet_model.dart';
 
-/// Veterinários de demonstração para o TCC.
-/// Dados estáticos — sem persistência — coordenadas ao redor de Rio Claro, SP.
+/// Veterinários de demonstração para o TCC (ids `demo-*`, exibidos com o selo
+/// "Demonstração"). Dados estáticos — coordenadas ao redor de Rio Claro, SP.
 class VetInMemoryDataSource {
   static const List<VetModel> _vets = [
     VetModel(
-      id:               '1',
+      id:               'demo-1',
       name:             'Dr. Carlos Lima',
       crmv:             'CRMV-SP 12345',
       specialties:      ['Clínica geral', 'Reprodução', 'Sanidade'],
@@ -20,7 +20,7 @@ class VetInMemoryDataSource {
       coverageRadiusKm: 40,
     ),
     VetModel(
-      id:               '2',
+      id:               'demo-2',
       name:             'Dra. Ana Souza',
       crmv:             'CRMV-SP 67890',
       specialties:      ['Reprodução', 'Sanidade animal'],
@@ -35,7 +35,7 @@ class VetInMemoryDataSource {
       coverageRadiusKm: 50,
     ),
     VetModel(
-      id:               '3',
+      id:               'demo-3',
       name:             'Dr. Roberto Neves',
       crmv:             'CRMV-SP 54321',
       specialties:      ['Clínica geral', 'Cirurgia'],
@@ -49,7 +49,7 @@ class VetInMemoryDataSource {
       coverageRadiusKm: 30,
     ),
     VetModel(
-      id:               '4',
+      id:               'demo-4',
       name:             'Dra. Fernanda Castro',
       crmv:             'CRMV-SP 11223',
       specialties:      ['Nutrição animal', 'Clínica geral'],

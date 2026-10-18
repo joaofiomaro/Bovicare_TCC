@@ -7,8 +7,13 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
+import '../../../alerts/presentation/providers/farm_alerts_provider.dart';
+import '../../../alerts/presentation/widgets/farm_alert_tile.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../health/presentation/providers/health_events_provider.dart';
+import '../../../herd/presentation/providers/animals_provider.dart';
+import '../../../vaccination/presentation/providers/vaccinations_provider.dart';
 import '../../domain/entities/dashboard_stats.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/activity_timeline.dart';
@@ -35,7 +40,13 @@ class DashboardScreen extends ConsumerWidget {
         ),
         data: (state) => RefreshIndicator(
           color:    AppColors.brandGreen,
-          onRefresh: () => ref.read(dashboardProvider.notifier).refresh(),
+          onRefresh: () async {
+            ref
+              ..invalidate(allVaccinationsProvider)
+              ..invalidate(allHealthEventsProvider)
+              ..invalidate(animalsProvider);
+            await ref.read(dashboardProvider.notifier).refresh();
+          },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
@@ -46,6 +57,7 @@ class DashboardScreen extends ConsumerWidget {
                   _AlertBanner(stats: state.stats),
                 const SizedBox(height: AppSpacing.base),
                 _KpiGrid(stats: state.stats),
+                const _AlertsSection(),
                 const SizedBox(height: AppSpacing.xl),
                 const _SectionLabel(title: 'Módulos'),
                 const SizedBox(height: AppSpacing.sm),
@@ -214,7 +226,54 @@ class _AlertBanner extends StatelessWidget {
   }
 }
 
-// ── KPI Grid ──────────────────────────────────────────────────────────────────
+// ── Alertas do rebanho ───────────────────────────────────────────────────────
+
+/// Até 3 alertas mais importantes + atalho para a central de alertas.
+/// Some quando não há alertas (ou enquanto carrega).
+class _AlertsSection extends ConsumerWidget {
+  const _AlertsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final alerts = ref.watch(farmAlertsProvider).valueOrNull ?? const [];
+    if (alerts.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppSpacing.xl),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Alertas',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              GestureDetector(
+                onTap: () => context.pushNamed(AppRoutes.alerts),
+                child: Text(
+                  'Ver todos (${alerts.length})',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color:      AppColors.brandGreen,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        for (final alert in alerts.take(3)) FarmAlertTile(alert: alert),
+      ],
+    );
+  }
+}
+
+// ── KPI Grid──────────────────────────────────────────────────────────────────
 
 class _KpiGrid extends StatelessWidget {
   const _KpiGrid({required this.stats});

@@ -4,9 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/utils/file_share_service.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_chip_filter.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_toast.dart';
+import '../../data/report_exporter.dart';
 import '../../domain/entities/report_data.dart';
 import '../providers/report_provider.dart';
 import '../widgets/report_preview.dart';
@@ -20,10 +23,32 @@ class ReportsScreen extends ConsumerStatefulWidget {
 }
 
 class _ReportsScreenState extends ConsumerState<ReportsScreen> {
-  ReportType? _activeType;
-  String      _format = 'PDF';
+  ReportType?  _activeType;
+  ReportFormat _format    = ReportFormat.pdf;
+  bool         _exporting = false;
 
-  static const _formats = ['PDF', 'CSV'];
+  /// Gera o arquivo no formato escolhido e abre o compartilhamento do sistema.
+  Future<void> _export(ReportData data) async {
+    setState(() => _exporting = true);
+    try {
+      final bytes = switch (_format) {
+        ReportFormat.pdf => await ReportExporter.toPdf(data),
+        ReportFormat.csv => ReportExporter.toCsvBytes(data),
+      };
+      await FileShareService.shareBytes(
+        bytes:    bytes,
+        fileName: ReportExporter.fileName(data, _format),
+        mimeType: _format.mimeType,
+        subject:  'BoviCare — ${data.type.label}',
+      );
+    } on Exception catch (_) {
+      if (mounted) {
+        AppToast.error(context, 'Não foi possível exportar o relatório.');
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
 
   Future<void> _generate(ReportType type) async {
     setState(() => _activeType = type);
@@ -115,9 +140,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   const SizedBox(height: AppSpacing.sm),
                   const _SectionLabel('Formato'),
                   const SizedBox(height: AppSpacing.sm),
-                  AppChipFilter<String>(
-                    options: _formats
-                        .map((f) => ChipOption(label: f, value: f))
+                  AppChipFilter<ReportFormat>(
+                    options: ReportFormat.values
+                        .map((f) => ChipOption(label: f.label, value: f))
                         .toList(),
                     selected: {_format},
                     onSelected: (fmt, {required isSelected}) =>
@@ -142,9 +167,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                         style: const TextStyle(color: AppColors.danger),
                       ),
                     ),
-                    data: (report) => report != null
-                        ? ReportPreview(data: report)
-                        : const SizedBox.shrink(),
+                    data: (report) => report == null
+                        ? const SizedBox.shrink()
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ReportPreview(data: report),
+                              const SizedBox(height: AppSpacing.base),
+                              AppButton(
+                                label:     'Exportar ${_format.label}',
+                                icon:      Icons.ios_share_rounded,
+                                isLoading: _exporting,
+                                onPressed: () => _export(report),
+                              ),
+                            ],
+                          ),
                   ),
                   const SizedBox(height: AppSpacing.x2l),
                 ],

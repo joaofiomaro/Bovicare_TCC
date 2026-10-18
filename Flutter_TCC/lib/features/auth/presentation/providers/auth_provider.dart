@@ -50,18 +50,28 @@ class AuthNotifier extends AsyncNotifier<UserEntity?> {
   Future<UserEntity?> build() =>
       ref.read(_getCurrentUserUseCaseProvider).call();
 
+  /// Retorna false em erro ou quando o perfil ainda precisa ser completado
+  /// (nesse caso o estado fica `AsyncData(null)` sem erro e o router leva à
+  /// tela "Complete seu cadastro").
   Future<bool> login(String email, String password) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(_loginUseCaseProvider).call(
+    try {
+      final user = await ref.read(_loginUseCaseProvider).call(
             email:    email,
             password: password,
-          ),
-    );
-    return state.hasValue && state.value != null;
+          );
+      state = AsyncData(user);
+      return true;
+    } on ProfileSetupRequiredFailure {
+      state = const AsyncData(null);
+      return false;
+    } on Exception catch (e, st) {
+      state = AsyncError(e, st);
+      return false;
+    }
   }
 
-  /// Retorna false tanto em erro quanto em cancelamento.
+  /// Retorna false tanto em erro quanto em cancelamento ou perfil pendente.
   /// Só mostra toast de erro se `state.hasError` for true.
   Future<bool> loginWithGoogle() async {
     state = const AsyncLoading();
@@ -69,9 +79,43 @@ class AuthNotifier extends AsyncNotifier<UserEntity?> {
       final user = await ref.read(_loginWithGoogleUseCaseProvider).call();
       state = AsyncData(user);
       return user != null;
+    } on ProfileSetupRequiredFailure {
+      state = const AsyncData(null);
+      return false;
     } on Exception catch (e, st) {
       state = AsyncError(e, st);
       return false;
+    }
+  }
+
+  /// Cria o perfil com o papel escolhido. Retorna a mensagem de erro, ou
+  /// `null` em sucesso.
+  Future<String?> completeProfile({
+    required String name,
+    required UserRole role,
+  }) async {
+    try {
+      final user = await ref
+          .read(authRepositoryProvider)
+          .completeProfile(name: name, role: role);
+      state = AsyncData(user);
+      return null;
+    } on Failure catch (e) {
+      return e.message;
+    } on Exception catch (_) {
+      return 'Não foi possível concluir o cadastro.';
+    }
+  }
+
+  /// Envia o e-mail de redefinição. Retorna a mensagem de erro ou `null`.
+  Future<String?> sendPasswordReset(String email) async {
+    try {
+      await ref.read(authRepositoryProvider).sendPasswordReset(email);
+      return null;
+    } on Failure catch (e) {
+      return e.message;
+    } on Exception catch (_) {
+      return 'Não foi possível enviar o e-mail. Tente novamente.';
     }
   }
 

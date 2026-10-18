@@ -49,6 +49,34 @@ class ServiceCallFirestoreDataSource with FirestoreErrorHandler {
         return snap.docs.map(ServiceCallModel.fromFirestore).toList();
       });
 
+  // --- Tempo real (snapshots) ------------------------------------------------
+  // Mesmas consultas acima, como stream: o pool do vet e a lista do produtor
+  // se atualizam sozinhos quando o outro lado abre/aceita/conclui um chamado.
+
+  Stream<List<ServiceCallModel>> watchOpen() => _watch(
+        _collection
+            .where('status', isEqualTo: ServiceStatus.open.name)
+            .orderBy('createdAtIso', descending: true),
+      );
+
+  Stream<List<ServiceCallModel>> watchForVet(String vetId) => _watch(
+        _collection
+            .where('vetId', isEqualTo: vetId)
+            .orderBy('createdAtIso', descending: true),
+      );
+
+  Stream<List<ServiceCallModel>> watchForProducer(String producerId) => _watch(
+        _collection
+            .where('producerId', isEqualTo: producerId)
+            .orderBy('createdAtIso', descending: true),
+      );
+
+  Stream<List<ServiceCallModel>> _watch(Query<Map<String, dynamic>> query) =>
+      query.snapshots().handleError(
+        (Object e) => throw mapFirestoreException(e),
+        test: (e) => e is FirebaseException,
+      ).map((snap) => snap.docs.map(ServiceCallModel.fromFirestore).toList());
+
   /// Aceita um chamado de forma atômica: a transação relê o doc e só aplica
   /// `open → accepted` se ainda estiver aberto (evita corrida entre dois vets).
   Future<void> accept({

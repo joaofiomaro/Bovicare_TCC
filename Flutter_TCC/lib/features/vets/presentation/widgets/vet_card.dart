@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../domain/entities/vet_entity.dart';
+import '../../domain/repositories/vet_repository.dart';
 
 class VetCard extends StatelessWidget {
   const VetCard({
@@ -78,9 +79,19 @@ class VetCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            AppBadge(
-              label: vet.isAvailable ? 'Disponível' : 'Ocupado',
-              type:  vet.isAvailable ? BadgeType.success : BadgeType.warning,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                AppBadge(
+                  label: vet.isAvailable ? 'Disponível' : 'Ocupado',
+                  type:  vet.isAvailable ? BadgeType.success : BadgeType.warning,
+                ),
+                // Perfis fictícios do protótipo ficam sempre identificados.
+                if (vet.isDemo) ...[
+                  const SizedBox(height: 4),
+                  const AppBadge(label: 'Demonstração'),
+                ],
+              ],
             ),
           ],
         ),

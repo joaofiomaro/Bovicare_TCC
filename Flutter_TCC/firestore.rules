@@ -79,7 +79,44 @@ service cloud.firestore {
     // imutabilidade do `role` (vide teste de auto-promoção).
     match /users/{uid}/{collection}/{docId} {
       allow read, write: if isOwner(uid)
-        && collection in ['animals', 'vaccinations', 'sales', 'weighings'];
+        && collection in [
+             'animals', 'vaccinations', 'sales', 'weighings',
+             'healthEvents', 'settings',
+           ]
+        // Configurações: apenas os dois documentos conhecidos pelo app.
+        && (collection != 'settings' || docId in ['alerts', 'consents']);
+    }
+
+    // ── Diretório público de veterinários ─────────────────────────────────────
+    // Qualquer usuário logado consulta; só o próprio veterinário publica,
+    // edita ou retira o perfil (id do documento = uid).
+    function validVetProfile(d) {
+      return d.keys().hasOnly([
+          'name', 'crmv', 'specialties', 'phone', 'whatsapp', 'email',
+          'city', 'state', 'lat', 'lng', 'isAvailable', 'coverageRadiusKm',
+          'updatedAt',
+        ])
+        && isNonEmptyStr(d.name, 120)
+        && isNonEmptyStr(d.crmv, 40)
+        && d.specialties is list && d.specialties.size() > 0
+        && d.specialties.size() <= 10
+        && isNonEmptyStr(d.phone, 30)
+        && optStr(d, 'whatsapp', 30)
+        && optStr(d, 'email', 254)
+        && isNonEmptyStr(d.city, 80)
+        && d.state is string && d.state.size() == 2
+        && d.lat is number && d.lat >= -90 && d.lat <= 90
+        && d.lng is number && d.lng >= -180 && d.lng <= 180
+        && d.isAvailable is bool
+        && d.coverageRadiusKm is int
+        && d.coverageRadiusKm > 0 && d.coverageRadiusKm <= 500;
+    }
+
+    match /vets/{uid} {
+      allow read:   if isSignedIn();
+      allow create, update: if isOwner(uid) && isVet()
+                            && validVetProfile(request.resource.data);
+      allow delete: if isOwner(uid);
     }
 
     // ── Chamados — coleção compartilhada produtor ↔ vet ───────────────────────

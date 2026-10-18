@@ -88,7 +88,7 @@ class _CallsList extends StatelessWidget {
   });
 
   final AsyncValue<List<ServiceCall>> state;
-  final FutureProvider<List<ServiceCall>> provider;
+  final StreamProvider<List<ServiceCall>> provider;
   final String emptyTitle;
   final String emptySub;
   final WidgetRef ref;
