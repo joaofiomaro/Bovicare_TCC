@@ -67,7 +67,9 @@ class DashboardFirestoreDataSource with FirestoreErrorHandler {
           alertCount:           alerts,
           upcomingVaccinations: upcoming,
           alertMessage: alerts > 0
-              ? '$alerts animal${alerts == 1 ? '' : 'is'} necessitam de atenção'
+              ? alerts == 1
+                  ? '1 animal necessita de atenção'
+                  : '$alerts animais necessitam de atenção'
               : null,
         );
       });
