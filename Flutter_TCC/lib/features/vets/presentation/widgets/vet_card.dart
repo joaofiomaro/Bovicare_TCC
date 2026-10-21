@@ -47,6 +47,8 @@ class VetCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -66,12 +68,16 @@ class VetCard extends StatelessWidget {
                         color: AppColors.mutedGreen,
                       ),
                       const SizedBox(width: 2),
-                      Text(
-                        _distanceLabel,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.mutedGreen,
-                              fontSize: 11,
-                            ),
+                      Flexible(
+                        child: Text(
+                          _distanceLabel,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.mutedGreen,
+                                fontSize: 11,
+                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),

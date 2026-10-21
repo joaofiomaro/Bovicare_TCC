@@ -201,8 +201,14 @@ class _ProfileHero extends StatelessWidget {
       roleLabel,
     ].join(' · ');
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+    // Largura total: a coluna da tela alinha à esquerda (start), então sem
+    // isso o bloco encolhe para o conteúdo e fica encostado no canto.
+    return Container(
+      width:   double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.base,
+        vertical:   AppSpacing.xl,
+      ),
       child: Column(
         children: [
           AppAvatar(name: user?.name ?? 'U', radius: 40),
@@ -212,6 +218,7 @@ class _ProfileHero extends StatelessWidget {
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
           Text(
@@ -219,6 +226,7 @@ class _ProfileHero extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.mutedGreen,
                 ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

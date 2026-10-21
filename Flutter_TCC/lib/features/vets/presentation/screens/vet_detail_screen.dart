@@ -54,15 +54,16 @@ class _VetDetailContent extends StatelessWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverAppBar(
-            backgroundColor: AppColors.brandGreen,
-            foregroundColor: Colors.white,
-            pinned:          true,
-            expandedHeight:  200,
-            flexibleSpace:   FlexibleSpaceBar(
-              background: _VetHeader(vet: vet),
-            ),
+          const SliverAppBar(
+            backgroundColor:        AppColors.brandGreen,
+            foregroundColor:        Colors.white,
+            surfaceTintColor:       Colors.transparent,
+            pinned:                 true,
+            scrolledUnderElevation: 0,
           ),
+          // Altura livre (não um expandedHeight fixo): nome longo, fonte do
+          // sistema ampliada ou os dois selos nunca ficam cortados.
+          SliverToBoxAdapter(child: _VetHeader(vet: vet)),
           SliverPadding(
             padding: const EdgeInsets.all(AppSpacing.base),
             sliver:  SliverList(
@@ -91,11 +92,10 @@ class _VetHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       color: AppColors.brandGreen,
-      alignment: Alignment.center,
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 44,
-        bottom: AppSpacing.base,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.base, 0, AppSpacing.base, AppSpacing.xl,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -124,6 +124,7 @@ class _VetHeader extends StatelessWidget {
                   color:      Colors.white,
                   fontWeight: FontWeight.w700,
                 ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 3),
           Text(
@@ -131,19 +132,20 @@ class _VetHeader extends StatelessWidget {
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Colors.white70,
                 ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          Row(
-            mainAxisSize: MainAxisSize.min,
+          // Wrap: em telas estreitas o segundo selo desce para a linha de baixo.
+          Wrap(
+            alignment:  WrapAlignment.center,
+            spacing:    6,
+            runSpacing: 6,
             children: [
               AppBadge(
                 label: vet.isAvailable ? 'Disponível agora' : 'Ocupado',
                 type:  vet.isAvailable ? BadgeType.success : BadgeType.warning,
               ),
-              if (vet.isDemo) ...[
-                const SizedBox(width: 6),
-                const AppBadge(label: 'Perfil de demonstração'),
-              ],
+              if (vet.isDemo) const AppBadge(label: 'Perfil de demonstração'),
             ],
           ),
         ],

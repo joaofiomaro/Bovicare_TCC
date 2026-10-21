@@ -43,7 +43,9 @@ class AppButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (icon != null) ...[Icon(icon, size: 18), const SizedBox(width: 8)],
-              Text(label),
+              // Flexible: em tela estreita/fonte ampliada o rótulo quebra
+              // linha em vez de estourar a largura do botão.
+              Flexible(child: Text(label, textAlign: TextAlign.center)),
             ],
           );
 

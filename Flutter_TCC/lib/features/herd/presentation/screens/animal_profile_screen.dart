@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/utils/parallel.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
@@ -36,7 +37,7 @@ final animalTimelineProvider = FutureProvider.autoDispose
     ref.watch(vaccinationsProvider(animalId).future),
     ref.watch(animalHealthEventsProvider(animalId).future),
     ref.watch(animalWeighingsProvider(animalId).future),
-  ).wait;
+  ).waitFirstError;
 
   return [
     for (final v in vaccinations)
@@ -272,19 +273,37 @@ class _AnimalHeader extends StatelessWidget {
 class _AnimalTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // Em telas estreitas (ou com fonte do sistema ampliada) os rótulos
+    // encolhem para caber inteiros, em vez de serem cortados ("Reproduç").
     return const TabBar(
       tabs: [
-        Tab(text: 'Resumo'),
-        Tab(text: 'Sanitário'),
-        Tab(text: 'Reprodução'),
-        Tab(text: 'Histórico'),
+        _FitTab('Resumo'),
+        _FitTab('Sanitário'),
+        _FitTab('Reprodução'),
+        _FitTab('Histórico'),
       ],
+      labelPadding:       EdgeInsets.symmetric(horizontal: 4),
       labelColor:         AppColors.brandGreen,
       unselectedLabelColor: AppColors.mutedGreen,
       indicatorColor:     AppColors.brandGreen,
       indicatorWeight:    2.5,
       labelStyle:           TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
       unselectedLabelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
+    );
+  }
+}
+
+class _FitTab extends StatelessWidget {
+  const _FitTab(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tab(
+      child: FittedBox(
+        fit:   BoxFit.scaleDown,
+        child: Text(text, maxLines: 1, softWrap: false),
+      ),
     );
   }
 }
@@ -468,21 +487,28 @@ class _ActionItem extends StatelessWidget {
             color: isDark ? AppColors.darkBorder : AppColors.ghostGreen,
           ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: AppColors.brandGreen, size: 22),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize:   11,
-                fontWeight: FontWeight.w500,
-                color:      AppColors.mutedGreen,
+        padding: const EdgeInsets.all(4),
+        // FittedBox: com a fonte do sistema ampliada, ícone e rótulo encolhem
+        // juntos em vez de estourar a altura fixa da célula do grid.
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: AppColors.brandGreen, size: 22),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize:   11,
+                  fontWeight: FontWeight.w500,
+                  color:      AppColors.mutedGreen,
+                ),
+                maxLines:  1,
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

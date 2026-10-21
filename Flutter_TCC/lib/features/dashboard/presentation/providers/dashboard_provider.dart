@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/utils/parallel.dart';
 import '../../data/datasources/dashboard_firestore_data_source.dart';
 import '../../data/repositories/dashboard_repository_impl.dart';
 import '../../domain/entities/activity_item.dart';
@@ -38,7 +39,7 @@ class DashboardNotifier extends AsyncNotifier<DashboardState> {
     final (stats, activities) = await (
       GetDashboardStatsUseCase(repo).call(),
       GetRecentActivitiesUseCase(repo).call(),
-    ).wait;
+    ).waitFirstError;
 
     return DashboardState(stats: stats, activities: activities);
   }

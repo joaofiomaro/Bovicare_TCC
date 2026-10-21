@@ -59,6 +59,17 @@ class BovicareApp extends ConsumerWidget {
       themeMode:    themeMode,
       routerConfig: router,
       locale: const Locale('pt', 'BR'),
+      // Respeita a fonte ampliada do sistema (acessibilidade), mas limita a
+      // 1,3× para que cards e grids de altura fixa não cortem o texto.
+      builder: (context, child) {
+        final mq = MediaQuery.of(context);
+        return MediaQuery(
+          data: mq.copyWith(
+            textScaler: mq.textScaler.clamp(maxScaleFactor: 1.3),
+          ),
+          child: child!,
+        );
+      },
     );
   }
 }
