@@ -117,8 +117,10 @@ class AnimalFirestoreDataSource with FirestoreErrorHandler {
           id: '1', earTag: '047', name: 'Mimosa', breed: 'Nelore',
           sex: 'female', status: 'pregnant', birthDateIso: '2022-03-12',
           weightKg: 384,
+          // Relativo a hoje (não uma data fixa do ano anterior, que podia
+          // passar dos 283 dias de gestação): ~5 meses de prenhez.
           pregnancyDateIso:
-              DateTime(now.year - 1, 10, 10).toIso8601String(),
+              now.subtract(const Duration(days: 150)).toIso8601String(),
         ),
         const AnimalModel(
           id: '2', earTag: '031', name: 'Estrela', breed: 'Gir',
@@ -144,8 +146,9 @@ class AnimalFirestoreDataSource with FirestoreErrorHandler {
           id: '6', earTag: '089', name: 'Aurora', breed: 'Girolando',
           sex: 'female', status: 'pregnant', birthDateIso: '2022-07-04',
           weightKg: 395,
+          // Reta final (~1 mês para o parto): alimenta os alertas de parto.
           pregnancyDateIso:
-              DateTime(now.year - 1, 8, 20).toIso8601String(),
+              now.subtract(const Duration(days: 250)).toIso8601String(),
         ),
         const AnimalModel(
           id: '7', earTag: '012', name: 'Bravo', breed: 'Brahman',

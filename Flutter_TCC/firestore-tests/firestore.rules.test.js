@@ -577,3 +577,37 @@ describe('Chamados — aceitar / evoluir / cancelar', () => {
     await assertFails(deleteDoc(doc(asProd1(), 'serviceCalls/call1')));
   });
 });
+
+// Consultas usadas pela exportação de dados (LGPD) e pela exclusão de conta.
+describe('Exportação de dados — consultas', () => {
+  // As regras validam o ID dos docs de settings, então listar a coleção é
+  // negado — o app lê/apaga `alerts` e `consents` por ID (export e exclusão).
+  test('listar settings é negado; ler os docs conhecidos por ID é permitido', async () => {
+    await assertFails(getDocs(collection(asProd1(), 'users/prod1/settings')));
+    await assertSucceeds(getDoc(doc(asProd1(), 'users/prod1/settings/alerts')));
+    await assertSucceeds(getDoc(doc(asProd1(), 'users/prod1/settings/consents')));
+    await assertSucceeds(deleteDoc(doc(asProd1(), 'users/prod1/settings/alerts')));
+  });
+
+  test('dono lista chamados onde é produtor', async () => {
+    await assertSucceeds(getDocs(query(
+      collection(asProd1(), 'serviceCalls'),
+      where('producerId', '==', 'prod1'),
+    )));
+  });
+
+  test('dono lista chamados onde é o vet atribuído', async () => {
+    await assertSucceeds(getDocs(query(
+      collection(asProd1(), 'serviceCalls'),
+      where('vetId', '==', 'prod1'),
+    )));
+    await assertSucceeds(getDocs(query(
+      collection(asVet1(), 'serviceCalls'),
+      where('vetId', '==', 'vet1'),
+    )));
+  });
+
+  test('dono lê o próprio perfil público de vet (mesmo inexistente)', async () => {
+    await assertSucceeds(getDoc(doc(asProd1(), 'vets/prod1')));
+  });
+});

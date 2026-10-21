@@ -16,6 +16,11 @@ class SettingsFirestoreDataSource with FirestoreErrorHandler {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
+  /// Únicos documentos aceitos em `settings` pelas Security Rules. As regras
+  /// validam o ID do documento, então a coleção NÃO pode ser listada
+  /// (`collection.get()` é negado): quem precisa de todos lê/apaga por ID.
+  static const List<String> docIds = ['alerts', 'consents'];
+
   DocumentReference<Map<String, dynamic>> _doc(String id) =>
       _firestore.doc('users/${_auth.currentUser!.uid}/settings/$id');
 

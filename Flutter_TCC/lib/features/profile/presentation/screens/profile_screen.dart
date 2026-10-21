@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/utils/file_share_service.dart';
@@ -139,6 +140,11 @@ class ProfileScreen extends ConsumerWidget {
         mimeType: 'application/json',
         subject:  'BoviCare — meus dados',
       );
+    } on Failure catch (e) {
+      // Motivo real (sem conexão, sem permissão...) em vez de um texto fixo.
+      if (context.mounted) {
+        AppToast.error(context, 'Não foi possível exportar: ${e.message}');
+      }
     } on Exception catch (_) {
       if (context.mounted) {
         AppToast.error(

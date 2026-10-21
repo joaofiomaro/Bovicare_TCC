@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../../core/errors/failures.dart';
+import '../../../settings/data/settings_firestore_data_source.dart';
 import '../models/user_model.dart';
 
 class AuthFirebaseDataSource {
@@ -19,14 +20,14 @@ class AuthFirebaseDataSource {
   final GoogleSignIn _googleSignIn;
 
   /// Subcoleções privadas do usuário — apagadas junto com a conta (LGPD).
-  /// Deve refletir a lista aceita em `firestore.rules`.
+  /// Deve refletir a lista aceita em `firestore.rules`. `settings` não pode
+  /// ser listada pelas regras: seus documentos são apagados por ID.
   static const List<String> _privateCollections = [
     'animals',
     'vaccinations',
     'sales',
     'weighings',
     'healthEvents',
-    'settings',
   ];
 
   /// Janela em que o Firebase aceita operações sensíveis (`user.delete()`)
@@ -168,6 +169,10 @@ class AuthFirebaseDataSource {
       final userDoc = _userDoc(user.uid);
       for (final name in _privateCollections) {
         await _deleteCollection(userDoc.collection(name));
+      }
+      // Apagar doc inexistente é permitido e não falha.
+      for (final id in SettingsFirestoreDataSource.docIds) {
+        await userDoc.collection('settings').doc(id).delete();
       }
       // Perfil público de veterinário (se publicado). Apagar doc
       // inexistente é permitido e não falha.

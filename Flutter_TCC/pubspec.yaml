@@ -1,7 +1,7 @@
 name: bovicare
 description: BoviCare — Gestão de rebanho bovino para produtores e veterinários.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.12.1

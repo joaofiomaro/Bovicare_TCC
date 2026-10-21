@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../core/errors/firestore_error_mapper.dart';
+import '../../settings/data/settings_firestore_data_source.dart';
 
 /// Portabilidade de dados (LGPD, art. 18, V): reúne tudo o que o app guarda
 /// sobre o usuário logado num único JSON legível.
@@ -17,13 +18,14 @@ class UserDataExportService with FirestoreErrorHandler {
   final FirebaseAuth _auth;
 
   /// Subcoleções privadas exportadas (mesma lista das Security Rules).
+  /// `settings` fica de fora: as regras não permitem listá-la, então os
+  /// documentos conhecidos são lidos por ID (ver [_settings]).
   static const List<String> privateCollections = [
     'animals',
     'vaccinations',
     'healthEvents',
     'weighings',
     'sales',
-    'settings',
   ];
 
   Future<Map<String, dynamic>> collect() => guardFirestore(() async {
@@ -38,6 +40,7 @@ class UserDataExportService with FirestoreErrorHandler {
             for (final d in snap.docs) {'id': d.id, ..._plain(d.data())},
           ];
         }
+        collections['settings'] = await _settings(userDoc);
 
         final calls = _firestore.collection('serviceCalls');
         final asProducer =
@@ -66,6 +69,19 @@ class UserDataExportService with FirestoreErrorHandler {
           ],
         };
       });
+
+  Future<List<Map<String, dynamic>>> _settings(
+    DocumentReference<Map<String, dynamic>> userDoc,
+  ) async {
+    final snaps = await Future.wait([
+      for (final id in SettingsFirestoreDataSource.docIds)
+        userDoc.collection('settings').doc(id).get(),
+    ]);
+    return [
+      for (final s in snaps)
+        if (s.data() case final data?) {'id': s.id, ..._plain(data)},
+    ];
+  }
 
   Future<Uint8List> exportJsonBytes() async {
     final data = await collect();
