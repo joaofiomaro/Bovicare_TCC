@@ -7,6 +7,7 @@ import '../../../../core/extensions/datetime_ext.dart';
 import '../../../../core/utils/file_share_service.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_chip_filter.dart';
+import '../../../../shared/widgets/app_date_field.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../data/report_exporter.dart';
@@ -271,20 +272,11 @@ class _DateField extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: () async {
-        final picked = await showDatePicker(
-          context:     context,
+        final picked = await pickAppDate(
+          context,
           initialDate: date ?? DateTime.now(),
-          firstDate:   firstDate ?? DateTime(2000),
-          lastDate:    lastDate  ?? DateTime.now(),
-          locale:      const Locale('pt', 'BR'),
-          builder: (ctx, child) => Theme(
-            data: Theme.of(ctx).copyWith(
-              colorScheme: Theme.of(ctx).colorScheme.copyWith(
-                    primary: AppColors.brandGreen,
-                  ),
-            ),
-            child: child!,
-          ),
+          firstDate:   firstDate,
+          lastDate:    lastDate,
         );
         if (picked != null) onChanged(picked);
       },

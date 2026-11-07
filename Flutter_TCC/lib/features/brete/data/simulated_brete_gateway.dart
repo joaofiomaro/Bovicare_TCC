@@ -4,10 +4,10 @@ import 'dart:math';
 import '../domain/brete_gateway.dart';
 import '../domain/brete_models.dart';
 
-/// Brete simulado — usado quando não há broker MQTT configurado (TCC sem o
-/// hardware). Reproduz os tempos e regras do firmware: a porteira leva ~1,5 s
-/// para abrir/fechar, não fecha com obstáculo e a emergência trava tudo até o
-/// rearme.
+/// Brete simulado — usado quando não há hardware (TCC sem o ESP32).
+/// Reproduz as regras do firmware: duas portas, cada uma leva ~1,5 s para
+/// abrir/fechar, uma só abre com a outra fechada (intertravamento), não fecha
+/// com obstáculo e a emergência trava tudo até o rearme.
 class SimulatedBreteGateway implements BreteGateway {
   SimulatedBreteGateway({Random? random, List<String> Function()? knownTags})
       : _random = random ?? Random(),
@@ -23,7 +23,10 @@ class SimulatedBreteGateway implements BreteGateway {
 
   final _controller = StreamController<BreteStatus>.broadcast();
   BreteStatus _current = const BreteStatus();
-  Timer? _moveTimer;
+  final _moveTimers = <BreteDoor, Timer>{};
+
+  @override
+  BreteTransport get transport => BreteTransport.simulation;
 
   @override
   bool get isSimulation => true;
@@ -34,6 +37,9 @@ class SimulatedBreteGateway implements BreteGateway {
   @override
   Stream<BreteStatus> get status => _controller.stream;
 
+  @override
+  Stream<String> get alerts => const Stream.empty();
+
   void _emit(BreteStatus s) {
     _current = s;
     if (!_controller.isClosed) _controller.add(s);
@@ -41,52 +47,76 @@ class SimulatedBreteGateway implements BreteGateway {
 
   @override
   Future<void> connect() async {
+    DoorState settled(DoorState? d) =>
+        d == null || d == DoorState.unknown ? DoorState.closed : d;
     _emit(_current.copyWith(
       connection: BreteConnection.simulated,
-      door:       _current.door == DoorState.unknown
-          ? DoorState.closed
-          : _current.door,
+      door:       settled(_current.door),
+      exitDoor:   settled(_current.exitDoor),
       lastUpdate: DateTime.now(),
       clearError: true,
     ));
   }
 
+  void _cancelTimers() {
+    for (final t in _moveTimers.values) {
+      t.cancel();
+    }
+    _moveTimers.clear();
+  }
+
   @override
   Future<void> disconnect() async {
-    _moveTimer?.cancel();
+    _cancelTimers();
     _emit(_current.copyWith(connection: BreteConnection.disconnected));
   }
 
   @override
-  Future<void> send(BreteCommand command) async {
+  Future<void> send(BreteCommand command, {BreteDoor door = BreteDoor.entry}) async {
     if (!_current.isOnline) throw const BreteException('Brete desconectado.');
-    final emergency = _current.door == DoorState.emergency;
+    const blocked = BreteException('Brete em emergência — faça o rearme.');
 
     switch (command) {
       case BreteCommand.emergencyStop:
-        _moveTimer?.cancel();
-        _emit(_current.copyWith(door: DoorState.emergency, lastUpdate: DateTime.now()));
-      case BreteCommand.reset:
-        if (emergency) _move(DoorState.closed);
-      case BreteCommand.open:
-        if (emergency) throw const BreteException('Brete em emergência — faça o rearme.');
-        _move(DoorState.open);
-      case BreteCommand.close:
-        if (emergency) throw const BreteException('Brete em emergência — faça o rearme.');
-        if (_current.sensors.obstructed) {
-          throw const BreteException('Passagem obstruída — porteira não fecha.');
+        _cancelTimers();
+        var s = _current.copyWith(emergency: true, lastUpdate: DateTime.now());
+        for (final d in BreteDoor.values) {
+          if (s.doorOf(d) == DoorState.moving) s = s.withDoor(d, DoorState.stopped);
         }
-        _move(DoorState.closed);
+        _emit(s);
+      case BreteCommand.reset:
+        _emit(_current.copyWith(emergency: false, lastUpdate: DateTime.now()));
+      case BreteCommand.open:
+        if (_current.emergency) throw blocked;
+        if (_current.doorOf(door) == DoorState.open) return;
+        final other = door == BreteDoor.entry ? BreteDoor.exit : BreteDoor.entry;
+        if (_current.doorOf(other) != DoorState.closed) {
+          throw const BreteException('Feche a outra porta antes de abrir esta.');
+        }
+        _move(door, DoorState.open);
+      case BreteCommand.close:
+        if (_current.emergency) throw blocked;
+        if (_current.doorOf(door) == DoorState.closed) return;
+        if (_current.sensors.obstructedAt(door)) {
+          throw const BreteException('Passagem obstruída — a porta não fecha.');
+        }
+        _move(door, DoorState.closed);
+      case BreteCommand.stop:
+        _moveTimers.remove(door)?.cancel();
+        if (_current.doorOf(door) == DoorState.moving) {
+          _emit(_current.withDoor(door, DoorState.stopped, at: DateTime.now()));
+        }
       case BreteCommand.readRfid:
         _simulateRead();
     }
   }
 
-  void _move(DoorState target) {
-    _moveTimer?.cancel();
-    _emit(_current.copyWith(door: DoorState.moving, lastUpdate: DateTime.now()));
-    _moveTimer = Timer(_moveTime, () {
-      _emit(_current.copyWith(door: target, lastUpdate: DateTime.now()));
+  void _move(BreteDoor door, DoorState target) {
+    _moveTimers.remove(door)?.cancel();
+    _emit(_current.withDoor(door, DoorState.moving, at: DateTime.now()));
+    _moveTimers[door] = Timer(_moveTime, () {
+      _moveTimers.remove(door);
+      _emit(_current.withDoor(door, target, at: DateTime.now()));
     });
   }
 
@@ -101,6 +131,18 @@ class SimulatedBreteGateway implements BreteGateway {
   }
 
   @override
+  Future<void> restart() async {
+    _cancelTimers();
+    var s = _current.copyWith(emergency: false);
+    for (final d in BreteDoor.values) {
+      if (s.doorOf(d) == DoorState.moving) s = s.withDoor(d, DoorState.stopped);
+    }
+    _emit(s.copyWith(connection: BreteConnection.connecting));
+    await Future<void>.delayed(const Duration(milliseconds: 800));
+    await connect();
+  }
+
+  @override
   Future<String?> readNextRfid({Duration timeout = const Duration(seconds: 20)}) async {
     if (!_current.isOnline) await connect();
     // Tempo de aproximação da tag ao leitor.
@@ -110,7 +152,7 @@ class SimulatedBreteGateway implements BreteGateway {
 
   @override
   Future<void> dispose() async {
-    _moveTimer?.cancel();
+    _cancelTimers();
     await _controller.close();
   }
 }

@@ -1,18 +1,38 @@
 import 'dart:convert';
 
-/// Situação da porteira do brete reportada pelo ESP32.
-enum DoorState { open, closed, moving, emergency, unknown }
+/// Situação de uma porta guilhotina do brete reportada pelo ESP32.
+enum DoorState {
+  open,
+  closed,
+  moving,
+
+  /// Parada no meio do curso (botão, comando PARAR ou emergência).
+  stopped,
+
+  /// Bloqueada por falha (fim de curso ou tempo-limite) até o RESET.
+  fault,
+  unknown,
+}
+
+/// Portas do brete: 1 = entrada, 2 = saída (numeração do firmware).
+enum BreteDoor { entry, exit }
 
 /// Situação da conexão do app com o brete.
 enum BreteConnection { disconnected, connecting, connected, simulated, error }
 
-/// Comandos aceitos pelo firmware (tópico `.../cmd`).
+/// Meio de comunicação com o brete.
+enum BreteTransport { simulation, ble, mqtt }
+
+/// Comandos aceitos pelo firmware.
 enum BreteCommand {
   open,
   close,
+
+  /// Para a porta no ponto em que estiver.
+  stop,
   emergencyStop,
 
-  /// Sai do estado de emergência (rearme), deixando a porteira fechada.
+  /// Sai do estado de emergência (rearme).
   reset,
 
   /// Pede ao leitor RFID que faça uma leitura imediata.
@@ -20,32 +40,54 @@ enum BreteCommand {
 }
 
 extension BreteCommandX on BreteCommand {
-  /// Valor do campo `cmd` no JSON enviado ao firmware.
+  /// Valor do campo `cmd` no JSON enviado pelo MQTT.
   String get wire => switch (this) {
         BreteCommand.open          => 'open',
         BreteCommand.close         => 'close',
+        BreteCommand.stop          => 'stop',
         BreteCommand.emergencyStop => 'emergency_stop',
         BreteCommand.reset         => 'reset',
         BreteCommand.readRfid      => 'read_rfid',
       };
+
+  /// Comandos que agem sobre uma porta específica.
+  bool get targetsDoor =>
+      this == BreteCommand.open ||
+      this == BreteCommand.close ||
+      this == BreteCommand.stop;
 }
 
-/// Sensores do brete. `true` = obstruído (infravermelho) ou acionado (pedal).
+/// Sensores e botões do brete. `true` = obstruído (infravermelho) ou
+/// apertado (botão).
 class BreteSensors {
   const BreteSensors({
-    this.irTop = false,
-    this.irBottom = false,
-    this.pedalOpen = false,
-    this.pedalClose = false,
+    this.irEntry = false,
+    this.irExit = false,
+    this.button1 = false,
+    this.button2 = false,
+    this.stopButton = false,
   });
 
-  final bool irTop;
-  final bool irBottom;
-  final bool pedalOpen;
-  final bool pedalClose;
+  /// Sensor IR da porta de entrada (porta 1).
+  final bool irEntry;
 
-  /// Há um animal/obstáculo na passagem.
-  bool get obstructed => irTop || irBottom;
+  /// Sensor IR da porta de saída (porta 2).
+  final bool irExit;
+
+  /// Botão físico que alterna a porta 1.
+  final bool button1;
+
+  /// Botão físico que alterna a porta 2.
+  final bool button2;
+
+  /// Botão de parada de emergência apertado.
+  final bool stopButton;
+
+  /// Há um animal/obstáculo em alguma passagem.
+  bool get obstructed => irEntry || irExit;
+
+  bool obstructedAt(BreteDoor door) =>
+      door == BreteDoor.entry ? irEntry : irExit;
 }
 
 /// Estado completo do brete exibido no painel.
@@ -53,15 +95,29 @@ class BreteStatus {
   const BreteStatus({
     this.connection = BreteConnection.disconnected,
     this.door = DoorState.unknown,
+    this.exitDoor,
+    this.emergency = false,
     this.sensors = const BreteSensors(),
     this.lastRfid,
     this.lastRfidAt,
     this.lastUpdate,
     this.errorMessage,
+    this.firmwareVersion,
+    this.rfidAvailable = true,
+    this.entryFault = '',
+    this.exitFault = '',
   });
 
   final BreteConnection connection;
+
+  /// Porta de entrada (porta 1) — ou a única porta, no protocolo MQTT.
   final DoorState door;
+
+  /// Porta de saída (porta 2). `null` quando o brete tem uma porta só.
+  final DoorState? exitDoor;
+
+  /// Parada de emergência ativa: comandos de porta bloqueados até o rearme.
+  final bool emergency;
   final BreteSensors sensors;
   final String? lastRfid;
   final DateTime? lastRfidAt;
@@ -69,30 +125,81 @@ class BreteStatus {
   /// Momento do último estado recebido do dispositivo.
   final DateTime? lastUpdate;
   final String? errorMessage;
+  final String? firmwareVersion;
+
+  /// O brete tem leitor RFID funcionando.
+  final bool rfidAvailable;
+
+  /// Código da falha de cada porta (`TIMEOUT_ABRIR`...); vazio = sem falha.
+  final String entryFault;
+  final String exitFault;
+
+  /// Falha da porta, ou null se ela estiver normal.
+  String? faultOf(BreteDoor d) {
+    final f = d == BreteDoor.entry ? entryFault : exitFault;
+    return f.isEmpty ? null : f;
+  }
+
+  bool get hasFault =>
+      entryFault.isNotEmpty ||
+      exitFault.isNotEmpty ||
+      door == DoorState.fault ||
+      exitDoor == DoorState.fault;
 
   bool get isOnline =>
       connection == BreteConnection.connected ||
       connection == BreteConnection.simulated;
 
+  bool get hasExitDoor => exitDoor != null;
+
+  DoorState doorOf(BreteDoor d) =>
+      d == BreteDoor.entry ? door : (exitDoor ?? DoorState.unknown);
+
   BreteStatus copyWith({
     BreteConnection? connection,
     DoorState? door,
+    DoorState? exitDoor,
+    bool? emergency,
     BreteSensors? sensors,
     String? lastRfid,
     DateTime? lastRfidAt,
     DateTime? lastUpdate,
     String? errorMessage,
     bool clearError = false,
+    String? firmwareVersion,
+    bool? rfidAvailable,
+    String? entryFault,
+    String? exitFault,
   }) =>
       BreteStatus(
-        connection:   connection ?? this.connection,
-        door:         door ?? this.door,
-        sensors:      sensors ?? this.sensors,
-        lastRfid:     lastRfid ?? this.lastRfid,
-        lastRfidAt:   lastRfidAt ?? this.lastRfidAt,
-        lastUpdate:   lastUpdate ?? this.lastUpdate,
-        errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+        connection:      connection ?? this.connection,
+        door:            door ?? this.door,
+        exitDoor:        exitDoor ?? this.exitDoor,
+        emergency:       emergency ?? this.emergency,
+        sensors:         sensors ?? this.sensors,
+        lastRfid:        lastRfid ?? this.lastRfid,
+        lastRfidAt:      lastRfidAt ?? this.lastRfidAt,
+        lastUpdate:      lastUpdate ?? this.lastUpdate,
+        errorMessage:    clearError ? null : (errorMessage ?? this.errorMessage),
+        firmwareVersion: firmwareVersion ?? this.firmwareVersion,
+        rfidAvailable:   rfidAvailable ?? this.rfidAvailable,
+        entryFault:      entryFault ?? this.entryFault,
+        exitFault:       exitFault ?? this.exitFault,
       );
+
+  /// Atualiza uma das portas.
+  BreteStatus withDoor(BreteDoor d, DoorState state, {DateTime? at}) =>
+      d == BreteDoor.entry
+          ? copyWith(door: state, lastUpdate: at)
+          : copyWith(exitDoor: state, lastUpdate: at);
+}
+
+/// Validação de tag RFID compartilhada pelos protocolos: só dígitos/letras,
+/// 4–32 caracteres (ISO 11784/11785 tem 15 dígitos; UID do RC522 em hex tem
+/// 8–20).
+String? normalizeRfidTag(String raw) {
+  final tag = raw.trim();
+  return RegExp(r'^[A-Za-z0-9]{4,32}$').hasMatch(tag) ? tag : null;
 }
 
 /// Protocolo MQTT do brete (ver docs/BRETE_MQTT_PROTOCOLO.md).
@@ -110,7 +217,7 @@ abstract final class BreteProtocol {
         'open'      => DoorState.open,
         'closed'    => DoorState.closed,
         'opening' || 'closing' || 'moving' => DoorState.moving,
-        'emergency' => DoorState.emergency,
+        'emergency' || 'stopped' => DoorState.stopped,
         _           => DoorState.unknown,
       };
 
@@ -126,16 +233,16 @@ abstract final class BreteProtocol {
     if (decoded is! Map<String, dynamic>) return current;
 
     final sensors = decoded['sensors'];
+    final hasDoor = decoded.containsKey('door');
     return current.copyWith(
-      door: decoded.containsKey('door')
-          ? parseDoor(decoded['door'])
-          : current.door,
+      door:      hasDoor ? parseDoor(decoded['door']) : current.door,
+      emergency: hasDoor ? decoded['door'] == 'emergency' : current.emergency,
       sensors: sensors is Map<String, dynamic>
           ? BreteSensors(
-              irTop:      sensors['irTop'] == true,
-              irBottom:   sensors['irBottom'] == true,
-              pedalOpen:  sensors['pedalOpen'] == true,
-              pedalClose: sensors['pedalClose'] == true,
+              irEntry: sensors['irTop'] == true,
+              irExit:  sensors['irBottom'] == true,
+              button1: sensors['pedalOpen'] == true,
+              button2: sensors['pedalClose'] == true,
             )
           : current.sensors,
       lastUpdate: now,
@@ -143,7 +250,7 @@ abstract final class BreteProtocol {
   }
 
   /// Extrai o código RFID do tópico `rfid` — aceita `{"tag":"..."}` ou o
-  /// código puro. Só dígitos/letras (ISO 11784/11785 tem 15 dígitos).
+  /// código puro.
   static String? parseRfid(String payload) {
     var tag = payload.trim();
     try {
@@ -152,7 +259,6 @@ abstract final class BreteProtocol {
     } on FormatException {
       // payload em texto puro
     }
-    tag = tag.trim();
-    return RegExp(r'^[A-Za-z0-9]{4,32}$').hasMatch(tag) ? tag : null;
+    return normalizeRfidTag(tag);
   }
 }

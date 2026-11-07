@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -59,6 +60,10 @@ class BovicareApp extends ConsumerWidget {
       themeMode:    themeMode,
       routerConfig: router,
       locale: const Locale('pt', 'BR'),
+      // Sem estes delegates o Flutter não tem os textos em pt-BR dos widgets
+      // Material, e o seletor de data abre em branco.
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      supportedLocales: const [Locale('pt', 'BR')],
       // Respeita a fonte ampliada do sistema (acessibilidade), mas limita a
       // 1,3× para que cards e grids de altura fixa não cortem o texto.
       builder: (context, child) {

@@ -8,6 +8,7 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_date_field.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../domain/entities/service_call.dart';
@@ -93,12 +94,12 @@ class _VetCallActionSheetState extends ConsumerState<_VetCallActionSheet> {
       );
 
   Future<void> _schedule() async {
-    final picked = await showDatePicker(
-      context:     context,
-      initialDate: DateTime.now().add(const Duration(days: 1)),
-      firstDate:   DateTime.now(),
-      lastDate:    DateTime.now().add(const Duration(days: 365)),
-      locale:      const Locale('pt', 'BR'),
+    final today  = DateUtils.dateOnly(DateTime.now());
+    final picked = await pickAppDate(
+      context,
+      initialDate: _scheduledDate ?? today.add(const Duration(days: 1)),
+      firstDate:   today,
+      lastDate:    today.add(const Duration(days: 365)),
     );
     if (picked != null) setState(() => _scheduledDate = picked);
   }

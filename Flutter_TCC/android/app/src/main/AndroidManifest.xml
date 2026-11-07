@@ -5,6 +5,16 @@
     <!-- Permissão de internet para tiles do mapa (OpenStreetMap) e Firebase -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!--
+        Bluetooth LE para o brete (ESP32). Android 12+: SCAN sem uso para
+        localização + CONNECT. Android 11 ou menor usa as permissões legadas
+        e a localização acima.
+    -->
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <!--
         allowBackup=false: o cache offline do Firestore (dados do rebanho) e a
         sessão do Firebase Auth ficam no armazenamento privado do app e não
         devem ser copiados para backups na nuvem/adb.

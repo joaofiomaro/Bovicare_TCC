@@ -1,5 +1,10 @@
 # Protocolo MQTT do Brete Eletrônico (ESP32 ↔ BoviCare)
 
+> **Meio alternativo.** O firmware atual (`docs/BoviCare_Brete_Final.ino`)
+> usa **Bluetooth LE** (`docs/PROTOCOLO_BLE.md`), que é o padrão do app. Este
+> protocolo só vale com `BRETE_CONEXAO=mqtt` no `.env` e descreve um brete de
+> uma porta só.
+
 Contrato entre o firmware do brete (ESP32) e o app. O app já implementa este
 protocolo (`lib/features/brete/`); o firmware precisa seguir os tópicos e
 payloads abaixo.

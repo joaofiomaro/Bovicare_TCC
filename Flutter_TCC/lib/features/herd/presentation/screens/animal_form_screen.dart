@@ -6,6 +6,7 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
 import '../../../../core/utils/id_generator.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_date_field.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_text_field.dart';
@@ -79,7 +80,7 @@ class _AnimalFormScreenState extends ConsumerState<AnimalFormScreen> {
     return kg % 1 == 0 ? kg.toInt().toString() : kg.toString();
   }
 
-  /// Lê a tag pelo brete (MQTT) ou, sem hardware, pela simulação.
+  /// Lê a tag pelo brete (Bluetooth/MQTT) ou, sem hardware, pela simulação.
   Future<void> _readRfid() async {
     setState(() => _isScanning = true);
     final tag = await ref.read(breteGatewayProvider).readNextRfid();
@@ -96,21 +97,10 @@ class _AnimalFormScreenState extends ConsumerState<AnimalFormScreen> {
   }
 
   Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context:     context,
+    final picked = await pickAppDate(
+      context,
       initialDate: _birthDate ??
           DateTime.now().subtract(const Duration(days: 365)),
-      firstDate:   DateTime(2000),
-      lastDate:    DateTime.now(),
-      locale:      const Locale('pt', 'BR'),
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme: Theme.of(ctx).colorScheme.copyWith(
-                primary: AppColors.brandGreen,
-              ),
-        ),
-        child: child!,
-      ),
     );
     if (picked != null) setState(() => _birthDate = picked);
   }

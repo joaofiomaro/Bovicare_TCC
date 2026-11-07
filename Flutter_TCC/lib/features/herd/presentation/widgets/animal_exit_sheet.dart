@@ -6,6 +6,7 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
 import '../../../../core/utils/id_generator.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_date_field.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../domain/entities/animal_entity.dart';
@@ -74,21 +75,7 @@ class _AnimalExitSheetState extends ConsumerState<AnimalExitSheet> {
       double.tryParse(text.trim().replaceAll(',', '.'));
 
   Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context:     context,
-      initialDate: _date,
-      firstDate:   DateTime(2000),
-      lastDate:    DateTime.now(),
-      locale:      const Locale('pt', 'BR'),
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme: Theme.of(ctx).colorScheme.copyWith(
-                primary: AppColors.brandGreen,
-              ),
-        ),
-        child: child!,
-      ),
-    );
+    final picked = await pickAppDate(context, initialDate: _date);
     if (picked != null) setState(() => _date = picked);
   }
 

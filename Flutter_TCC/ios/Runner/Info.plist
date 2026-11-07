@@ -60,6 +60,8 @@
 			pedir permissão. Usada apenas para centralizar o mapa e ordenar os
 			veterinários por distância — nunca é enviada ao servidor.
 		-->
+		<key>NSBluetoothAlwaysUsageDescription</key>
+		<string>O BoviCare usa o Bluetooth para controlar o brete.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>O BoviCare usa sua localização para mostrar os veterinários mais próximos no mapa.</string>
 		<key>UIApplicationSceneManifest</key>

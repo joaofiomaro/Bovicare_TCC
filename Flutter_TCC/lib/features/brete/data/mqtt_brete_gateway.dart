@@ -69,6 +69,9 @@ class MqttBreteGateway implements BreteGateway {
   StreamSubscription<List<MqttReceivedMessage<MqttMessage>>>? _sub;
 
   @override
+  BreteTransport get transport => BreteTransport.mqtt;
+
+  @override
   bool get isSimulation => false;
 
   @override
@@ -76,6 +79,9 @@ class MqttBreteGateway implements BreteGateway {
 
   @override
   Stream<BreteStatus> get status => _controller.stream;
+
+  @override
+  Stream<String> get alerts => const Stream.empty();
 
   void _emit(BreteStatus s) {
     _current = s;
@@ -172,7 +178,8 @@ class MqttBreteGateway implements BreteGateway {
   }
 
   @override
-  Future<void> send(BreteCommand command) async {
+  Future<void> send(BreteCommand command, {BreteDoor door = BreteDoor.entry}) async {
+    // O protocolo MQTT tem uma porta só: [door] é ignorado.
     final client = _client;
     if (client == null ||
         client.connectionStatus?.state != MqttConnectionState.connected) {
@@ -185,6 +192,20 @@ class MqttBreteGateway implements BreteGateway {
       MqttQos.atLeastOnce,
       builder.payload!,
     );
+  }
+
+  @override
+  Future<void> restart() async {
+    if (_current.connection == BreteConnection.connected) {
+      try {
+        await send(BreteCommand.stop);
+        if (_current.emergency) await send(BreteCommand.reset);
+      } on BreteException {
+        // segue para a reconexão
+      }
+    }
+    await disconnect();
+    await connect();
   }
 
   @override
