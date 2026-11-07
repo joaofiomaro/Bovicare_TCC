@@ -111,9 +111,9 @@ quando o comando veio do botão físico e `p` é 0 quando não é comando de por
 
 ## Firmware 1.3.0 (o que está na placa)
 
-O firmware completo está em `BoviCare_Firmware.zip`, na raiz do projeto
+O firmware completo está na pasta `BoviCare_Firmware/`, na raiz do projeto
 (`BoviCare_Brete_Final/BoviCare_Brete_Final.ino`, com a documentação dele em
-`docs/`). O app trata as novidades em relação à 1.1:
+`BoviCare_Firmware/docs/`). O app trata as novidades em relação à 1.1:
 
 | Novidade | No app |
 |---|---|
