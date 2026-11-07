@@ -6,6 +6,8 @@ import '../../core/constants/app_colors.dart';
 import '../../core/router/app_routes.dart';
 import '../../features/auth/domain/entities/user_entity.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../../features/tutorial/presentation/guides.dart';
+import '../../features/tutorial/presentation/widgets/tutorial_target.dart';
 
 /// Item de uma aba do shell — rota, rótulo e ícones.
 class ShellTab {
@@ -71,17 +73,20 @@ class AppShell extends ConsumerWidget {
 
     return Scaffold(
       body: child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: selectedIndex,
-        onDestinationSelected: (i) => context.go(tabs[i].route),
-        destinations: [
-          for (final tab in tabs)
-            NavigationDestination(
-              icon: Icon(tab.icon),
-              selectedIcon: Icon(tab.activeIcon, color: AppColors.brandGreen),
-              label: tab.label,
-            ),
-        ],
+      bottomNavigationBar: TutorialTarget(
+        id:    TutorialIds.navBar,
+        child: NavigationBar(
+          selectedIndex: selectedIndex,
+          onDestinationSelected: (i) => context.go(tabs[i].route),
+          destinations: [
+            for (final tab in tabs)
+              NavigationDestination(
+                icon: Icon(tab.icon),
+                selectedIcon: Icon(tab.activeIcon, color: AppColors.brandGreen),
+                label: tab.label,
+              ),
+          ],
+        ),
       ),
     );
   }

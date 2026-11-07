@@ -4,7 +4,6 @@ import 'package:bovicare/features/herd/presentation/providers/animals_provider.d
 import 'package:bovicare/features/herd/presentation/screens/animal_profile_screen.dart';
 import 'package:bovicare/features/vaccination/presentation/providers/vaccinations_provider.dart';
 import 'package:bovicare/features/vets/domain/entities/vet_entity.dart';
-import 'package:bovicare/features/vets/domain/repositories/vet_repository.dart';
 import 'package:bovicare/features/vets/presentation/providers/vets_provider.dart';
 import 'package:bovicare/features/vets/presentation/screens/vet_detail_screen.dart';
 import 'package:bovicare/features/vets/presentation/screens/vets_list_screen.dart';
@@ -25,7 +24,7 @@ const _smallPhone = Size(320, 568);
 const _largeFont  = 1.3;
 
 const _vet = VetEntity(
-  id:               '${kDemoVetIdPrefix}1',
+  id:               'vet-1',
   name:             'Dra. Maria Aparecida Fernandes de Souza',
   crmv:             'CRMV-SP 123456',
   specialties:      ['Reprodução', 'Clínica de grandes animais', 'Sanidade'],
@@ -127,7 +126,6 @@ void main() {
     );
 
     expect(find.text(_vet.name), findsOneWidget);
-    expect(find.text('Perfil de demonstração'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

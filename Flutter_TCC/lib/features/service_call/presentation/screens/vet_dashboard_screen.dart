@@ -5,6 +5,9 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../dashboard/presentation/widgets/kpi_card.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
+import '../../../tutorial/presentation/widgets/tutorial_target.dart';
 import '../../domain/entities/service_call.dart';
 import '../providers/service_calls_provider.dart';
 import '../widgets/service_call_tile.dart';
@@ -31,83 +34,92 @@ class VetDashboardScreen extends ConsumerWidget {
         .length;
     final nextSched = _nextScheduled(myCalls);
 
-    return Scaffold(
-      body: RefreshIndicator(
-        color:     AppColors.brandGreen,
-        onRefresh: () async {
-          ref
-            ..invalidate(openCallsProvider)
-            ..invalidate(vetCallsProvider);
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _VetHeader(name: user?.name ?? 'Veterinário'),
-              const SizedBox(height: AppSpacing.base),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
-                child: GridView.count(
-                  shrinkWrap:       true,
-                  physics:          const NeverScrollableScrollPhysics(),
-                  crossAxisCount:   2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing:  12,
-                  childAspectRatio: 1.25,
-                  children: [
-                    KpiCard(
-                      label:    'Chamados abertos',
-                      value:    open.length,
-                      sub:      'no pool',
-                      isAccent: true,
-                    ),
-                    KpiCard(
-                      label: 'Meus ativos',
-                      value: active.length,
-                      sub:   'em atendimento',
-                      delay: const Duration(milliseconds: 80),
-                    ),
-                    KpiCard(
-                      label: 'Concluídos',
-                      value: monthDone,
-                      sub:   'neste mês',
-                      delay: const Duration(milliseconds: 160),
-                    ),
-                    KpiCard(
-                      label:      'Agendamentos',
-                      value:      myCalls.where((c) => c.scheduledDate != null && c.isActive).length,
-                      sub:        nextSched != null ? 'próximo em breve' : 'nenhum',
-                      delay:      const Duration(milliseconds: 240),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              const _SectionLabel('Chamados abertos no pool'),
-              const SizedBox(height: AppSpacing.sm),
-              if (open.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.base),
-                  child: Text(
-                    'Nenhum chamado aberto no momento.',
-                    style: TextStyle(color: AppColors.mutedGreen),
-                  ),
-                )
-              else
-                ...open.take(4).map(
-                      (call) => Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.base, 0, AppSpacing.base, AppSpacing.sm,
+    return ScreenTutorial(
+      guide: Guides.vetDashboard,
+      child: Scaffold(
+        body: RefreshIndicator(
+          color:     AppColors.brandGreen,
+          onRefresh: () async {
+            ref
+              ..invalidate(openCallsProvider)
+              ..invalidate(vetCallsProvider);
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _VetHeader(name: user?.name ?? 'Veterinário'),
+                const SizedBox(height: AppSpacing.base),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
+                  child: TutorialTarget(
+                    id:    TutorialIds.vetDashKpis,
+                    child: GridView.count(
+                      shrinkWrap:       true,
+                      physics:          const NeverScrollableScrollPhysics(),
+                      crossAxisCount:   2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing:  12,
+                      childAspectRatio: 1.25,
+                      children: [
+                        KpiCard(
+                          label:    'Chamados abertos',
+                          value:    open.length,
+                          sub:      'no pool',
+                          isAccent: true,
                         ),
-                        child: ServiceCallTile(
-                          call:  call,
-                          onTap: () => showVetCallActionSheet(context, call),
+                        KpiCard(
+                          label: 'Meus ativos',
+                          value: active.length,
+                          sub:   'em atendimento',
+                          delay: const Duration(milliseconds: 80),
+                        ),
+                        KpiCard(
+                          label: 'Concluídos',
+                          value: monthDone,
+                          sub:   'neste mês',
+                          delay: const Duration(milliseconds: 160),
+                        ),
+                        KpiCard(
+                          label:      'Agendamentos',
+                          value:      myCalls.where((c) => c.scheduledDate != null && c.isActive).length,
+                          sub:        nextSched != null ? 'próximo em breve' : 'nenhum',
+                          delay:      const Duration(milliseconds: 240),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                const TutorialTarget(
+                  id:    TutorialIds.vetDashPool,
+                  child: _SectionLabel('Chamados abertos no pool'),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                if (open.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.base),
+                    child: Text(
+                      'Nenhum chamado aberto no momento.',
+                      style: TextStyle(color: AppColors.mutedGreen),
+                    ),
+                  )
+                else
+                  ...open.take(4).map(
+                        (call) => Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.base, 0, AppSpacing.base, AppSpacing.sm,
+                          ),
+                          child: ServiceCallTile(
+                            call:  call,
+                            onTap: () => showVetCallActionSheet(context, call),
+                          ),
                         ),
                       ),
-                    ),
-              const SizedBox(height: AppSpacing.x2l),
-            ],
+                const SizedBox(height: AppSpacing.x2l),
+              ],
+            ),
           ),
         ),
       ),
@@ -144,21 +156,29 @@ class _VetHeader extends StatelessWidget {
             right:  AppSpacing.base,
             bottom: AppSpacing.x2l,
           ),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Área do veterinário',
-                style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Dr(a). $name',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Área do veterinário',
+                      style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w500),
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Dr(a). $name',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                  ],
+                ),
               ),
+              const TutorialHelpButton(),
             ],
           ),
         ),

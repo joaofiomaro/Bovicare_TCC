@@ -13,6 +13,9 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../health/presentation/providers/health_events_provider.dart';
 import '../../../herd/presentation/providers/animals_provider.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
+import '../../../tutorial/presentation/widgets/tutorial_target.dart';
 import '../../../vaccination/presentation/providers/vaccinations_provider.dart';
 import '../../domain/entities/dashboard_stats.dart';
 import '../providers/dashboard_provider.dart';
@@ -28,46 +31,58 @@ class DashboardScreen extends ConsumerWidget {
     final user      = ref.watch(authProvider).valueOrNull;
     final dashboard = ref.watch(dashboardProvider);
 
-    return Scaffold(
-      body: dashboard.when(
-        loading: () => const DashboardSkeleton(),
-        error: (e, _) => AppEmptyState(
-          icon:        Icons.error_outline_rounded,
-          title:       'Erro ao carregar',
-          subtitle:    e.toString(),
-          actionLabel: 'Tentar novamente',
-          onAction:    () => ref.invalidate(dashboardProvider),
-        ),
-        data: (state) => RefreshIndicator(
-          color:    AppColors.brandGreen,
-          onRefresh: () async {
-            ref
-              ..invalidate(allVaccinationsProvider)
-              ..invalidate(allHealthEventsProvider)
-              ..invalidate(animalsProvider);
-            await ref.read(dashboardProvider.notifier).refresh();
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _DashboardHeader(user: user),
-                if (state.stats.alertCount > 0)
-                  _AlertBanner(stats: state.stats),
-                const SizedBox(height: AppSpacing.base),
-                _KpiGrid(stats: state.stats),
-                const _AlertsSection(),
-                const SizedBox(height: AppSpacing.xl),
-                const _SectionLabel(title: 'Módulos'),
-                const SizedBox(height: AppSpacing.sm),
-                const _ModulesList(),
-                const SizedBox(height: AppSpacing.xl),
-                const _SectionLabel(title: 'Atividade recente'),
-                const SizedBox(height: AppSpacing.sm),
-                ActivityTimeline(activities: state.activities),
-                const SizedBox(height: AppSpacing.x2l),
-              ],
+    return ScreenTutorial(
+      guide: Guides.dashboard,
+      child: Scaffold(
+        body: dashboard.when(
+          loading: () => const DashboardSkeleton(),
+          error: (e, _) => AppEmptyState(
+            icon:        Icons.error_outline_rounded,
+            title:       'Erro ao carregar',
+            subtitle:    e.toString(),
+            actionLabel: 'Tentar novamente',
+            onAction:    () => ref.invalidate(dashboardProvider),
+          ),
+          data: (state) => RefreshIndicator(
+            color:    AppColors.brandGreen,
+            onRefresh: () async {
+              ref
+                ..invalidate(allVaccinationsProvider)
+                ..invalidate(allHealthEventsProvider)
+                ..invalidate(animalsProvider);
+              await ref.read(dashboardProvider.notifier).refresh();
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _DashboardHeader(user: user),
+                  if (state.stats.alertCount > 0)
+                    _AlertBanner(stats: state.stats),
+                  const SizedBox(height: AppSpacing.base),
+                  TutorialTarget(
+                    id:    TutorialIds.dashboardKpis,
+                    child: _KpiGrid(stats: state.stats),
+                  ),
+                  const TutorialTarget(
+                    id:    TutorialIds.dashboardAlerts,
+                    child: _AlertsSection(),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  const _SectionLabel(title: 'Módulos'),
+                  const SizedBox(height: AppSpacing.sm),
+                  const TutorialTarget(
+                    id:    TutorialIds.dashboardModules,
+                    child: _ModulesList(),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  const _SectionLabel(title: 'Atividade recente'),
+                  const SizedBox(height: AppSpacing.sm),
+                  ActivityTimeline(activities: state.activities),
+                  const SizedBox(height: AppSpacing.x2l),
+                ],
+              ),
             ),
           ),
         ),
@@ -150,6 +165,7 @@ class _DashboardHeader extends StatelessWidget {
                   ],
                 ),
               ),
+              const TutorialHelpButton(),
               AppAvatar(
                 name:     user?.name ?? 'U',
                 radius:   22,

@@ -12,6 +12,9 @@ import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../brete/presentation/providers/brete_provider.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
+import '../../../tutorial/presentation/widgets/tutorial_target.dart';
 import '../../domain/entities/animal_entity.dart';
 import '../providers/animals_provider.dart';
 
@@ -183,143 +186,159 @@ class _AnimalFormScreenState extends ConsumerState<AnimalFormScreen> {
   Widget build(BuildContext context) {
     final birthLabel = _birthDate?.toBrDate ?? 'Selecionar data';
 
-    return Scaffold(
-      body: Column(
-        children: [
-          AppHeader(
-            title:    widget.isEditing ? 'Editar animal' : 'Novo animal',
-            subtitle: widget.isEditing ? 'Atualize os dados' : 'Preencha os dados',
-            showBack: true,
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSpacing.base),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _RfidScanner(
-                    rfid:     _rfid,
-                    scanning: _isScanning,
-                    onScan:   _readRfid,
-                  ),
-                  const SizedBox(height: AppSpacing.base),
-
-                  AppTextField(
-                    label:           'Brinco / ID *',
-                    controller:      _earTagController,
-                    prefixIcon:      Icons.label_outline_rounded,
-                    textInputAction: TextInputAction.next,
-                    keyboardType:    TextInputType.number,
-                  ),
-                  const SizedBox(height: AppSpacing.base),
-
-                  AppTextField(
-                    label:           'Nome',
-                    controller:      _nameController,
-                    prefixIcon:      Icons.badge_outlined,
-                    textInputAction: TextInputAction.next,
-                  ),
-                  const SizedBox(height: AppSpacing.base),
-
-                  // Raça — DropdownButton direto (estado gerenciado localmente).
-                  _LabeledField(
-                    label: 'Raça *',
-                    child: Container(
-                      padding:    const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color:
-                            Theme.of(context).colorScheme.surfaceContainerHighest,
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(12)),
-                      ),
-                      child: DropdownButton<String>(
-                        value:      _breed,
-                        isExpanded: true,
-                        underline:  const SizedBox.shrink(),
-                        onChanged:  (v) => setState(() => _breed = v!),
-                        items: _breeds
-                            .map((b) =>
-                                DropdownMenuItem(value: b, child: Text(b)))
-                            .toList(),
+    return ScreenTutorial(
+      guide: Guides.animalForm,
+      child: Scaffold(
+        body: Column(
+          children: [
+            AppHeader(
+              title:    widget.isEditing ? 'Editar animal' : 'Novo animal',
+              subtitle: widget.isEditing ? 'Atualize os dados' : 'Preencha os dados',
+              showBack: true,
+              actions:  const [TutorialHelpButton()],
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacing.base),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TutorialTarget(
+                      id:    TutorialIds.formRfid,
+                      child: _RfidScanner(
+                        rfid:     _rfid,
+                        scanning: _isScanning,
+                        onScan:   _readRfid,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.base),
+                    const SizedBox(height: AppSpacing.base),
 
-                  // Sexo
-                  _LabeledField(
-                    label: 'Sexo *',
-                    child: Row(
-                      children: [
-                        _SexChip(
-                          label:    'Fêmea',
-                          selected: _sex == AnimalSex.female,
-                          onTap:    () =>
-                              setState(() => _sex = AnimalSex.female),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        _SexChip(
-                          label:    'Macho',
-                          selected: _sex == AnimalSex.male,
-                          onTap:    () => setState(() => _sex = AnimalSex.male),
-                        ),
-                      ],
+                    TutorialTarget(
+                      id:    TutorialIds.formEarTag,
+                      child: AppTextField(
+                        label:           'Brinco / ID *',
+                        controller:      _earTagController,
+                        prefixIcon:      Icons.label_outline_rounded,
+                        textInputAction: TextInputAction.next,
+                        keyboardType:    TextInputType.number,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.base),
+                    const SizedBox(height: AppSpacing.base),
 
-                  // Data de nascimento
-                  _LabeledField(
-                    label: 'Data de nascimento *',
-                    child: InkWell(
-                      onTap:        _pickDate,
-                      borderRadius: const BorderRadius.all(Radius.circular(12)),
-                      child: InputDecorator(
-                        decoration: _inputDecoration(context),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.calendar_today_outlined,
-                                size: 18, color: AppColors.mutedGreen),
-                            const SizedBox(width: 8),
-                            Text(
-                              birthLabel,
-                              style: TextStyle(
-                                color: _birthDate != null
-                                    ? Theme.of(context).colorScheme.onSurface
-                                    : AppColors.mutedGreen,
-                              ),
+                    AppTextField(
+                      label:           'Nome',
+                      controller:      _nameController,
+                      prefixIcon:      Icons.badge_outlined,
+                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+
+                    // Raça — DropdownButton direto (estado gerenciado localmente).
+                    _LabeledField(
+                      label: 'Raça *',
+                      child: Container(
+                        padding:    const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(context).colorScheme.surfaceContainerHighest,
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(12)),
+                        ),
+                        child: DropdownButton<String>(
+                          value:      _breed,
+                          isExpanded: true,
+                          underline:  const SizedBox.shrink(),
+                          onChanged:  (v) => setState(() => _breed = v!),
+                          items: _breeds
+                              .map((b) =>
+                                  DropdownMenuItem(value: b, child: Text(b)))
+                              .toList(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+
+                    // Sexo
+                    _LabeledField(
+                      label: 'Sexo *',
+                      child: Row(
+                        children: [
+                          _SexChip(
+                            label:    'Fêmea',
+                            selected: _sex == AnimalSex.female,
+                            onTap:    () =>
+                                setState(() => _sex = AnimalSex.female),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          _SexChip(
+                            label:    'Macho',
+                            selected: _sex == AnimalSex.male,
+                            onTap:    () => setState(() => _sex = AnimalSex.male),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+
+                    // Data de nascimento
+                    TutorialTarget(
+                      id:    TutorialIds.formBirth,
+                      child: _LabeledField(
+                        label: 'Data de nascimento *',
+                        child: InkWell(
+                          onTap:        _pickDate,
+                          borderRadius: const BorderRadius.all(Radius.circular(12)),
+                          child: InputDecorator(
+                            decoration: _inputDecoration(context),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.calendar_today_outlined,
+                                    size: 18, color: AppColors.mutedGreen),
+                                const SizedBox(width: 8),
+                                Text(
+                                  birthLabel,
+                                  style: TextStyle(
+                                    color: _birthDate != null
+                                        ? Theme.of(context).colorScheme.onSurface
+                                        : AppColors.mutedGreen,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.base),
+                    const SizedBox(height: AppSpacing.base),
 
-                  AppTextField(
-                    label:        'Peso atual (kg)',
-                    controller:   _weightController,
-                    prefixIcon:   Icons.monitor_weight_outlined,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    textInputAction: TextInputAction.done,
-                  ),
-                  const SizedBox(height: AppSpacing.x2l),
+                    AppTextField(
+                      label:        'Peso atual (kg)',
+                      controller:   _weightController,
+                      prefixIcon:   Icons.monitor_weight_outlined,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      textInputAction: TextInputAction.done,
+                    ),
+                    const SizedBox(height: AppSpacing.x2l),
 
-                  AppButton(
-                    label: widget.isEditing
-                        ? 'Salvar alterações'
-                        : 'Cadastrar animal',
-                    icon:      Icons.check_rounded,
-                    onPressed: _save,
-                    isLoading: _isSaving,
-                  ),
-                  const SizedBox(height: AppSpacing.base),
-                ],
+                    TutorialTarget(
+                      id:    TutorialIds.formSave,
+                      child: AppButton(
+                        label: widget.isEditing
+                            ? 'Salvar alterações'
+                            : 'Cadastrar animal',
+                        icon:      Icons.check_rounded,
+                        onPressed: _save,
+                        isLoading: _isSaving,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.base),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

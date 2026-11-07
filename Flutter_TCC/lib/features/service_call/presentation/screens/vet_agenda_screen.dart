@@ -6,6 +6,8 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
 import '../../domain/entities/service_call.dart';
 import '../providers/service_calls_provider.dart';
 import '../widgets/service_call_tile.dart';
@@ -19,62 +21,66 @@ class VetAgendaScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final calls = ref.watch(vetCallsProvider);
 
-    return Scaffold(
-      body: Column(
-        children: [
-          const AppHeader(
-            title:    'Agenda',
-            subtitle: 'Visitas agendadas',
-          ),
-          Expanded(
-            child: calls.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.brandGreen),
-              ),
-              error: (e, _) => AppEmptyState(
-                icon:        Icons.error_outline_rounded,
-                title:       'Erro ao carregar',
-                subtitle:    e.toString(),
-                actionLabel: 'Tentar novamente',
-                onAction:    () => ref.invalidate(vetCallsProvider),
-              ),
-              data: (list) {
-                final scheduled = list
-                    .where((c) => c.scheduledDate != null && c.isActive)
-                    .toList()
-                  ..sort((a, b) =>
-                      a.scheduledDate!.compareTo(b.scheduledDate!));
-
-                if (scheduled.isEmpty) {
-                  return const AppEmptyState(
-                    icon:     Icons.event_busy_outlined,
-                    title:    'Agenda vazia',
-                    subtitle: 'Agende uma visita ao aceitar um chamado.',
-                  );
-                }
-
-                return RefreshIndicator(
-                  color:     AppColors.brandGreen,
-                  onRefresh: () async => ref.invalidate(vetCallsProvider),
-                  child: ListView.separated(
-                    padding:   const EdgeInsets.all(AppSpacing.base),
-                    itemCount: scheduled.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(height: AppSpacing.sm),
-                    itemBuilder: (_, i) {
-                      final call = scheduled[i];
-                      return ServiceCallTile(
-                        call:  call,
-                        onTap: () => showVetCallActionSheet(context, call),
-                        trailing: _ScheduleLabel(date: call.scheduledDate!),
-                      );
-                    },
-                  ),
-                );
-              },
+    return ScreenTutorial(
+      guide: Guides.vetAgenda,
+      child: Scaffold(
+        body: Column(
+          children: [
+            const AppHeader(
+              title:    'Agenda',
+              subtitle: 'Visitas agendadas',
+              actions:  [TutorialHelpButton()],
             ),
-          ),
-        ],
+            Expanded(
+              child: calls.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: AppColors.brandGreen),
+                ),
+                error: (e, _) => AppEmptyState(
+                  icon:        Icons.error_outline_rounded,
+                  title:       'Erro ao carregar',
+                  subtitle:    e.toString(),
+                  actionLabel: 'Tentar novamente',
+                  onAction:    () => ref.invalidate(vetCallsProvider),
+                ),
+                data: (list) {
+                  final scheduled = list
+                      .where((c) => c.scheduledDate != null && c.isActive)
+                      .toList()
+                    ..sort((a, b) =>
+                        a.scheduledDate!.compareTo(b.scheduledDate!));
+
+                  if (scheduled.isEmpty) {
+                    return const AppEmptyState(
+                      icon:     Icons.event_busy_outlined,
+                      title:    'Agenda vazia',
+                      subtitle: 'Agende uma visita ao aceitar um chamado.',
+                    );
+                  }
+
+                  return RefreshIndicator(
+                    color:     AppColors.brandGreen,
+                    onRefresh: () async => ref.invalidate(vetCallsProvider),
+                    child: ListView.separated(
+                      padding:   const EdgeInsets.all(AppSpacing.base),
+                      itemCount: scheduled.length,
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpacing.sm),
+                      itemBuilder: (_, i) {
+                        final call = scheduled[i];
+                        return ServiceCallTile(
+                          call:  call,
+                          onTap: () => showVetCallActionSheet(context, call),
+                          trailing: _ScheduleLabel(date: call.scheduledDate!),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

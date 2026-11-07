@@ -16,18 +16,11 @@ class AnimalFirestoreDataSource with FirestoreErrorHandler {
 
   String get _uid => _auth.currentUser!.uid;
 
-  DocumentReference<Map<String, dynamic>> get _userDoc =>
-      _firestore.doc('users/$_uid');
-
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('users/$_uid/animals');
 
   Future<List<AnimalModel>> getAll() => guardFirestore(() async {
-        var snapshot = await _collection.orderBy('earTag').get();
-        if (snapshot.docs.isEmpty && await _shouldSeedDemo()) {
-          await _seed();
-          snapshot = await _collection.orderBy('earTag').get();
-        }
+        final snapshot = await _collection.orderBy('earTag').get();
         return snapshot.docs.map(AnimalModel.fromFirestore).toList();
       });
 
@@ -77,83 +70,4 @@ class AnimalFirestoreDataSource with FirestoreErrorHandler {
         await batch.commit();
       });
 
-  // ---------------------------------------------------------------------------
-
-  /// Rebanho demonstrativo apenas na PRIMEIRA vez que um **produtor** abre o
-  /// app — marcado em `users/{uid}.demoSeededAt`.
-  ///
-  /// Sem a marca, o critério "coleção vazia" fazia 7 animais fictícios
-  /// reaparecerem sempre que o produtor removia/dava baixa em todo o rebanho,
-  /// e um veterinário (que não tem rebanho) também recebia um.
-  Future<bool> _shouldSeedDemo() async {
-    final profile = (await _userDoc.get()).data();
-    if (profile == null) return false;
-    if (profile['role'] != 'producer') return false;
-    return !profile.containsKey('demoSeededAt');
-  }
-
-  /// Popula a coleção com animais demonstrativos e grava a marca no perfil,
-  /// no mesmo batch (ou ambos acontecem, ou nada).
-  Future<void> _seed() async {
-    final now = DateTime.now();
-    final batch = _firestore.batch();
-    for (final model in _buildSeed(now)) {
-      batch.set(_collection.doc(model.id), {
-        ...model.toFirestore(),
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    }
-    batch.set(
-      _userDoc,
-      {'demoSeededAt': FieldValue.serverTimestamp()},
-      SetOptions(merge: true),
-    );
-    await batch.commit();
-  }
-
-  List<AnimalModel> _buildSeed(DateTime now) => [
-        AnimalModel(
-          id: '1', earTag: '047', name: 'Mimosa', breed: 'Nelore',
-          sex: 'female', status: 'pregnant', birthDateIso: '2022-03-12',
-          weightKg: 384,
-          // Relativo a hoje (não uma data fixa do ano anterior, que podia
-          // passar dos 283 dias de gestação): ~5 meses de prenhez.
-          pregnancyDateIso:
-              now.subtract(const Duration(days: 150)).toIso8601String(),
-        ),
-        const AnimalModel(
-          id: '2', earTag: '031', name: 'Estrela', breed: 'Gir',
-          sex: 'female', status: 'attention', birthDateIso: '2020-01-20',
-          weightKg: 410,
-        ),
-        const AnimalModel(
-          id: '3', earTag: '003', name: 'Touro 01', breed: 'Nelore',
-          sex: 'male', status: 'healthy', birthDateIso: '2021-06-15',
-          weightKg: 620,
-        ),
-        const AnimalModel(
-          id: '4', earTag: '058', name: 'Bela', breed: 'Gir',
-          sex: 'female', status: 'sick', birthDateIso: '2023-02-08',
-          weightKg: 290,
-        ),
-        const AnimalModel(
-          id: '5', earTag: '072', name: 'Pintada', breed: 'Nelore',
-          sex: 'female', status: 'healthy', birthDateIso: '2021-09-30',
-          weightKg: 360,
-        ),
-        AnimalModel(
-          id: '6', earTag: '089', name: 'Aurora', breed: 'Girolando',
-          sex: 'female', status: 'pregnant', birthDateIso: '2022-07-04',
-          weightKg: 395,
-          // Reta final (~1 mês para o parto): alimenta os alertas de parto.
-          pregnancyDateIso:
-              now.subtract(const Duration(days: 250)).toIso8601String(),
-        ),
-        const AnimalModel(
-          id: '7', earTag: '012', name: 'Bravo', breed: 'Brahman',
-          sex: 'male', status: 'healthy', birthDateIso: '2019-04-18',
-          weightKg: 710,
-        ),
-      ];
 }

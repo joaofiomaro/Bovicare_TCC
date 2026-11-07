@@ -6,8 +6,10 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_skeleton.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
+import '../../../tutorial/presentation/widgets/tutorial_target.dart';
 import '../../domain/entities/vet_entity.dart';
-import '../../domain/repositories/vet_repository.dart';
 import '../providers/vets_provider.dart';
 import '../widgets/contact_buttons.dart';
 
@@ -51,33 +53,46 @@ class _VetDetailContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          const SliverAppBar(
-            backgroundColor:        AppColors.brandGreen,
-            foregroundColor:        Colors.white,
-            surfaceTintColor:       Colors.transparent,
-            pinned:                 true,
-            scrolledUnderElevation: 0,
-          ),
-          // Altura livre (não um expandedHeight fixo): nome longo, fonte do
-          // sistema ampliada ou os dois selos nunca ficam cortados.
-          SliverToBoxAdapter(child: _VetHeader(vet: vet)),
-          SliverPadding(
-            padding: const EdgeInsets.all(AppSpacing.base),
-            sliver:  SliverList(
-              delegate: SliverChildListDelegate([
-                _SpecialtiesCard(specialties: vet.specialties),
-                const SizedBox(height: AppSpacing.md),
-                _LocationCard(vet: vet),
-                const SizedBox(height: AppSpacing.xl),
-                ContactButtons(vet: vet),
-                const SizedBox(height: AppSpacing.x2l),
-              ]),
+    return ScreenTutorial(
+      guide: Guides.vetDetail,
+      child: Scaffold(
+        body: CustomScrollView(
+          slivers: [
+            const SliverAppBar(
+              backgroundColor:        AppColors.brandGreen,
+              foregroundColor:        Colors.white,
+              surfaceTintColor:       Colors.transparent,
+              pinned:                 true,
+              scrolledUnderElevation: 0,
+              actions:                [TutorialHelpButton()],
             ),
-          ),
-        ],
+            // Altura livre (não um expandedHeight fixo): nome longo, fonte do
+            // sistema ampliada ou os dois selos nunca ficam cortados.
+            SliverToBoxAdapter(child: _VetHeader(vet: vet)),
+            SliverPadding(
+              padding: const EdgeInsets.all(AppSpacing.base),
+              sliver:  SliverList(
+                delegate: SliverChildListDelegate([
+                  TutorialTarget(
+                    id:    TutorialIds.vetSpecialties,
+                    child: _SpecialtiesCard(specialties: vet.specialties),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  TutorialTarget(
+                    id:    TutorialIds.vetLocation,
+                    child: _LocationCard(vet: vet),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  TutorialTarget(
+                    id:    TutorialIds.vetContact,
+                    child: ContactButtons(vet: vet),
+                  ),
+                  const SizedBox(height: AppSpacing.x2l),
+                ]),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -145,7 +160,6 @@ class _VetHeader extends StatelessWidget {
                 label: vet.isAvailable ? 'Disponível agora' : 'Ocupado',
                 type:  vet.isAvailable ? BadgeType.success : BadgeType.warning,
               ),
-              if (vet.isDemo) const AppBadge(label: 'Perfil de demonstração'),
             ],
           ),
         ],

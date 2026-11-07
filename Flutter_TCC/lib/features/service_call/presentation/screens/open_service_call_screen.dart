@@ -10,6 +10,9 @@ import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
+import '../../../tutorial/presentation/widgets/tutorial_target.dart';
 import '../../../vets/presentation/providers/vets_provider.dart';
 import '../../domain/entities/service_call.dart';
 import '../providers/service_calls_provider.dart';
@@ -125,109 +128,122 @@ class _OpenServiceCallScreenState
   Widget build(BuildContext context) {
     final isSubmitting = ref.watch(serviceCallActionsProvider).isLoading;
 
-    return Scaffold(
-      body: Column(
-        children: [
-          const AppHeader(
-            title:    'Solicitar atendimento',
-            subtitle: 'Abrir chamado para veterinários',
-            showBack: true,
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSpacing.base),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppTextField(
-                    label:      'Motivo',
-                    hint:       'Ex.: Vaca com dificuldade no parto',
-                    controller: _title,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  AppTextField(
-                    label:      'Descrição',
-                    hint:       'Detalhe os sintomas e o que precisa',
-                    controller: _description,
-                    maxLines:   4,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: AppTextField(
-                          label:      'Cidade',
-                          controller: _city,
-                        ),
+    return ScreenTutorial(
+      guide: Guides.openServiceCall,
+      child: Scaffold(
+        body: Column(
+          children: [
+            const AppHeader(
+              title:    'Solicitar atendimento',
+              subtitle: 'Abrir chamado para veterinários',
+              showBack: true,
+              actions:  [TutorialHelpButton()],
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacing.base),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TutorialTarget(
+                      id:    TutorialIds.callReason,
+                      child: AppTextField(
+                        label:      'Motivo',
+                        hint:       'Ex.: Vaca com dificuldade no parto',
+                        controller: _title,
                       ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: AppTextField(
-                          label:      'UF',
-                          controller: _state,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  AppTextField(
-                    label:      'Brinco do animal (opcional)',
-                    controller: _earTag,
-                  ),
-                  SwitchListTile(
-                    contentPadding:   EdgeInsets.zero,
-                    value:            _shareLocation,
-                    activeThumbColor: AppColors.brandGreen,
-                    onChanged:        _locating ? null : _toggleLocation,
-                    title: const Text('Enviar a localização da fazenda'),
-                    subtitle: Text(
-                      _locating
-                          ? 'Obtendo localização…'
-                          : _shareLocation
-                              ? 'Posição atual anexada — o veterinário poderá abrir a rota.'
-                              : 'Use estando na fazenda. Compartilhada só com o '
-                                  'veterinário que atender.',
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    'Urgência',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  AppChipFilter<ServiceUrgency>(
-                    options: ServiceUrgency.values
-                        .map((u) => ChipOption(label: u.label, value: u))
-                        .toList(),
-                    selected: {_urgency},
-                    onSelected: (u, {required isSelected}) =>
-                        setState(() => _urgency = u),
-                  ),
-                  if (_error != null) ...[
                     const SizedBox(height: AppSpacing.md),
+                    AppTextField(
+                      label:      'Descrição',
+                      hint:       'Detalhe os sintomas e o que precisa',
+                      controller: _description,
+                      maxLines:   4,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: AppTextField(
+                            label:      'Cidade',
+                            controller: _city,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: AppTextField(
+                            label:      'UF',
+                            controller: _state,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    AppTextField(
+                      label:      'Brinco do animal (opcional)',
+                      controller: _earTag,
+                    ),
+                    SwitchListTile(
+                      contentPadding:   EdgeInsets.zero,
+                      value:            _shareLocation,
+                      activeThumbColor: AppColors.brandGreen,
+                      onChanged:        _locating ? null : _toggleLocation,
+                      title: const Text('Enviar a localização da fazenda'),
+                      subtitle: Text(
+                        _locating
+                            ? 'Obtendo localização…'
+                            : _shareLocation
+                                ? 'Posição atual anexada — o veterinário poderá abrir a rota.'
+                                : 'Use estando na fazenda. Compartilhada só com o '
+                                    'veterinário que atender.',
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
-                      _error!,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.error,
+                      'Urgência',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
                           ),
                     ),
+                    const SizedBox(height: AppSpacing.sm),
+                    TutorialTarget(
+                      id:    TutorialIds.callUrgency,
+                      child: AppChipFilter<ServiceUrgency>(
+                        options: ServiceUrgency.values
+                            .map((u) => ChipOption(label: u.label, value: u))
+                            .toList(),
+                        selected: {_urgency},
+                        onSelected: (u, {required isSelected}) =>
+                            setState(() => _urgency = u),
+                      ),
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        _error!,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                      ),
+                    ],
+                    const SizedBox(height: AppSpacing.xl),
+                    TutorialTarget(
+                      id:    TutorialIds.callSubmit,
+                      child: AppButton(
+                        label:     'Abrir chamado',
+                        icon:      Icons.send_rounded,
+                        isLoading: isSubmitting,
+                        onPressed: _submit,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.x2l),
                   ],
-                  const SizedBox(height: AppSpacing.xl),
-                  AppButton(
-                    label:     'Abrir chamado',
-                    icon:      Icons.send_rounded,
-                    isLoading: isSubmitting,
-                    onPressed: _submit,
-                  ),
-                  const SizedBox(height: AppSpacing.x2l),
-                ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

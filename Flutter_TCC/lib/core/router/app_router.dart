@@ -27,6 +27,7 @@ import '../../features/service_call/presentation/screens/vet_agenda_screen.dart'
 import '../../features/service_call/presentation/screens/vet_calls_screen.dart';
 import '../../features/settings/presentation/screens/alert_settings_screen.dart';
 import '../../features/settings/presentation/screens/consents_screen.dart';
+import '../../features/tutorial/presentation/screens/welcome_screen.dart';
 import '../../features/vaccination/presentation/screens/vaccination_screen.dart';
 import '../../features/vets/presentation/screens/vet_detail_screen.dart';
 import '../../features/vets/presentation/screens/vet_professional_profile_screen.dart';
@@ -92,6 +93,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path:    AppPaths.splash,
         name:    AppRoutes.splash,
         builder: (_, __) => const SplashScreen(),
+      ),
+      GoRoute(
+        path:        AppPaths.welcome,
+        name:        AppRoutes.welcome,
+        pageBuilder: (_, state) => _fadeTransition(state, const WelcomeScreen()),
       ),
       GoRoute(
         path:        AppPaths.login,

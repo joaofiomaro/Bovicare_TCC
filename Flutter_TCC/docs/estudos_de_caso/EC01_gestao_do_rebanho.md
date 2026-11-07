@@ -18,7 +18,7 @@ encontrar rapidamente qualquer animal pelo brinco ou nome.
 | Passo | Tela | Ação do usuário | Resposta do sistema |
 |---|---|---|---|
 | 1 | Cadastro | Escolhe **Produtor Rural**, informa nome, e-mail e senha (mín. 8) | Cria a conta no Firebase Auth e o perfil `users/{uid}` com `role = producer` |
-| 2 | Dashboard | — | Exibe saudação, KPIs e módulos. No primeiro acesso, cria um rebanho demonstrativo com 7 animais (uma única vez) |
+| 2 | Dashboard | — | Exibe saudação, KPIs e módulos. A conta começa vazia (sem dados fictícios); na primeira visita a cada tela o app oferece um passo a passo opcional |
 | 3 | Rebanho | Abre a aba Rebanho | Lista animais ativos com raça, sexo, idade, peso e badge de status |
 | 4 | Novo animal | Toca **+**, preenche brinco `101`, nome `Jabuticaba`, raça Girolando, fêmea, nascimento, peso `285` | Valida brinco e data obrigatórios, peso numérico; salva em `users/{uid}/animals` |
 | 5 | Rebanho | Digita `jabu` na busca | Filtra em memória (sem nova consulta) por brinco, nome, raça ou RFID |
@@ -38,7 +38,10 @@ flowchart LR
 ## Regras de negócio aplicadas
 - Senha com no mínimo 8 caracteres no cadastro; e-mail validado por formato.
 - Papel (`producer`/`vet`) escolhido no cadastro e **imutável** depois.
-- Rebanho demonstrativo semeado **uma vez por produtor** (marca `demoSeededAt`).
+- Conta nova começa sem animais nem veterinários fictícios: só aparece o que o usuário cadastra.
+- Tutorial opcional: boas-vindas na primeira abertura (ver ou pular) e convite ao passo a passo
+  na primeira visita a cada tela; o botão **?** do cabeçalho reabre, e Perfil › Ajuda e tutoriais
+  liga/desliga as dicas.
 - Busca e filtros aplicados em memória: a lista é carregada uma vez do Firestore.
 - Editar não altera a situação de baixa (vendido/óbito) do animal.
 - A tag RFID é lida pelo brete (EC09): via MQTT com o ESP32 ou, sem hardware, em modo simulação.

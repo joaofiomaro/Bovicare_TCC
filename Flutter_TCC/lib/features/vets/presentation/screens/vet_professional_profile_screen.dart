@@ -9,6 +9,9 @@ import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
+import '../../../tutorial/presentation/widgets/tutorial_target.dart';
 import '../../domain/entities/vet_entity.dart';
 import '../providers/vets_provider.dart';
 
@@ -31,24 +34,28 @@ class VetProfessionalProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(myVetProfileProvider);
-    return Scaffold(
-      body: Column(
-        children: [
-          const AppHeader(
-            title:    'Perfil profissional',
-            subtitle: 'Visível para produtores na aba Vets',
-            showBack: true,
-          ),
-          Expanded(
-            child: profile.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.brandGreen),
-              ),
-              error: (e, _) => Center(child: Text(e.toString())),
-              data:  (current) => _ProfileForm(initial: current),
+    return ScreenTutorial(
+      guide: Guides.vetProfessionalProfile,
+      child: Scaffold(
+        body: Column(
+          children: [
+            const AppHeader(
+              title:    'Perfil profissional',
+              subtitle: 'Visível para produtores na aba Vets',
+              showBack: true,
+              actions:  [TutorialHelpButton()],
             ),
-          ),
-        ],
+            Expanded(
+              child: profile.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: AppColors.brandGreen),
+                ),
+                error: (e, _) => Center(child: Text(e.toString())),
+                data:  (current) => _ProfileForm(initial: current),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -253,28 +260,37 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
         const SizedBox(height: AppSpacing.md),
         AppTextField(label: 'Raio de atendimento (km) *', controller: _radius, prefixIcon: Icons.radar_rounded, keyboardType: TextInputType.number),
         const SizedBox(height: AppSpacing.md),
-        AppButton(
-          label:     _lat == null
-              ? 'Usar minha localização'
-              : 'Base marcada (${_lat!.toStringAsFixed(3)}, ${_lng!.toStringAsFixed(3)}) — atualizar',
-          icon:      Icons.my_location_rounded,
-          variant:   AppButtonVariant.outline,
-          isLoading: _locating,
-          onPressed: _useMyLocation,
+        TutorialTarget(
+          id:    TutorialIds.vetProfileLocation,
+          child: AppButton(
+            label:     _lat == null
+                ? 'Usar minha localização'
+                : 'Base marcada (${_lat!.toStringAsFixed(3)}, ${_lng!.toStringAsFixed(3)}) — atualizar',
+            icon:      Icons.my_location_rounded,
+            variant:   AppButtonVariant.outline,
+            isLoading: _locating,
+            onPressed: _useMyLocation,
+          ),
         ),
-        SwitchListTile(
-          contentPadding:   EdgeInsets.zero,
-          value:            _available,
-          activeThumbColor: AppColors.brandGreen,
-          title:            const Text('Disponível para novos atendimentos'),
-          onChanged:        (v) => setState(() => _available = v),
+        TutorialTarget(
+          id:    TutorialIds.vetProfileAvailable,
+          child: SwitchListTile(
+            contentPadding:   EdgeInsets.zero,
+            value:            _available,
+            activeThumbColor: AppColors.brandGreen,
+            title:            const Text('Disponível para novos atendimentos'),
+            onChanged:        (v) => setState(() => _available = v),
+          ),
         ),
         const SizedBox(height: AppSpacing.base),
-        AppButton(
-          label:     _isPublished ? 'Salvar alterações' : 'Publicar perfil',
-          icon:      Icons.public_rounded,
-          isLoading: busy,
-          onPressed: _publish,
+        TutorialTarget(
+          id:    TutorialIds.vetProfilePublish,
+          child: AppButton(
+            label:     _isPublished ? 'Salvar alterações' : 'Publicar perfil',
+            icon:      Icons.public_rounded,
+            isLoading: busy,
+            onPressed: _publish,
+          ),
         ),
         if (_isPublished) ...[
           const SizedBox(height: AppSpacing.sm),

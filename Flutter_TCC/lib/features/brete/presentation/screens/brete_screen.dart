@@ -15,6 +15,9 @@ import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../herd/domain/entities/animal_entity.dart';
 import '../../../herd/presentation/providers/animals_provider.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
+import '../../../tutorial/presentation/widgets/tutorial_target.dart';
 import '../../domain/brete_ble_protocol.dart';
 import '../../domain/brete_gateway.dart';
 import '../../domain/brete_models.dart';
@@ -133,127 +136,154 @@ class _BreteScreenState extends ConsumerState<BreteScreen> {
       }
     }
 
-    return Scaffold(
-      body: Column(
-        children: [
-          AppHeader(
-            title:    'Brete',
-            subtitle: switch (gateway.transport) {
-              BreteTransport.simulation => 'Modo simulação — sem hardware conectado',
-              BreteTransport.ble =>
-                'ESP32 via Bluetooth${firmware != null ? ' · firmware $firmware' : ''}',
-              BreteTransport.mqtt => 'ESP32 via MQTT',
-            },
-            actions: [_ConnectionPill(connection: status.connection)],
-          ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(AppSpacing.base),
-              children: [
-                if (status.connection == BreteConnection.error ||
-                    status.connection == BreteConnection.disconnected)
-                  _ErrorCard(
-                    message: status.errorMessage ??
-                        'Brete desconectado.',
-                    onRetry: () => ref.read(breteGatewayProvider).connect(),
-                  ),
-                if (emergency) ...[
-                  _EmergencyBanner(stopPressed: status.sensors.stopButton),
-                  const SizedBox(height: AppSpacing.base),
-                ],
-                if (status.hasExitDoor)
-                  IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        for (final d in BreteDoor.values) ...[
-                          if (d != BreteDoor.entry) const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: _DoorPanel(
-                              title:   d == BreteDoor.entry ? 'Porta de entrada' : 'Porta de saída',
-                              door:    status.doorOf(d),
-                              fault:   status.faultOf(d),
-                              enabled: online && !emergency,
-                              onSend:  (c) => _send(c, d),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  )
-                else
-                  _DoorPanel(
-                    title:   'Porteira',
-                    door:    status.door,
-                    enabled: online && !emergency,
-                    onSend:  _send,
-                  ),
-                const SizedBox(height: AppSpacing.base),
-                // Sempre visível; o rearme aparece junto enquanto em == 1.
-                AppButton(
-                  label:     'Parada de emergência',
-                  icon:      Icons.report_rounded,
-                  variant:   AppButtonVariant.danger,
-                  onPressed: online ? _emergency : null,
+    return ScreenTutorial(
+      guide: Guides.brete,
+      child: Scaffold(
+        body: Column(
+          children: [
+            AppHeader(
+              title:    'Brete',
+              subtitle: switch (gateway.transport) {
+                BreteTransport.simulation => 'Modo simulação — sem hardware conectado',
+                BreteTransport.ble =>
+                  'ESP32 via Bluetooth${firmware != null ? ' · firmware $firmware' : ''}',
+                BreteTransport.mqtt => 'ESP32 via MQTT',
+              },
+              actions: [
+                const TutorialHelpButton(),
+                TutorialTarget(
+                  id:    TutorialIds.breteConnection,
+                  child: _ConnectionPill(connection: status.connection),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                // Rearme (só em emergência) e reinício lado a lado. O reinício
-                // fica liberado mesmo offline: é o caminho para destravar.
-                Row(
-                  children: [
-                    if (emergency) ...[
-                      Expanded(
-                        child: AppButton(
-                          label:     'Rearmar',
-                          icon:      Icons.restart_alt_rounded,
-                          variant:   AppButtonVariant.outline,
-                          onPressed: online && !_restarting
-                              ? () => _send(BreteCommand.reset)
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                    ],
-                    Expanded(
-                      child: AppButton(
-                        label:     'Reiniciar sistema',
-                        icon:      Icons.power_settings_new_rounded,
-                        variant:   AppButtonVariant.outline,
-                        isLoading: _restarting,
-                        onPressed: status.connection == BreteConnection.connecting
-                            ? null
-                            : _restart,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                const _Label('Animal via RFID'),
-                const SizedBox(height: AppSpacing.sm),
-                _RfidCard(
-                  status:  status,
-                  animal:  matched,
-                  reading: _reading,
-                  onRead:  online && status.rfidAvailable ? _readRfid : null,
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                const _Label('Sensores e pedais'),
-                const SizedBox(height: AppSpacing.sm),
-                _SensorsCard(sensors: status.sensors, twoDoors: status.hasExitDoor),
-                if (status.lastUpdate != null) ...[
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    'Atualizado em ${status.lastUpdate!.toBrDateTime}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.mutedGreen,
-                        ),
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.x2l),
               ],
             ),
-          ),
-        ],
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(AppSpacing.base),
+                children: [
+                  if (status.connection == BreteConnection.error ||
+                      status.connection == BreteConnection.disconnected)
+                    _ErrorCard(
+                      message: status.errorMessage ??
+                          'Brete desconectado.',
+                      onRetry: () => ref.read(breteGatewayProvider).connect(),
+                    ),
+                  if (emergency) ...[
+                    _EmergencyBanner(stopPressed: status.sensors.stopButton),
+                    const SizedBox(height: AppSpacing.base),
+                  ],
+                  if (status.hasExitDoor)
+                    TutorialTarget(
+                      id:    TutorialIds.breteDoors,
+                      child: IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            for (final d in BreteDoor.values) ...[
+                              if (d != BreteDoor.entry) const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: _DoorPanel(
+                                  title:   d == BreteDoor.entry ? 'Porta de entrada' : 'Porta de saída',
+                                  door:    status.doorOf(d),
+                                  fault:   status.faultOf(d),
+                                  enabled: online && !emergency,
+                                  onSend:  (c) => _send(c, d),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    TutorialTarget(
+                      id:    TutorialIds.breteDoors,
+                      child: _DoorPanel(
+                        title:   'Porteira',
+                        door:    status.door,
+                        enabled: online && !emergency,
+                        onSend:  _send,
+                      ),
+                    ),
+                  const SizedBox(height: AppSpacing.base),
+                  // Sempre visível; o rearme aparece junto enquanto em == 1.
+                  TutorialTarget(
+                    id:    TutorialIds.breteEmergency,
+                    child: AppButton(
+                      label:     'Parada de emergência',
+                      icon:      Icons.report_rounded,
+                      variant:   AppButtonVariant.danger,
+                      onPressed: online ? _emergency : null,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  // Rearme (só em emergência) e reinício lado a lado. O reinício
+                  // fica liberado mesmo offline: é o caminho para destravar.
+                  Row(
+                    children: [
+                      if (emergency) ...[
+                        Expanded(
+                          child: AppButton(
+                            label:     'Rearmar',
+                            icon:      Icons.restart_alt_rounded,
+                            variant:   AppButtonVariant.outline,
+                            onPressed: online && !_restarting
+                                ? () => _send(BreteCommand.reset)
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                      ],
+                      Expanded(
+                        child: TutorialTarget(
+                          id:    TutorialIds.breteRestart,
+                          child: AppButton(
+                            label:     'Reiniciar sistema',
+                            icon:      Icons.power_settings_new_rounded,
+                            variant:   AppButtonVariant.outline,
+                            isLoading: _restarting,
+                            onPressed: status.connection == BreteConnection.connecting
+                                ? null
+                                : _restart,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  const _Label('Animal via RFID'),
+                  const SizedBox(height: AppSpacing.sm),
+                  TutorialTarget(
+                    id:    TutorialIds.breteRfid,
+                    child: _RfidCard(
+                      status:  status,
+                      animal:  matched,
+                      reading: _reading,
+                      onRead:  online && status.rfidAvailable ? _readRfid : null,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  const _Label('Sensores e pedais'),
+                  const SizedBox(height: AppSpacing.sm),
+                  TutorialTarget(
+                    id:    TutorialIds.breteSensors,
+                    child: _SensorsCard(sensors: status.sensors, twoDoors: status.hasExitDoor),
+                  ),
+                  if (status.lastUpdate != null) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'Atualizado em ${status.lastUpdate!.toBrDateTime}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.mutedGreen,
+                          ),
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.x2l),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

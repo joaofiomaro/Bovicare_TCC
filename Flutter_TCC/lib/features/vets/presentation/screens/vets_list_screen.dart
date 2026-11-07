@@ -8,6 +8,9 @@ import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_skeleton.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
+import '../../../tutorial/presentation/widgets/tutorial_target.dart';
 import '../../domain/entities/vet_entity.dart';
 import '../providers/vets_provider.dart';
 import '../widgets/vet_card.dart';
@@ -49,62 +52,78 @@ class _VetsListScreenState extends ConsumerState<VetsListScreen> {
     );
     final usingFallback = location.valueOrNull?.isFallback ?? false;
 
-    return Scaffold(
-      body: Column(
-        children: [
-          AppHeader(
-            title:    'Veterinários',
-            subtitle: vets.maybeWhen(
-              data: (_) => usingFallback
-                  ? '$availableCount disponíveis na região de referência'
-                  : '$availableCount disponíveis perto de você',
-              orElse: () => null,
-            ),
-            actions: [
-              IconButton(
-                tooltip:  onlyAvailable ? 'Mostrar todos' : 'Somente disponíveis',
-                icon:     Icon(
-                  onlyAvailable
-                      ? Icons.filter_alt_rounded
-                      : Icons.filter_alt_outlined,
-                  color: Colors.white,
-                ),
-                onPressed: () => ref
-                    .read(vetAvailableFilterProvider.notifier)
-                    .state = !onlyAvailable,
+    return ScreenTutorial(
+      guide: Guides.vetsList,
+      child: Scaffold(
+        body: Column(
+          children: [
+            AppHeader(
+              title:    'Veterinários',
+              subtitle: vets.maybeWhen(
+                data: (_) => usingFallback
+                    ? '$availableCount disponíveis na região de referência'
+                    : '$availableCount disponíveis perto de você',
+                orElse: () => null,
               ),
-            ],
-          ),
-
-          // Busca, mapa, avisos e lista rolam juntos: em telas baixas (ou com
-          // o teclado aberto) nada fica espremido ou cortado.
-          Expanded(
-            child: RefreshIndicator(
-              color:     AppColors.brandGreen,
-              onRefresh: _refresh,
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                slivers: [
-                  SliverToBoxAdapter(child: _searchField(context)),
-                  SliverToBoxAdapter(child: _map(vets, location)),
-                  // Aviso quando a posição real não está disponível.
-                  if (usingFallback)
-                    SliverToBoxAdapter(
-                      child: _LocationFallbackNotice(
-                        disabledByUser: location.valueOrNull?.source ==
-                            LocationSource.disabledByUser,
-                      ),
+              actions: [
+                const TutorialHelpButton(),
+                TutorialTarget(
+                  id:    TutorialIds.vetsFilter,
+                  child: IconButton(
+                    tooltip:  onlyAvailable ? 'Mostrar todos' : 'Somente disponíveis',
+                    icon:     Icon(
+                      onlyAvailable
+                          ? Icons.filter_alt_rounded
+                          : Icons.filter_alt_outlined,
+                      color: Colors.white,
                     ),
-                  SliverToBoxAdapter(child: _listHeader(context)),
-                  const SliverToBoxAdapter(child: Divider(height: 1)),
-                  ..._vetsList(vets, onlyAvailable),
-                ],
+                    onPressed: () => ref
+                        .read(vetAvailableFilterProvider.notifier)
+                        .state = !onlyAvailable,
+                  ),
+                ),
+              ],
+            ),
+
+            // Busca, mapa, avisos e lista rolam juntos: em telas baixas (ou com
+            // o teclado aberto) nada fica espremido ou cortado.
+            Expanded(
+              child: RefreshIndicator(
+                color:     AppColors.brandGreen,
+                onRefresh: _refresh,
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  slivers: [
+                    SliverToBoxAdapter(child: TutorialTarget(
+                      id:    TutorialIds.vetsSearch,
+                      child: _searchField(context),
+                    )),
+                    SliverToBoxAdapter(child: TutorialTarget(
+                      id:    TutorialIds.vetsMap,
+                      child: _map(vets, location),
+                    )),
+                    // Aviso quando a posição real não está disponível.
+                    if (usingFallback)
+                      SliverToBoxAdapter(
+                        child: _LocationFallbackNotice(
+                          disabledByUser: location.valueOrNull?.source ==
+                              LocationSource.disabledByUser,
+                        ),
+                      ),
+                    SliverToBoxAdapter(child: TutorialTarget(
+                      id:    TutorialIds.vetsList,
+                      child: _listHeader(context),
+                    )),
+                    const SliverToBoxAdapter(child: Divider(height: 1)),
+                    ..._vetsList(vets, onlyAvailable),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -255,7 +274,10 @@ class _VetsListScreenState extends ConsumerState<VetsListScreen> {
                 title:       'Nenhum veterinário encontrado',
                 subtitle:    onlyAvailable
                     ? 'Nenhum disponível agora. Tente remover o filtro.'
-                    : 'Tente uma busca diferente.',
+                    : _searchController.text.isNotEmpty
+                        ? 'Tente uma busca diferente.'
+                        : 'Quando um veterinário publicar o perfil no BoviCare, '
+                            'ele aparece aqui.',
                 actionLabel: onlyAvailable ? 'Mostrar todos' : null,
                 onAction:    onlyAvailable
                     ? () => ref

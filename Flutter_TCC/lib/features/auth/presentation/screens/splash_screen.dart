@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../tutorial/presentation/providers/tutorial_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -25,6 +26,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     // Aguarda a animação de entrada antes de redirecionar.
     await Future<void>.delayed(const Duration(milliseconds: 1800));
     if (!mounted) return;
+
+    // Primeira abertura do app: boas-vindas com a opção de ver o tutorial.
+    final tutorial = ref.read(tutorialProvider.notifier);
+    await tutorial.ready;
+    if (!mounted) return;
+    if (!ref.read(tutorialProvider).introSeen) {
+      context.goNamed(AppRoutes.welcome);
+      return;
+    }
 
     // FirebaseAuth.currentUser é síncrono — usa o cache local sem rede.
     final isLoggedIn = FirebaseAuth.instance.currentUser != null;

@@ -10,6 +10,9 @@ import '../../../../shared/widgets/app_chip_filter.dart';
 import '../../../../shared/widgets/app_date_field.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_toast.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
+import '../../../tutorial/presentation/widgets/tutorial_target.dart';
 import '../../data/report_exporter.dart';
 import '../../domain/entities/report_data.dart';
 import '../providers/report_provider.dart';
@@ -71,125 +74,141 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final reportState = ref.watch(reportProvider);
     final isLoading   = reportState.isLoading;
 
-    return Scaffold(
-      body: Column(
-        children: [
-          const AppHeader(
-            title:    'Relatórios',
-            subtitle: 'Geração e exportação',
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSpacing.base),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Seleção de período
-                  AppChipFilter<ReportPeriod>(
-                    options: ReportPeriod.values
-                        .map((p) => ChipOption(label: p.label, value: p))
-                        .toList(),
-                    selected: {filter.period},
-                    onSelected: (period, {required isSelected}) {
-                      ref.read(reportFilterProvider.notifier).state =
-                          filter.copyWith(
-                        period:      period,
-                        clearCustom: period != ReportPeriod.custom,
-                      );
-                      ref.read(reportProvider.notifier).clear();
-                      setState(() => _activeType = null);
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-
-                  // Date pickers para período livre
-                  if (filter.period == ReportPeriod.custom) ...[
-                    _DateRangePicker(
-                      start:          filter.customStart,
-                      end:            filter.customEnd,
-                      onStartChanged: (d) {
-                        ref.read(reportFilterProvider.notifier).state =
-                            filter.copyWith(customStart: d);
-                        ref.read(reportProvider.notifier).clear();
-                        setState(() => _activeType = null);
-                      },
-                      onEndChanged: (d) {
-                        ref.read(reportFilterProvider.notifier).state =
-                            filter.copyWith(customEnd: d);
-                        ref.read(reportProvider.notifier).clear();
-                        setState(() => _activeType = null);
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.base),
-                  ],
-
-                  // Tipos de relatório
-                  const _SectionLabel('Tipos'),
-                  const SizedBox(height: AppSpacing.sm),
-                  ...ReportType.values.map(
-                    (type) => Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                      child: ReportTypeCard(
-                        type:       type,
-                        isLoading:  isLoading && _activeType == type,
-                        onGenerate: isLoading ? () {} : () => _generate(type),
+    return ScreenTutorial(
+      guide: Guides.reports,
+      child: Scaffold(
+        body: Column(
+          children: [
+            const AppHeader(
+              title:    'Relatórios',
+              subtitle: 'Geração e exportação',
+              actions:  [TutorialHelpButton()],
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacing.base),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Seleção de período
+                    TutorialTarget(
+                      id:    TutorialIds.reportsPeriod,
+                      child: AppChipFilter<ReportPeriod>(
+                        options: ReportPeriod.values
+                            .map((p) => ChipOption(label: p.label, value: p))
+                            .toList(),
+                        selected: {filter.period},
+                        onSelected: (period, {required isSelected}) {
+                          ref.read(reportFilterProvider.notifier).state =
+                              filter.copyWith(
+                            period:      period,
+                            clearCustom: period != ReportPeriod.custom,
+                          );
+                          ref.read(reportProvider.notifier).clear();
+                          setState(() => _activeType = null);
+                        },
                       ),
                     ),
-                  ),
+                    const SizedBox(height: AppSpacing.sm),
 
-                  // Seleção de formato
-                  const SizedBox(height: AppSpacing.sm),
-                  const _SectionLabel('Formato'),
-                  const SizedBox(height: AppSpacing.sm),
-                  AppChipFilter<ReportFormat>(
-                    options: ReportFormat.values
-                        .map((f) => ChipOption(label: f.label, value: f))
-                        .toList(),
-                    selected: {_format},
-                    onSelected: (fmt, {required isSelected}) =>
-                        setState(() => _format = fmt),
-                  ),
+                    // Date pickers para período livre
+                    if (filter.period == ReportPeriod.custom) ...[
+                      _DateRangePicker(
+                        start:          filter.customStart,
+                        end:            filter.customEnd,
+                        onStartChanged: (d) {
+                          ref.read(reportFilterProvider.notifier).state =
+                              filter.copyWith(customStart: d);
+                          ref.read(reportProvider.notifier).clear();
+                          setState(() => _activeType = null);
+                        },
+                        onEndChanged: (d) {
+                          ref.read(reportFilterProvider.notifier).state =
+                              filter.copyWith(customEnd: d);
+                          ref.read(reportProvider.notifier).clear();
+                          setState(() => _activeType = null);
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.base),
+                    ],
 
-                  // Preview do relatório gerado
-                  const SizedBox(height: AppSpacing.xl),
-                  reportState.when(
-                    loading: () => const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 32),
-                        child: CircularProgressIndicator(
-                          color: AppColors.brandGreen,
+                    // Tipos de relatório
+                    const _SectionLabel('Tipos'),
+                    const SizedBox(height: AppSpacing.sm),
+                    TutorialTarget(
+                      id:    TutorialIds.reportsTypes,
+                      child: Column(
+                        children: [
+                          for (final type in ReportType.values)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                              child: ReportTypeCard(
+                                type:       type,
+                                isLoading:  isLoading && _activeType == type,
+                                onGenerate: isLoading ? () {} : () => _generate(type),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    // Seleção de formato
+                    const SizedBox(height: AppSpacing.sm),
+                    const _SectionLabel('Formato'),
+                    const SizedBox(height: AppSpacing.sm),
+                    TutorialTarget(
+                      id:    TutorialIds.reportsFormat,
+                      child: AppChipFilter<ReportFormat>(
+                        options: ReportFormat.values
+                            .map((f) => ChipOption(label: f.label, value: f))
+                            .toList(),
+                        selected: {_format},
+                        onSelected: (fmt, {required isSelected}) =>
+                            setState(() => _format = fmt),
+                      ),
+                    ),
+
+                    // Preview do relatório gerado
+                    const SizedBox(height: AppSpacing.xl),
+                    reportState.when(
+                      loading: () => const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 32),
+                          child: CircularProgressIndicator(
+                            color: AppColors.brandGreen,
+                          ),
                         ),
                       ),
-                    ),
-                    error: (e, _) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-                      child: Text(
-                        'Erro ao gerar relatório: $e',
-                        style: const TextStyle(color: AppColors.danger),
+                      error: (e, _) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                        child: Text(
+                          'Erro ao gerar relatório: $e',
+                          style: const TextStyle(color: AppColors.danger),
+                        ),
                       ),
+                      data: (report) => report == null
+                          ? const SizedBox.shrink()
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ReportPreview(data: report),
+                                const SizedBox(height: AppSpacing.base),
+                                AppButton(
+                                  label:     'Exportar ${_format.label}',
+                                  icon:      Icons.ios_share_rounded,
+                                  isLoading: _exporting,
+                                  onPressed: () => _export(report),
+                                ),
+                              ],
+                            ),
                     ),
-                    data: (report) => report == null
-                        ? const SizedBox.shrink()
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ReportPreview(data: report),
-                              const SizedBox(height: AppSpacing.base),
-                              AppButton(
-                                label:     'Exportar ${_format.label}',
-                                icon:      Icons.ios_share_rounded,
-                                isLoading: _exporting,
-                                onPressed: () => _export(report),
-                              ),
-                            ],
-                          ),
-                  ),
-                  const SizedBox(height: AppSpacing.x2l),
-                ],
+                    const SizedBox(height: AppSpacing.x2l),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

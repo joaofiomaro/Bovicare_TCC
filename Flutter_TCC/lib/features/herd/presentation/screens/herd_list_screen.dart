@@ -10,6 +10,9 @@ import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_skeleton.dart';
 import '../../../../shared/widgets/app_toast.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
+import '../../../tutorial/presentation/widgets/tutorial_target.dart';
 import '../../domain/entities/animal_entity.dart';
 import '../providers/animals_provider.dart';
 import '../widgets/animal_exit_sheet.dart';
@@ -59,168 +62,187 @@ class _HerdListScreenState extends ConsumerState<HerdListScreen> {
     final animals       = ref.watch(filteredAnimalsProvider);
     final currentFilter = ref.watch(herdFilterProvider);
 
-    return Scaffold(
-      body: Column(
-        children: [
-          AppHeader(
-            title: _selectionMode
-                ? '${_selected.length} selecionado${_selected.length == 1 ? '' : 's'}'
-                : 'Rebanho',
-            subtitle: _selectionMode
-                ? null
-                : animals.maybeWhen(
-                    data: (list) =>
-                        '${list.length} ${list.length == 1 ? 'animal' : 'animais'}',
-                    orElse: () => null,
-                  ),
-            actions: _selectionMode
-                ? [
-                    IconButton(
-                      onPressed: _clearSelection,
-                      icon: const Icon(Icons.close_rounded, color: Colors.white),
-                      tooltip: 'Cancelar seleção',
+    return ScreenTutorial(
+      guide: Guides.herd,
+      child: Scaffold(
+        body: Column(
+          children: [
+            AppHeader(
+              title: _selectionMode
+                  ? '${_selected.length} selecionado${_selected.length == 1 ? '' : 's'}'
+                  : 'Rebanho',
+              subtitle: _selectionMode
+                  ? null
+                  : animals.maybeWhen(
+                      data: (list) =>
+                          '${list.length} ${list.length == 1 ? 'animal' : 'animais'}',
+                      orElse: () => null,
                     ),
-                  ]
-                : [
-                    IconButton(
-                      onPressed: () =>
-                          context.goNamed(AppRoutes.archivedAnimals),
-                      icon: const Icon(Icons.inventory_2_outlined,
-                          color: Colors.white),
-                      tooltip: 'Arquivados',
-                    ),
-                    IconButton(
-                      onPressed: () => context.goNamed(AppRoutes.newAnimal),
-                      icon: const Icon(Icons.add_rounded, color: Colors.white),
-                      tooltip: 'Adicionar animal',
-                    ),
-                  ],
-          ),
-          // Barra de busca
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.base, AppSpacing.sm, AppSpacing.base, AppSpacing.xs,
-            ),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (v) => ref.read(herdSearchProvider.notifier).state = v,
-              decoration: InputDecoration(
-                hintText:    'Buscar por brinco, nome ou RFID…',
-                prefixIcon:  const Icon(Icons.search_rounded, size: 20),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear_rounded, size: 18),
-                        onPressed: () {
-                          _searchController.clear();
-                          ref.read(herdSearchProvider.notifier).state = '';
-                        },
-                      )
-                    : null,
-                filled:      true,
-                fillColor:   Theme.of(context).colorScheme.surfaceContainerHighest,
-                border:      const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(12)),
-                  borderSide:   BorderSide.none,
-                ),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-          ),
-          // Chips de filtro
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-            child: AppChipFilter<HerdFilter>(
-              options: const [
-                ChipOption(label: 'Todos',   value: HerdFilter.all),
-                ChipOption(label: 'Fêmeas',  value: HerdFilter.females),
-                ChipOption(label: 'Machos',  value: HerdFilter.males),
-                ChipOption(label: 'Prenhas', value: HerdFilter.pregnant),
-                ChipOption(label: 'Alertas', value: HerdFilter.alerts, icon: Icons.warning_amber_rounded),
-              ],
-              selected: {currentFilter},
-              onSelected: (value, {required isSelected}) =>
-                  ref.read(herdFilterProvider.notifier).state = value,
-            ),
-          ),
-          const Divider(height: 1),
-          // Lista
-          Expanded(
-            child: animals.when(
-              loading: () => ListView.builder(
-                itemCount: 6,
-                itemBuilder: (_, __) => const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
-                  child: AnimalListTileSkeleton(),
-                ),
-              ),
-              error: (e, _) => AppEmptyState(
-                icon:        Icons.error_outline_rounded,
-                title:       'Erro ao carregar',
-                subtitle:    e.toString(),
-                actionLabel: 'Tentar novamente',
-                onAction:    () => ref.invalidate(animalsProvider),
-              ),
-              data: (list) {
-                if (list.isEmpty) {
-                  return AppEmptyState(
-                    icon:        Icons.pets_rounded,
-                    title:       'Nenhum animal encontrado',
-                    subtitle:    'Tente outro filtro ou cadastre um novo animal.',
-                    actionLabel: 'Cadastrar',
-                    onAction:    () => context.goNamed(AppRoutes.newAnimal),
-                  );
-                }
-                return RefreshIndicator(
-                  color:     AppColors.brandGreen,
-                  onRefresh: () async => ref.invalidate(animalsProvider),
-                  child: ListView.builder(
-                    itemCount: list.length,
-                    itemBuilder: (_, i) => AnimalListTile(
-                      animal:         list[i],
-                      animationIndex: i,
-                      selectionMode:  _selectionMode,
-                      selected:       _selected.contains(list[i].id),
-                      onSelectToggle: () => _toggle(list[i].id),
-                      onTap:   () => context.goNamed(
-                        AppRoutes.animal,
-                        pathParameters: {'id': list[i].id},
+              actions: _selectionMode
+                  ? [
+                      IconButton(
+                        onPressed: _clearSelection,
+                        icon: const Icon(Icons.close_rounded, color: Colors.white),
+                        tooltip: 'Cancelar seleção',
                       ),
-                      onDelete: () async {
-                        final ok = await ref
-                            .read(animalsProvider.notifier)
-                            .delete(list[i].id);
-                        if (context.mounted) {
-                          if (ok) {
-                            AppToast.success(context, 'Animal removido.');
-                          } else {
-                            AppToast.error(
-                                context, 'Erro ao remover. Tente novamente.');
-                          }
-                        }
-                      },
+                    ]
+                  : [
+                      const TutorialHelpButton(),
+                      TutorialTarget(
+                        id:    TutorialIds.herdArchived,
+                        child: IconButton(
+                          onPressed: () =>
+                              context.goNamed(AppRoutes.archivedAnimals),
+                          icon: const Icon(Icons.inventory_2_outlined,
+                              color: Colors.white),
+                          tooltip: 'Arquivados',
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => context.goNamed(AppRoutes.newAnimal),
+                        icon: const Icon(Icons.add_rounded, color: Colors.white),
+                        tooltip: 'Adicionar animal',
+                      ),
+                    ],
+            ),
+            // Barra de busca
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.base, AppSpacing.sm, AppSpacing.base, AppSpacing.xs,
+              ),
+              child: TutorialTarget(
+                id:    TutorialIds.herdSearch,
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (v) => ref.read(herdSearchProvider.notifier).state = v,
+                  decoration: InputDecoration(
+                    hintText:    'Buscar por brinco, nome ou RFID…',
+                    prefixIcon:  const Icon(Icons.search_rounded, size: 20),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear_rounded, size: 18),
+                            onPressed: () {
+                              _searchController.clear();
+                              ref.read(herdSearchProvider.notifier).state = '';
+                            },
+                          )
+                        : null,
+                    filled:      true,
+                    fillColor:   Theme.of(context).colorScheme.surfaceContainerHighest,
+                    border:      const OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                      borderSide:   BorderSide.none,
+                    ),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+            ),
+            // Chips de filtro
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: TutorialTarget(
+                id:    TutorialIds.herdFilters,
+                child: AppChipFilter<HerdFilter>(
+                  options: const [
+                    ChipOption(label: 'Todos',   value: HerdFilter.all),
+                    ChipOption(label: 'Fêmeas',  value: HerdFilter.females),
+                    ChipOption(label: 'Machos',  value: HerdFilter.males),
+                    ChipOption(label: 'Prenhas', value: HerdFilter.pregnant),
+                    ChipOption(label: 'Alertas', value: HerdFilter.alerts, icon: Icons.warning_amber_rounded),
+                  ],
+                  selected: {currentFilter},
+                  onSelected: (value, {required isSelected}) =>
+                      ref.read(herdFilterProvider.notifier).state = value,
+                ),
+              ),
+            ),
+            const Divider(height: 1),
+            // Lista
+            Expanded(
+              child: TutorialTarget(
+                id:    TutorialIds.herdList,
+                child: animals.when(
+                  loading: () => ListView.builder(
+                    itemCount: 6,
+                    itemBuilder: (_, __) => const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 4),
+                      child: AnimalListTileSkeleton(),
                     ),
                   ),
-                );
-              },
+                  error: (e, _) => AppEmptyState(
+                    icon:        Icons.error_outline_rounded,
+                    title:       'Erro ao carregar',
+                    subtitle:    e.toString(),
+                    actionLabel: 'Tentar novamente',
+                    onAction:    () => ref.invalidate(animalsProvider),
+                  ),
+                  data: (list) {
+                    if (list.isEmpty) {
+                      return AppEmptyState(
+                        icon:        Icons.pets_rounded,
+                        title:       'Nenhum animal encontrado',
+                        subtitle:    'Tente outro filtro ou cadastre um novo animal.',
+                        actionLabel: 'Cadastrar',
+                        onAction:    () => context.goNamed(AppRoutes.newAnimal),
+                      );
+                    }
+                    return RefreshIndicator(
+                      color:     AppColors.brandGreen,
+                      onRefresh: () async => ref.invalidate(animalsProvider),
+                      child: ListView.builder(
+                        itemCount: list.length,
+                        itemBuilder: (_, i) => AnimalListTile(
+                          animal:         list[i],
+                          animationIndex: i,
+                          selectionMode:  _selectionMode,
+                          selected:       _selected.contains(list[i].id),
+                          onSelectToggle: () => _toggle(list[i].id),
+                          onTap:   () => context.goNamed(
+                            AppRoutes.animal,
+                            pathParameters: {'id': list[i].id},
+                          ),
+                          onDelete: () async {
+                            final ok = await ref
+                                .read(animalsProvider.notifier)
+                                .delete(list[i].id);
+                            if (context.mounted) {
+                              if (ok) {
+                                AppToast.success(context, 'Animal removido.');
+                              } else {
+                                AppToast.error(
+                                    context, 'Erro ao remover. Tente novamente.');
+                              }
+                            }
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+        floatingActionButton: _selectionMode
+            ? FloatingActionButton.extended(
+                onPressed:       _baixaSelected,
+                backgroundColor: AppColors.danger,
+                foregroundColor: Colors.white,
+                icon:            const Icon(Icons.logout_rounded),
+                label:           Text('Dar baixa (${_selected.length})'),
+              )
+            : TutorialTarget(
+              id:    TutorialIds.herdAdd,
+              child: FloatingActionButton(
+                  onPressed:       () => context.goNamed(AppRoutes.newAnimal),
+                  backgroundColor: AppColors.brandGreen,
+                  foregroundColor: Colors.white,
+                  tooltip:         'Adicionar animal',
+                  child:           const Icon(Icons.add_rounded),
+                ),
+            ),
       ),
-      floatingActionButton: _selectionMode
-          ? FloatingActionButton.extended(
-              onPressed:       _baixaSelected,
-              backgroundColor: AppColors.danger,
-              foregroundColor: Colors.white,
-              icon:            const Icon(Icons.logout_rounded),
-              label:           Text('Dar baixa (${_selected.length})'),
-            )
-          : FloatingActionButton(
-              onPressed:       () => context.goNamed(AppRoutes.newAnimal),
-              backgroundColor: AppColors.brandGreen,
-              foregroundColor: Colors.white,
-              tooltip:         'Adicionar animal',
-              child:           const Icon(Icons.add_rounded),
-            ),
     );
   }
 }

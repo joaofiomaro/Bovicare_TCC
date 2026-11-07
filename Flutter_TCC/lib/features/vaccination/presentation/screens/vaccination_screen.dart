@@ -12,6 +12,9 @@ import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../herd/domain/entities/animal_entity.dart';
 import '../../../herd/presentation/providers/animals_provider.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
+import '../../../tutorial/presentation/widgets/tutorial_target.dart';
 import '../../../vets/presentation/providers/vets_provider.dart';
 import '../../domain/entities/vaccination_record.dart';
 import '../../domain/entities/vaccine_info.dart';
@@ -83,28 +86,31 @@ class _VaccinationScreenState extends ConsumerState<VaccinationScreen> {
     final vetOptions   = ref.watch(vetOptionsProvider).valueOrNull ??
         const ['Não informado'];
 
-    return Scaffold(
-      body: animalAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error:   (e, _) => Center(child: Text('Erro: $e')),
-        data:    (animal) => animal == null
-            ? const Center(child: Text('Animal não encontrado.'))
-            : _Form(
-                animal:      animal,
-                isSubmitting: isSubmitting,
-                lotController: _lotController,
-                vaccineName:  _vaccineName,
-                dose:         _dose,
-                date:         _date,
-                vetName:      _vetName,
-                vetOptions:   vetOptions,
-                onVaccineChanged: (v) => setState(() => _vaccineName = v),
-                onDoseChanged:    (v) => setState(() => _dose = v),
-                onPickDate:       _pickDate,
-                onVetChanged: (v) =>
-                    setState(() => _vetName = v == 'Não informado' ? null : v),
-                onSubmit: () => _submit(animal),
-              ),
+    return ScreenTutorial(
+      guide: Guides.vaccination,
+      child: Scaffold(
+        body: animalAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error:   (e, _) => Center(child: Text('Erro: $e')),
+          data:    (animal) => animal == null
+              ? const Center(child: Text('Animal não encontrado.'))
+              : _Form(
+                  animal:      animal,
+                  isSubmitting: isSubmitting,
+                  lotController: _lotController,
+                  vaccineName:  _vaccineName,
+                  dose:         _dose,
+                  date:         _date,
+                  vetName:      _vetName,
+                  vetOptions:   vetOptions,
+                  onVaccineChanged: (v) => setState(() => _vaccineName = v),
+                  onDoseChanged:    (v) => setState(() => _dose = v),
+                  onPickDate:       _pickDate,
+                  onVetChanged: (v) =>
+                      setState(() => _vetName = v == 'Não informado' ? null : v),
+                  onSubmit: () => _submit(animal),
+                ),
+        ),
       ),
     );
   }
@@ -153,6 +159,7 @@ class _Form extends StatelessWidget {
           title:    'Registrar vacinação',
           subtitle: animal.displayName,
           showBack: true,
+          actions:  const [TutorialHelpButton()],
         ),
         Expanded(
           child: SingleChildScrollView(
@@ -163,12 +170,15 @@ class _Form extends StatelessWidget {
                 _AnimalCard(animal: animal),
                 const SizedBox(height: AppSpacing.xl),
 
-                _LabeledField(
-                  label: 'Vacina *',
-                  child: _Dropdown(
-                    value:     vaccineName,
-                    items:     VaccineInfo.vaccines,
-                    onChanged: onVaccineChanged,
+                TutorialTarget(
+                  id:    TutorialIds.vaccineType,
+                  child: _LabeledField(
+                    label: 'Vacina *',
+                    child: _Dropdown(
+                      value:     vaccineName,
+                      items:     VaccineInfo.vaccines,
+                      onChanged: onVaccineChanged,
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.base),
@@ -190,23 +200,26 @@ class _Form extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.base),
 
-                _LabeledField(
-                  label: 'Data de aplicação *',
-                  child: InkWell(
-                    onTap:        onPickDate,
-                    borderRadius: const BorderRadius.all(Radius.circular(12)),
-                    child: InputDecorator(
-                      decoration: _decoration(context, null),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.calendar_today_outlined,
-                            size:  18,
-                            color: AppColors.mutedGreen,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(dateLabel),
-                        ],
+                TutorialTarget(
+                  id:    TutorialIds.vaccineDate,
+                  child: _LabeledField(
+                    label: 'Data de aplicação *',
+                    child: InkWell(
+                      onTap:        onPickDate,
+                      borderRadius: const BorderRadius.all(Radius.circular(12)),
+                      child: InputDecorator(
+                        decoration: _decoration(context, null),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.calendar_today_outlined,
+                              size:  18,
+                              color: AppColors.mutedGreen,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(dateLabel),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -223,18 +236,24 @@ class _Form extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xl),
 
-                QuarantineCalculator(
-                  vaccineName:     vaccineName,
-                  dose:            dose,
-                  applicationDate: date,
+                TutorialTarget(
+                  id:    TutorialIds.vaccineQuarantine,
+                  child: QuarantineCalculator(
+                    vaccineName:     vaccineName,
+                    dose:            dose,
+                    applicationDate: date,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
 
-                AppButton(
-                  label:     'Registrar vacinação',
-                  icon:      Icons.check_rounded,
-                  onPressed: onSubmit,
-                  isLoading: isSubmitting,
+                TutorialTarget(
+                  id:    TutorialIds.vaccineSubmit,
+                  child: AppButton(
+                    label:     'Registrar vacinação',
+                    icon:      Icons.check_rounded,
+                    onPressed: onSubmit,
+                    isLoading: isSubmitting,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.base),
               ],

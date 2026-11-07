@@ -16,6 +16,10 @@ import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/providers/tutorial_provider.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
+import '../../../tutorial/presentation/widgets/tutorial_target.dart';
 import '../../data/user_data_export_service.dart';
 import '../widgets/sync_card.dart';
 
@@ -27,87 +31,104 @@ class ProfileScreen extends ConsumerWidget {
     final user   = ref.watch(authProvider).valueOrNull;
     final isDark = ref.watch(themeProvider) == ThemeMode.dark;
 
-    return Scaffold(
-      body: Column(
-        children: [
-          const AppHeader(title: 'Meu perfil'),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _ProfileHero(user: user),
+    return ScreenTutorial(
+      guide: Guides.profile,
+      child: Scaffold(
+        body: Column(
+          children: [
+            const AppHeader(
+              title:   'Meu perfil',
+              actions: [TutorialHelpButton()],
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _ProfileHero(user: user),
 
-                  const _SectionLabel('Conta'),
-                  _SettingsRow(
-                    icon:     Icons.person_outline_rounded,
-                    title:    'Editar dados',
-                    subtitle: 'Nome, e-mail, propriedade',
-                    onTap:    () => _showEditProfile(context, ref, user),
-                  ),
-                  if (user?.role == UserRole.vet)
+                    const _SectionLabel('Conta'),
                     _SettingsRow(
-                      icon:     Icons.medical_services_outlined,
-                      title:    'Perfil profissional',
-                      subtitle: 'CRMV, especialidades e área de atendimento',
-                      onTap:    () =>
-                          context.pushNamed(AppRoutes.vetProfessionalProfile),
-                    )
-                  else
+                      icon:     Icons.person_outline_rounded,
+                      title:    'Editar dados',
+                      subtitle: 'Nome, e-mail, propriedade',
+                      onTap:    () => _showEditProfile(context, ref, user),
+                    ),
+                    if (user?.role == UserRole.vet)
+                      _SettingsRow(
+                        icon:     Icons.medical_services_outlined,
+                        title:    'Perfil profissional',
+                        subtitle: 'CRMV, especialidades e área de atendimento',
+                        onTap:    () =>
+                            context.pushNamed(AppRoutes.vetProfessionalProfile),
+                      )
+                    else
+                      _SettingsRow(
+                        icon:     Icons.notifications_outlined,
+                        title:    'Configurar alertas',
+                        subtitle: 'Antecedência e categorias',
+                        onTap:    () => context.pushNamed(AppRoutes.alertSettings),
+                      ),
+                    _SwitchRow(
+                      icon:      Icons.dark_mode_outlined,
+                      title:     'Modo escuro',
+                      subtitle:  'Ajusta cores para ambiente noturno',
+                      value:     isDark,
+                      onChanged: (_) => ref.read(themeProvider.notifier).toggle(),
+                    ),
+
+                    const _SectionLabel('Privacidade — LGPD'),
                     _SettingsRow(
-                      icon:     Icons.notifications_outlined,
-                      title:    'Configurar alertas',
-                      subtitle: 'Antecedência e categorias',
-                      onTap:    () => context.pushNamed(AppRoutes.alertSettings),
+                      icon:      Icons.description_outlined,
+                      iconBg:    AppColors.infoLight,
+                      iconColor: AppColors.info,
+                      title:     'Meus consentimentos',
+                      subtitle:  'Visualizar e revogar por finalidade',
+                      onTap:     () => context.pushNamed(AppRoutes.consents),
                     ),
-                  _ThemeToggleRow(isDark: isDark, ref: ref),
-
-                  const _SectionLabel('Privacidade — LGPD'),
-                  _SettingsRow(
-                    icon:      Icons.description_outlined,
-                    iconBg:    AppColors.infoLight,
-                    iconColor: AppColors.info,
-                    title:     'Meus consentimentos',
-                    subtitle:  'Visualizar e revogar por finalidade',
-                    onTap:     () => context.pushNamed(AppRoutes.consents),
-                  ),
-                  _SettingsRow(
-                    icon:      Icons.download_outlined,
-                    iconBg:    AppColors.infoLight,
-                    iconColor: AppColors.info,
-                    title:     'Exportar meus dados',
-                    subtitle:  'Portabilidade — arquivo JSON',
-                    onTap:     () => _exportData(context),
-                  ),
-                  _SettingsRow(
-                    icon:      Icons.delete_outline_rounded,
-                    iconBg:    AppColors.dangerLight,
-                    iconColor: AppColors.danger,
-                    title:     'Excluir conta',
-                    subtitle:  'Remove a conta e todos os seus dados',
-                    onTap:     () => _deleteAccount(context, ref),
-                  ),
-
-                  const _SectionLabel('Sincronização'),
-                  const SyncCard(),
-
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.base, AppSpacing.sm,
-                      AppSpacing.base, AppSpacing.x2l,
+                    _SettingsRow(
+                      icon:      Icons.download_outlined,
+                      iconBg:    AppColors.infoLight,
+                      iconColor: AppColors.info,
+                      title:     'Exportar meus dados',
+                      subtitle:  'Portabilidade — arquivo JSON',
+                      onTap:     () => _exportData(context),
                     ),
-                    child: AppButton(
-                      label:    'Sair da conta',
-                      icon:     Icons.logout_rounded,
-                      variant:  AppButtonVariant.danger,
-                      onPressed: () => _logout(context, ref),
+                    _SettingsRow(
+                      icon:      Icons.delete_outline_rounded,
+                      iconBg:    AppColors.dangerLight,
+                      iconColor: AppColors.danger,
+                      title:     'Excluir conta',
+                      subtitle:  'Remove a conta e todos os seus dados',
+                      onTap:     () => _deleteAccount(context, ref),
                     ),
-                  ),
-                ],
+
+                    const TutorialTarget(
+                      id:    TutorialIds.profileHelp,
+                      child: _HelpSection(),
+                    ),
+
+                    const _SectionLabel('Sincronização'),
+                    const SyncCard(),
+
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.base, AppSpacing.sm,
+                        AppSpacing.base, AppSpacing.x2l,
+                      ),
+                      child: AppButton(
+                        label:    'Sair da conta',
+                        icon:     Icons.logout_rounded,
+                        variant:  AppButtonVariant.danger,
+                        onPressed: () => _logout(context, ref),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -329,10 +350,21 @@ class _SettingsRow extends StatelessWidget {
   }
 }
 
-class _ThemeToggleRow extends StatelessWidget {
-  const _ThemeToggleRow({required this.isDark, required this.ref});
-  final bool      isDark;
-  final WidgetRef ref;
+/// Linha de configuração com interruptor, no mesmo visual de [_SettingsRow].
+class _SwitchRow extends StatelessWidget {
+  const _SwitchRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final IconData           icon;
+  final String             title;
+  final String             subtitle;
+  final bool               value;
+  final ValueChanged<bool> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -351,22 +383,18 @@ class _ThemeToggleRow extends StatelessWidget {
               color: isDarkCtx ? AppColors.darkSurface2 : AppColors.brandPale,
               borderRadius: const BorderRadius.all(Radius.circular(10)),
             ),
-            child: const Icon(
-              Icons.dark_mode_outlined,
-              size:  20,
-              color: AppColors.mutedGreen,
-            ),
+            child: Icon(icon, size: 20, color: AppColors.mutedGreen),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Modo escuro',
+                Text(title,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         )),
-                Text('Ajusta cores para ambiente noturno',
+                Text(subtitle,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.mutedGreen,
                         )),
@@ -374,13 +402,57 @@ class _ThemeToggleRow extends StatelessWidget {
             ),
           ),
           Switch(
-            value:              isDark,
-            onChanged:          (_) => ref.read(themeProvider.notifier).toggle(),
+            value:              value,
+            onChanged:          onChanged,
             activeThumbColor:   AppColors.brandGreen,
             activeTrackColor:   AppColors.brandLight,
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── Ajuda e tutoriais ─────────────────────────────────────────────────────────
+
+/// Liga/desliga o passo a passo das telas e reabre a apresentação do app.
+class _HelpSection extends ConsumerWidget {
+  const _HelpSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tips     = ref.watch(tutorialProvider).tipsEnabled;
+    final notifier = ref.read(tutorialProvider.notifier);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionLabel('Ajuda e tutoriais'),
+        _SwitchRow(
+          icon:      Icons.lightbulb_outline_rounded,
+          title:     'Dicas nas telas',
+          subtitle:  'Oferecer o passo a passo na primeira visita',
+          value:     tips,
+          onChanged: (v) => notifier.setTipsEnabled(enabled: v),
+        ),
+        _SettingsRow(
+          icon:     Icons.replay_rounded,
+          title:    'Mostrar as dicas de novo',
+          subtitle: 'Cada tela volta a oferecer o passo a passo',
+          onTap:    () async {
+            await notifier.resetScreens();
+            if (context.mounted) {
+              AppToast.success(context, 'Pronto! As dicas voltam a aparecer em cada tela.');
+            }
+          },
+        ),
+        _SettingsRow(
+          icon:     Icons.slideshow_outlined,
+          title:    'Rever apresentação',
+          subtitle: 'As boas-vindas com as funções do app',
+          onTap:    () => context.pushNamed(AppRoutes.welcome),
+        ),
+      ],
     );
   }
 }

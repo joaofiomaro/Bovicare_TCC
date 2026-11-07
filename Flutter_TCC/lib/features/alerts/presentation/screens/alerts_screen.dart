@@ -9,6 +9,9 @@ import '../../../../shared/widgets/app_header.dart';
 import '../../../health/presentation/providers/health_events_provider.dart';
 import '../../../herd/presentation/providers/animals_provider.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
+import '../../../tutorial/presentation/widgets/tutorial_target.dart';
 import '../../../vaccination/presentation/providers/vaccinations_provider.dart';
 import '../providers/farm_alerts_provider.dart';
 import '../widgets/farm_alert_tile.dart';
@@ -29,52 +32,62 @@ class AlertsScreen extends ConsumerWidget {
         ..invalidate(allHealthEventsProvider);
     }
 
-    return Scaffold(
-      body: Column(
-        children: [
-          AppHeader(
-            title:    'Alertas',
-            subtitle: 'Próximos $leadDays dias',
-            showBack: true,
-            actions: [
-              IconButton(
-                tooltip:   'Configurar alertas',
-                icon:      const Icon(Icons.tune_rounded, color: Colors.white),
-                onPressed: () => context.pushNamed(AppRoutes.alertSettings),
-              ),
-            ],
-          ),
-          Expanded(
-            child: alerts.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.brandGreen),
-              ),
-              error: (e, _) => AppEmptyState(
-                icon:        Icons.error_outline_rounded,
-                title:       'Erro ao carregar',
-                subtitle:    e.toString(),
-                actionLabel: 'Tentar novamente',
-                onAction:    refresh,
-              ),
-              data: (list) => list.isEmpty
-                  ? const AppEmptyState(
-                      icon:     Icons.notifications_none_rounded,
-                      title:    'Nenhum alerta',
-                      subtitle: 'Vacinas, partos e carências em dia.',
-                    )
-                  : RefreshIndicator(
-                      color:     AppColors.brandGreen,
-                      onRefresh: refresh,
-                      child: ListView.separated(
-                        padding:   const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: list.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
-                        itemBuilder: (_, i) => FarmAlertTile(alert: list[i]),
-                      ),
-                    ),
+    return ScreenTutorial(
+      guide: Guides.alerts,
+      child: Scaffold(
+        body: Column(
+          children: [
+            AppHeader(
+              title:    'Alertas',
+              subtitle: 'Próximos $leadDays dias',
+              showBack: true,
+              actions: [
+                const TutorialHelpButton(),
+                TutorialTarget(
+                  id:    TutorialIds.alertsSettings,
+                  child: IconButton(
+                    tooltip:   'Configurar alertas',
+                    icon:      const Icon(Icons.tune_rounded, color: Colors.white),
+                    onPressed: () => context.pushNamed(AppRoutes.alertSettings),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+            Expanded(
+              child: TutorialTarget(
+                id:    TutorialIds.alertsList,
+                child: alerts.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(color: AppColors.brandGreen),
+                  ),
+                  error: (e, _) => AppEmptyState(
+                    icon:        Icons.error_outline_rounded,
+                    title:       'Erro ao carregar',
+                    subtitle:    e.toString(),
+                    actionLabel: 'Tentar novamente',
+                    onAction:    refresh,
+                  ),
+                  data: (list) => list.isEmpty
+                      ? const AppEmptyState(
+                          icon:     Icons.notifications_none_rounded,
+                          title:    'Nenhum alerta',
+                          subtitle: 'Vacinas, partos e carências em dia.',
+                        )
+                      : RefreshIndicator(
+                          color:     AppColors.brandGreen,
+                          onRefresh: refresh,
+                          child: ListView.separated(
+                            padding:   const EdgeInsets.symmetric(vertical: 8),
+                            itemCount: list.length,
+                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            itemBuilder: (_, i) => FarmAlertTile(alert: list[i]),
+                          ),
+                        ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

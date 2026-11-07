@@ -5,6 +5,9 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
+import '../../../tutorial/presentation/widgets/tutorial_target.dart';
 import '../../domain/entities/service_call.dart';
 import '../providers/service_calls_provider.dart';
 import '../widgets/service_call_tile.dart';
@@ -19,58 +22,65 @@ class VetCallsScreen extends ConsumerWidget {
     final open    = ref.watch(openCallsProvider);
     final myCalls = ref.watch(vetCallsProvider);
 
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        body: Column(
-          children: [
-            const AppHeader(
-              title:    'Chamados',
-              subtitle: 'Atendimentos veterinários',
-            ),
-            const TabBar(
-              labelColor:       AppColors.brandGreen,
-              indicatorColor:   AppColors.brandGreen,
-              unselectedLabelColor: AppColors.mutedGreen,
-              tabs: [
-                Tab(text: 'Abertos'),
-                Tab(text: 'Meus ativos'),
-                Tab(text: 'Histórico'),
-              ],
-            ),
-            Expanded(
-              child: TabBarView(
-                children: [
-                  // Pool de chamados abertos.
-                  _CallsList(
-                    state:        open,
-                    provider:     openCallsProvider,
-                    emptyTitle:   'Pool vazio',
-                    emptySub:     'Nenhum chamado aberto no momento.',
-                    ref:          ref,
-                  ),
-                  // Meus chamados ativos (aceitos / em atendimento).
-                  _CallsList(
-                    state:        myCalls,
-                    provider:     vetCallsProvider,
-                    emptyTitle:   'Sem atendimentos ativos',
-                    emptySub:     'Aceite um chamado do pool para começar.',
-                    ref:          ref,
-                    filter:       (c) => c.isActive,
-                  ),
-                  // Histórico (concluídos / cancelados).
-                  _CallsList(
-                    state:        myCalls,
-                    provider:     vetCallsProvider,
-                    emptyTitle:   'Sem histórico',
-                    emptySub:     'Seus atendimentos concluídos aparecem aqui.',
-                    ref:          ref,
-                    filter:       (c) => c.isClosed,
-                  ),
-                ],
+    return ScreenTutorial(
+      guide: Guides.vetCalls,
+      child: DefaultTabController(
+        length: 3,
+        child: Scaffold(
+          body: Column(
+            children: [
+              const AppHeader(
+                title:    'Chamados',
+                subtitle: 'Atendimentos veterinários',
+                actions:  [TutorialHelpButton()],
               ),
-            ),
-          ],
+              const TutorialTarget(
+                id:    TutorialIds.vetCallsTabs,
+                child: TabBar(
+                  labelColor:       AppColors.brandGreen,
+                  indicatorColor:   AppColors.brandGreen,
+                  unselectedLabelColor: AppColors.mutedGreen,
+                  tabs: [
+                    Tab(text: 'Abertos'),
+                    Tab(text: 'Meus ativos'),
+                    Tab(text: 'Histórico'),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    // Pool de chamados abertos.
+                    _CallsList(
+                      state:        open,
+                      provider:     openCallsProvider,
+                      emptyTitle:   'Pool vazio',
+                      emptySub:     'Nenhum chamado aberto no momento.',
+                      ref:          ref,
+                    ),
+                    // Meus chamados ativos (aceitos / em atendimento).
+                    _CallsList(
+                      state:        myCalls,
+                      provider:     vetCallsProvider,
+                      emptyTitle:   'Sem atendimentos ativos',
+                      emptySub:     'Aceite um chamado do pool para começar.',
+                      ref:          ref,
+                      filter:       (c) => c.isActive,
+                    ),
+                    // Histórico (concluídos / cancelados).
+                    _CallsList(
+                      state:        myCalls,
+                      provider:     vetCallsProvider,
+                      emptyTitle:   'Sem histórico',
+                      emptySub:     'Seus atendimentos concluídos aparecem aqui.',
+                      ref:          ref,
+                      filter:       (c) => c.isClosed,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

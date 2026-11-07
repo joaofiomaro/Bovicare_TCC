@@ -11,6 +11,9 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_toast.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
+import '../../../tutorial/presentation/widgets/tutorial_target.dart';
 import '../../domain/entities/service_call.dart';
 import '../providers/service_calls_provider.dart';
 import '../widgets/service_call_tile.dart';
@@ -48,65 +51,75 @@ class ProducerCallsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final calls = ref.watch(producerCallsProvider);
 
-    return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.pushNamed(AppRoutes.newServiceCall),
-        backgroundColor: AppColors.brandGreen,
-        icon:  const Icon(Icons.add, color: AppColors.white),
-        label: const Text(
-          'Novo chamado',
-          style: TextStyle(color: AppColors.white),
-        ),
-      ),
-      body: Column(
-        children: [
-          const AppHeader(
-            title:    'Meus chamados',
-            subtitle: 'Atendimentos solicitados',
-            showBack: true,
-          ),
-          Expanded(
-            child: calls.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.brandGreen),
-              ),
-              error: (e, _) => AppEmptyState(
-                icon:        Icons.error_outline_rounded,
-                title:       'Erro ao carregar',
-                subtitle:    e.toString(),
-                actionLabel: 'Tentar novamente',
-                onAction:    () => ref.invalidate(producerCallsProvider),
-              ),
-              data: (list) => list.isEmpty
-                  ? const AppEmptyState(
-                      icon:     Icons.assignment_outlined,
-                      title:    'Nenhum chamado',
-                      subtitle: 'Solicite atendimento de um veterinário.',
-                    )
-                  : RefreshIndicator(
-                      color:     AppColors.brandGreen,
-                      onRefresh: () async =>
-                          ref.invalidate(producerCallsProvider),
-                      child: ListView.separated(
-                        padding:  const EdgeInsets.all(AppSpacing.base),
-                        itemCount: list.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: AppSpacing.sm),
-                        itemBuilder: (_, i) {
-                          final call = list[i];
-                          return ServiceCallTile(
-                            call: call,
-                            trailing: _ProducerCallFooter(
-                              call:     call,
-                              onCancel: () => _cancel(context, ref, call),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
+    return ScreenTutorial(
+      guide: Guides.producerCalls,
+      child: Scaffold(
+        floatingActionButton: TutorialTarget(
+          id:    TutorialIds.callsNew,
+          child: FloatingActionButton.extended(
+            onPressed: () => context.pushNamed(AppRoutes.newServiceCall),
+            backgroundColor: AppColors.brandGreen,
+            icon:  const Icon(Icons.add, color: AppColors.white),
+            label: const Text(
+              'Novo chamado',
+              style: TextStyle(color: AppColors.white),
             ),
           ),
-        ],
+        ),
+        body: Column(
+          children: [
+            const AppHeader(
+              title:    'Meus chamados',
+              subtitle: 'Atendimentos solicitados',
+              showBack: true,
+              actions:  [TutorialHelpButton()],
+            ),
+            Expanded(
+              child: TutorialTarget(
+                id:    TutorialIds.callsList,
+                child: calls.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(color: AppColors.brandGreen),
+                  ),
+                  error: (e, _) => AppEmptyState(
+                    icon:        Icons.error_outline_rounded,
+                    title:       'Erro ao carregar',
+                    subtitle:    e.toString(),
+                    actionLabel: 'Tentar novamente',
+                    onAction:    () => ref.invalidate(producerCallsProvider),
+                  ),
+                  data: (list) => list.isEmpty
+                      ? const AppEmptyState(
+                          icon:     Icons.assignment_outlined,
+                          title:    'Nenhum chamado',
+                          subtitle: 'Solicite atendimento de um veterinário.',
+                        )
+                      : RefreshIndicator(
+                          color:     AppColors.brandGreen,
+                          onRefresh: () async =>
+                              ref.invalidate(producerCallsProvider),
+                          child: ListView.separated(
+                            padding:  const EdgeInsets.all(AppSpacing.base),
+                            itemCount: list.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: AppSpacing.sm),
+                            itemBuilder: (_, i) {
+                              final call = list[i];
+                              return ServiceCallTile(
+                                call: call,
+                                trailing: _ProducerCallFooter(
+                                  call:     call,
+                                  onCancel: () => _cancel(context, ref, call),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

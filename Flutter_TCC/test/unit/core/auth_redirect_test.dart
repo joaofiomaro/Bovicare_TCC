@@ -16,6 +16,17 @@ void main() {
       );
     });
 
+    test('boas-vindas abrem com ou sem login (primeira abertura e Perfil)', () {
+      expect(
+        authRedirect(isLoggedIn: false, location: AppPaths.welcome),
+        isNull,
+      );
+      expect(
+        authRedirect(isLoggedIn: true, location: AppPaths.welcome),
+        isNull,
+      );
+    });
+
     test('não autenticado em rota protegida → login', () {
       expect(
         authRedirect(isLoggedIn: false, location: AppPaths.dashboard),

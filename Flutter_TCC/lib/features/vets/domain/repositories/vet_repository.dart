@@ -1,15 +1,7 @@
 import '../entities/vet_entity.dart';
 
-/// Prefixo dos veterinários demonstrativos (dados fixos do protótipo).
-const String kDemoVetIdPrefix = 'demo-';
-
-extension VetEntityDemoX on VetEntity {
-  /// `true` para os perfis fictícios usados na demonstração do TCC.
-  bool get isDemo => id.startsWith(kDemoVetIdPrefix);
-}
-
 abstract interface class VetRepository {
-  /// Veterinários com perfil público publicado + perfis demonstrativos.
+  /// Veterinários com perfil público publicado.
   Future<List<VetEntity>> getAll();
   Future<VetEntity?>      getById(String id);
 

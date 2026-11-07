@@ -7,6 +7,9 @@ abstract final class AppRoutes {
   static const String register = 'register';
   static const String completeProfile = 'complete-profile';
 
+  // Boas-vindas / tutorial
+  static const String welcome = 'welcome';
+
   // Dashboard
   static const String dashboard = 'dashboard';
 
@@ -52,6 +55,7 @@ abstract final class AppPaths {
   static const String login    = '/login';
   static const String register = '/register';
   static const String completeProfile = '/complete-profile';
+  static const String welcome  = '/welcome';
 
   static const String dashboard = '/dashboard';
   static const String herd            = '/herd';

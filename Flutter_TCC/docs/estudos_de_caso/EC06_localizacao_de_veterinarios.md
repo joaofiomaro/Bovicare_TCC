@@ -10,6 +10,7 @@ e está disponível agora, para ligar ou mandar WhatsApp.
 
 ## Pré-condições
 - Produtor logado.
+- Ao menos um veterinário com perfil profissional publicado (a lista não traz perfis fictícios).
 - Permissão de localização concedida. No emulador, defina a posição em
   Extended Controls → Location (ex.: Rio Claro/SP, −22,4149 / −47,5613).
 
@@ -43,7 +44,7 @@ flowchart LR
   todos, enquadra só os veterinários.
 
 ## Exemplo numérico
-A partir da referência de Rio Claro (−22,4149, −47,5613), o veterinário demonstrativo
+A partir da referência de Rio Claro (−22,4149, −47,5613), um veterinário
 em (−22,3500, −47,5000) fica a cerca de **9,6 km** e aparece como "10 km" no cartão.
 
 ## Critérios de sucesso

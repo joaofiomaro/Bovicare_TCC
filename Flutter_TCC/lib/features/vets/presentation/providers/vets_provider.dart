@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';
 import '../../data/datasources/vet_firestore_data_source.dart';
-import '../../data/datasources/vet_in_memory_data_source.dart';
 import '../../data/repositories/vet_repository_impl.dart';
 import '../../data/services/location_service.dart';
 import '../../domain/entities/vet_entity.dart';
@@ -18,7 +17,7 @@ export '../../data/services/location_service.dart'
 // --- DI ---
 
 final vetRepositoryProvider = Provider<VetRepository>(
-  (_) => VetRepositoryImpl(VetFirestoreDataSource(), VetInMemoryDataSource()),
+  (_) => VetRepositoryImpl(VetFirestoreDataSource()),
 );
 
 final locationServiceProvider = Provider<LocationService>(

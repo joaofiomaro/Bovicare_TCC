@@ -19,6 +19,9 @@ import '../../../health/presentation/providers/health_events_provider.dart';
 import '../../../health/presentation/widgets/health_event_sheet.dart';
 import '../../../health/presentation/widgets/health_event_tile.dart';
 import '../../../health/presentation/widgets/pregnancy_sheet.dart';
+import '../../../tutorial/presentation/guides.dart';
+import '../../../tutorial/presentation/widgets/screen_tutorial.dart';
+import '../../../tutorial/presentation/widgets/tutorial_target.dart';
 import '../../../vaccination/domain/entities/vaccination_record.dart';
 import '../../../vaccination/presentation/providers/vaccinations_provider.dart';
 import '../../../weighing/presentation/providers/weighings_provider.dart';
@@ -114,24 +117,30 @@ class _AnimalProfileContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 4,
-      child: Scaffold(
-        body: Column(
-          children: [
-            _AnimalHeader(animal: animal),
-            _AnimalTabBar(),
-            Expanded(
-              child: TabBarView(
-                children: [
-                  _ResumoTab(animal: animal),
-                  _SanitarioTab(animalId: animal.id),
-                  _ReproducaoTab(animal: animal),
-                  _HistoricoTab(animal: animal),
-                ],
+    return ScreenTutorial(
+      guide: Guides.animalProfile,
+      child: DefaultTabController(
+        length: 4,
+        child: Scaffold(
+          body: Column(
+            children: [
+              _AnimalHeader(animal: animal),
+              TutorialTarget(
+                id:    TutorialIds.animalTabs,
+                child: _AnimalTabBar(),
               ),
-            ),
-          ],
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _ResumoTab(animal: animal),
+                    _SanitarioTab(animalId: animal.id),
+                    _ReproducaoTab(animal: animal),
+                    _HistoricoTab(animal: animal),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -179,18 +188,22 @@ class _AnimalHeader extends StatelessWidget {
                         label: animal.status.label,
                         type:  animal.status.badge,
                       ),
+                      const TutorialHelpButton(),
                       if (!animal.isArchived) ...[
                         const SizedBox(width: 4),
-                        IconButton(
-                          onPressed: () => context.goNamed(
-                            AppRoutes.editAnimal,
-                            pathParameters: {'id': animal.id},
-                            extra: animal,
+                        TutorialTarget(
+                          id:    TutorialIds.animalEdit,
+                          child: IconButton(
+                            onPressed: () => context.goNamed(
+                              AppRoutes.editAnimal,
+                              pathParameters: {'id': animal.id},
+                              extra: animal,
+                            ),
+                            icon: const Icon(Icons.edit_outlined,
+                                color: Colors.white, size: 20),
+                            visualDensity: VisualDensity.compact,
+                            tooltip: 'Editar animal',
                           ),
-                          icon: const Icon(Icons.edit_outlined,
-                              color: Colors.white, size: 20),
-                          visualDensity: VisualDensity.compact,
-                          tooltip: 'Editar animal',
                         ),
                       ],
                     ],
@@ -338,11 +351,17 @@ class _ResumoTab extends ConsumerWidget {
             const SizedBox(height: AppSpacing.base),
             const _SectionLabel('Registrar manejo'),
             const SizedBox(height: AppSpacing.sm),
-            _ActionGrid(animal: animal),
+            TutorialTarget(
+              id:    TutorialIds.animalActions,
+              child: _ActionGrid(animal: animal),
+            ),
             const SizedBox(height: AppSpacing.base),
             _DarBaixaButton(animal: animal),
           ],
-          WeightEvolutionSection(animalId: animal.id),
+          TutorialTarget(
+            id:    TutorialIds.animalWeight,
+            child: WeightEvolutionSection(animalId: animal.id),
+          ),
           const SizedBox(height: AppSpacing.xl),
           const _SectionLabel('Histórico recente'),
           const SizedBox(height: AppSpacing.sm),

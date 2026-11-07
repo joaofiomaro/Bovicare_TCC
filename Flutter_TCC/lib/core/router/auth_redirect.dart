@@ -41,8 +41,9 @@ String? authRedirect({
   UserRole? role,
   bool needsProfile = false,
 }) {
-  // Splash gerencia seu próprio redirect — não interferir.
-  if (location == AppPaths.splash) return null;
+  // Splash gerencia seu próprio redirect — não interferir. As boas-vindas
+  // aparecem antes do login e também podem ser revistas já logado.
+  if (location == AppPaths.splash || location == AppPaths.welcome) return null;
 
   final isAuthRoute =
       location == AppPaths.login || location == AppPaths.register;
