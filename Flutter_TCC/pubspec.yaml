@@ -34,7 +34,9 @@ dependencies:
   # --- UI & Animações ---
   flutter_animate: ^4.5.2
   shimmer: ^3.0.0
-  material_symbols_icons: ^4.2787.1
+  # Fonte dos ícones estilo iOS usados internamente pelo Flutter (campo de
+  # texto no iPhone): sem ela, esses ícones apareceriam em branco.
+  cupertino_icons: ^2.0.0
   google_fonts: ^6.2.1
   cached_network_image: ^3.4.1
 
