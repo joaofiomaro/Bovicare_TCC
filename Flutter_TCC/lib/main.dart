@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/router/app_router.dart';
+import 'core/session/session_reset.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'firebase_options.dart';
@@ -51,6 +52,8 @@ class BovicareApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router    = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeProvider);
+    // Limpa o cache de dados ao trocar de conta (logout/login).
+    ref.watch(sessionResetProvider);
 
     return MaterialApp.router(
       title: 'BoviCare',

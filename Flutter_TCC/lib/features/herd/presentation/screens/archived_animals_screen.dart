@@ -84,7 +84,8 @@ class _ArchivedTile extends StatelessWidget {
         horizontal: AppSpacing.base,
         vertical:   AppSpacing.xs,
       ),
-      onTap: () => context.goNamed(
+      // push (não go): o "voltar" da ficha retorna aos Arquivados.
+      onTap: () => context.pushNamed(
         AppRoutes.animal,
         pathParameters: {'id': animal.id},
       ),

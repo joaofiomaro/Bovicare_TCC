@@ -99,6 +99,10 @@ class _AnimalFormScreenState extends ConsumerState<AnimalFormScreen> {
     }
   }
 
+  /// Aceita vírgula decimal (padrão pt-BR, ex.: "384,5") além do ponto.
+  static double? _parseWeight(String text) =>
+      double.tryParse(text.trim().replaceAll(',', '.'));
+
   Future<void> _pickDate() async {
     final picked = await pickAppDate(
       context,
@@ -119,7 +123,7 @@ class _AnimalFormScreenState extends ConsumerState<AnimalFormScreen> {
     }
     final weightText = _weightController.text.trim();
     if (weightText.isNotEmpty) {
-      final weight = double.tryParse(weightText);
+      final weight = _parseWeight(weightText);
       if (weight == null || weight < 0) {
         AppToast.error(context, 'Peso inválido.');
         return false;
@@ -147,7 +151,7 @@ class _AnimalFormScreenState extends ConsumerState<AnimalFormScreen> {
       // (status, prenhez e, sobretudo, a baixa — não "ressuscita" arquivados).
       status:        base?.status ?? AnimalStatus.healthy,
       pregnancyDate: base?.pregnancyDate,
-      weightKg:      double.tryParse(_weightController.text.trim()),
+      weightKg:      _parseWeight(_weightController.text),
       rfid:          _rfid,
       exitType:      base?.exitType ?? AnimalExitType.active,
       exitDate:      base?.exitDate,

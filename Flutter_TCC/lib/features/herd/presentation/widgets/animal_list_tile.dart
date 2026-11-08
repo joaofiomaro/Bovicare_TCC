@@ -96,25 +96,31 @@ class AnimalListTile extends StatelessWidget {
         .slideX(begin: 0.05, duration: 300.ms, curve: Curves.easeOut);
   }
 
-  Future<bool?> _confirmDelete(BuildContext context) {
-    return showDialog<bool>(
+  /// Sempre devolve `true`/`false` (nunca `null`): tocar fora do diálogo
+  /// equivale a cancelar e o tile volta ao lugar.
+  Future<bool> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      // Os botões precisam fechar o DIÁLOGO usando o context dele. Usar o
+      // context do tile faria o pop no navegador da tela (go_router/shell),
+      // removendo a rota do rebanho e deixando a tela preta.
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Remover animal'),
         content: Text('Deseja remover ${animal.displayName} do rebanho?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
             child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
             style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: const Text('Remover'),
           ),
         ],
       ),
     );
+    return confirmed ?? false;
   }
 
   String _subtitle(AnimalEntity a) {

@@ -1,3 +1,4 @@
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/datasources/animal_firestore_data_source.dart';
@@ -52,14 +53,31 @@ class AnimalsNotifier extends AsyncNotifier<List<AnimalEntity>> {
     }
   }
 
-  /// Remove o animal e recarrega a lista. Retorna `false` em caso de falha.
+  /// Remove o animal. Retorna `false` em caso de falha.
+  ///
+  /// A remoção é otimista: o item sai da lista **antes** do `await`, no mesmo
+  /// frame do swipe. Um `Dismissible` já dispensado não pode continuar na
+  /// árvore enquanto o Firestore responde (o Flutter lança erro e a tela
+  /// quebra). Se a exclusão falhar, a lista anterior é restaurada.
   Future<bool> delete(String id) async {
+    final previous = state.valueOrNull;
+    if (previous != null) {
+      state = AsyncData(previous.where((a) => a.id != id).toList());
+    }
     try {
       final repo = ref.read(animalRepositoryProvider);
       await DeleteAnimalUseCase(repo).call(id);
-      ref.invalidateSelf();
       return true;
     } on Exception {
+      if (previous != null) {
+        // Só devolve o item depois do frame que o tirou da árvore; antes
+        // disso o tile dispensado seria reaproveitado e o Flutter acusaria
+        // "dismissed Dismissible still part of the tree".
+        await SchedulerBinding.instance.endOfFrame;
+        state = AsyncData(previous);
+      } else {
+        ref.invalidateSelf();
+      }
       return false;
     }
   }

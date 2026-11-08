@@ -193,6 +193,7 @@ class _HerdListScreenState extends ConsumerState<HerdListScreen> {
                       child: ListView.builder(
                         itemCount: list.length,
                         itemBuilder: (_, i) => AnimalListTile(
+                          key:            ValueKey(list[i].id),
                           animal:         list[i],
                           animationIndex: i,
                           selectionMode:  _selectionMode,
