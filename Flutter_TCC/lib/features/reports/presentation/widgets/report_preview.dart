@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../domain/entities/report_data.dart';
 
 /// Exibe o resultado gerado em uma tabela horizontal rolável.
@@ -22,7 +23,7 @@ class ReportPreview extends StatelessWidget {
           width:      double.infinity,
           padding:    const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color:        AppColors.brandPale,
+            color:        context.palette.brandTint,
             borderRadius: const BorderRadius.all(Radius.circular(12)),
             border:       Border.all(
               color: AppColors.brandGreen.withValues(alpha: 0.25),
@@ -30,9 +31,9 @@ class ReportPreview extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.check_circle_outline_rounded,
-                color: AppColors.brandGreen,
+                color: context.palette.brand,
                 size:  20,
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -41,7 +42,7 @@ class ReportPreview extends StatelessWidget {
                   '${data.totalRecords} ${data.totalRecords == 1 ? 'registro' : 'registros'} '
                   '· ${data.periodStart.toBrDate} a ${data.periodEnd.toBrDate}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color:      AppColors.brandGreen,
+                        color:      context.palette.brand,
                         fontWeight: FontWeight.w600,
                       ),
                 ),
@@ -58,7 +59,7 @@ class ReportPreview extends StatelessWidget {
               child: Text(
                 'Nenhum dado no período selecionado.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.mutedGreen,
+                      color: context.palette.muted,
                     ),
               ),
             ),
@@ -77,7 +78,7 @@ class ReportPreview extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 border:       Border.all(
-                  color: isDark ? AppColors.darkBorder : AppColors.ghostGreen,
+                  color: isDark ? AppColors.darkBorder : context.palette.border,
                 ),
                 borderRadius: const BorderRadius.all(Radius.circular(12)),
               ),
@@ -86,10 +87,10 @@ class ReportPreview extends StatelessWidget {
                     (h) => DataColumn(
                       label: Text(
                         h,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize:   11,
                           fontWeight: FontWeight.w700,
-                          color:      AppColors.mutedGreen,
+                          color:      context.palette.muted,
                           letterSpacing: 0.3,
                         ),
                       ),

@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/router/app_router.dart';
@@ -20,6 +22,14 @@ Future<void> main() async {
   // mapa, broker MQTT). Sem o arquivo o app usa os padrões embutidos em vez
   // de falhar na inicialização.
   await dotenv.load(isOptional: true);
+
+  // A fonte vem empacotada em assets/google_fonts: nunca busca na rede
+  // (funciona sem internet no campo e não atrasa a primeira tela).
+  GoogleFonts.config.allowRuntimeFetching = false;
+  LicenseRegistry.addLicense(() async* {
+    final ofl = await rootBundle.loadString('assets/google_fonts/OFL.txt');
+    yield LicenseEntryWithLineBreaks(['google_fonts'], ofl);
+  });
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 

@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_sheet_container.dart';
@@ -76,7 +77,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           Text(
             'Enviaremos um link para o seu e-mail para criar uma nova senha.',
             style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
-                  color: AppColors.mutedGreen,
+                  color: context.palette.muted,
                 ),
           ),
           const SizedBox(height: AppSpacing.xl),
@@ -184,7 +185,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Text(
                         'Acesse sua conta para continuar',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.mutedGreen,
+                              color: context.palette.muted,
                             ),
                       ),
                       const SizedBox(height: AppSpacing.x2l),
@@ -210,9 +211,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: _showForgotPassword,
-                          child: const Text(
+                          child: Text(
                             'Esqueci minha senha',
-                            style: TextStyle(color: AppColors.brandGreen),
+                            style: TextStyle(color: context.palette.brand),
                           ),
                         ),
                       ),
@@ -230,8 +231,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         isLoading: isLoading,
                       ),
                       const SizedBox(height: AppSpacing.x2l),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      // Wrap: com fonte ampliada o link desce de linha em vez
+                      // de estourar a largura.
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
                             'Ainda não tem conta? ',
@@ -243,7 +247,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               'Cadastrar',
                               style:
                                   Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        color: AppColors.brandGreen,
+                                        color: context.palette.brand,
                                         fontWeight: FontWeight.w600,
                                       ),
                             ),
@@ -277,7 +281,7 @@ class _Divider extends StatelessWidget {
           child: Text(
             'ou',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.mutedGreen,
+                  color: context.palette.muted,
                 ),
           ),
         ),
@@ -304,7 +308,7 @@ class _GoogleSignInButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.ghostGreen),
+          side: BorderSide(color: context.palette.border),
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(12)),
           ),
@@ -320,11 +324,14 @@ class _GoogleSignInButton extends StatelessWidget {
                 children: [
                   const _GoogleIcon(),
                   const SizedBox(width: 12),
-                  Text(
-                    'Continuar com Google',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                  Flexible(
+                    child: Text(
+                      'Continuar com Google',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
                   ),
                 ],
               ),

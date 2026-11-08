@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../domain/farm_alerts.dart';
 
 /// Linha de alerta — toque abre a ficha do animal.
@@ -14,22 +14,23 @@ class FarmAlertTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final (color, bg, icon) = switch (alert.type) {
       FarmAlertType.vaccineOverdue =>
-        (AppColors.danger, AppColors.dangerLight, Icons.vaccines_outlined),
+        (p.danger, p.dangerTint, Icons.vaccines_outlined),
       FarmAlertType.vaccineDue =>
-        (AppColors.amber, AppColors.amberLight, Icons.vaccines_outlined),
+        (p.amber, p.amberTint, Icons.vaccines_outlined),
       FarmAlertType.birthDue => (
           alert.severity == FarmAlertSeverity.high
-              ? AppColors.danger
-              : AppColors.brandGreen,
+              ? p.danger
+              : p.brand,
           alert.severity == FarmAlertSeverity.high
-              ? AppColors.dangerLight
-              : AppColors.brandLight,
+              ? p.dangerTint
+              : p.brandTintStrong,
           Icons.child_friendly_outlined,
         ),
       FarmAlertType.withdrawal =>
-        (AppColors.info, AppColors.infoLight, Icons.block_rounded),
+        (p.info, p.infoTint, Icons.block_rounded),
     };
 
     return InkWell(
@@ -76,9 +77,9 @@ class FarmAlertTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
-              color: AppColors.ghostGreen,
+              color: context.palette.subtle,
               size:  20,
             ),
           ],

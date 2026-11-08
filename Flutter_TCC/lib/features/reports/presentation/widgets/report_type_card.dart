@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../domain/entities/report_data.dart';
 
 class ReportTypeCard extends StatelessWidget {
@@ -19,10 +20,10 @@ class ReportTypeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final (iconData, iconColor, iconBg) = _iconProps(type);
+    final (iconData, iconColor, iconBg) = _iconProps(type, context.palette);
 
     return Material(
-      color:        isDark ? AppColors.darkSurface : AppColors.white,
+      color:        isDark ? AppColors.darkSurface : context.palette.card,
       borderRadius: const BorderRadius.all(Radius.circular(12)),
       child: InkWell(
         onTap:        isLoading ? null : onGenerate,
@@ -35,7 +36,7 @@ class ReportTypeCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: const BorderRadius.all(Radius.circular(12)),
             border: Border.all(
-              color: isDark ? AppColors.darkBorder : AppColors.ghostGreen,
+              color: isDark ? AppColors.darkBorder : context.palette.border,
             ),
           ),
           child: Row(
@@ -64,7 +65,7 @@ class ReportTypeCard extends StatelessWidget {
                     Text(
                       type.subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.mutedGreen,
+                            color: context.palette.muted,
                           ),
                     ),
                   ],
@@ -72,18 +73,18 @@ class ReportTypeCard extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.sm),
               if (isLoading)
-                const SizedBox(
+                SizedBox(
                   width:  20,
                   height: 20,
                   child:  CircularProgressIndicator(
                     strokeWidth: 2,
-                    color:       AppColors.brandGreen,
+                    color:       context.palette.brand,
                   ),
                 )
               else
-                const Icon(
+                Icon(
                   Icons.download_rounded,
-                  color: AppColors.brandGreen,
+                  color: context.palette.brand,
                   size:  22,
                 ),
             ],
@@ -93,11 +94,11 @@ class ReportTypeCard extends StatelessWidget {
     );
   }
 
-  (IconData, Color, Color) _iconProps(ReportType t) => switch (t) {
-    ReportType.sanitary     => (Icons.shield_outlined,        AppColors.brandGreen, AppColors.brandLight),
-    ReportType.reproductive => (Icons.favorite_outline_rounded, AppColors.brandGreen, AppColors.brandLight),
-    ReportType.financial    => (Icons.bar_chart_rounded,      AppColors.amber,      AppColors.amberLight),
-    ReportType.sales        => (Icons.sell_outlined,          AppColors.brandGreen, AppColors.brandLight),
-    ReportType.inventory    => (Icons.list_alt_rounded,       AppColors.mutedGreen, AppColors.brandPale),
+  (IconData, Color, Color) _iconProps(ReportType t, AppPalette p) => switch (t) {
+    ReportType.sanitary     => (Icons.shield_outlined,          p.brand, p.brandTintStrong),
+    ReportType.reproductive => (Icons.favorite_outline_rounded, p.brand, p.brandTintStrong),
+    ReportType.financial    => (Icons.bar_chart_rounded,        p.amber, p.amberTint),
+    ReportType.sales        => (Icons.sell_outlined,            p.brand, p.brandTintStrong),
+    ReportType.inventory    => (Icons.list_alt_rounded,         p.muted, p.brandTint),
   };
 }

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../core/utils/id_generator.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_date_field.dart';
+import '../../../../shared/widgets/app_sheet_container.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../herd/presentation/providers/animals_provider.dart';
@@ -101,117 +102,95 @@ class _WeighingFormSheetState extends ConsumerState<WeighingFormSheet> {
     final cs           = Theme.of(context).colorScheme;
     final isSubmitting = ref.watch(weighingFormProvider).isLoading;
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.base,
-        AppSpacing.base,
-        AppSpacing.base,
-        AppSpacing.base + MediaQuery.viewInsetsOf(context).bottom,
-      ),
-      decoration: BoxDecoration(
-        color:        cs.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+    // Mesma folha das demais: alça, rolagem e espaço do teclado.
+    return AppSheetContainer(
+      children: [
+      Row(
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color:        cs.outlineVariant,
-                borderRadius: const BorderRadius.all(Radius.circular(999)),
-              ),
+          Icon(Icons.monitor_weight_outlined,
+              color: context.palette.brand),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              'Registrar pesagem',
+              style: Theme.of(context).textTheme.titleLarge,
             ),
           ),
-          const SizedBox(height: AppSpacing.xl),
-          Row(
-            children: [
-              const Icon(Icons.monitor_weight_outlined,
-                  color: AppColors.brandGreen),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                'Registrar pesagem',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ],
-          ),
-          if (widget.currentWeight != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              'Peso atual: ${widget.currentWeight!.toStringAsFixed(0)} kg',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.mutedGreen,
-                  ),
-            ),
-          ],
-          const SizedBox(height: AppSpacing.xl),
-
-          AppTextField(
-            label:           'Peso (kg) *',
-            controller:      _weightController,
-            prefixIcon:      Icons.scale_outlined,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: AppSpacing.base),
-
-          Text(
-            'Data da pesagem *',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color:      AppColors.mutedGreen,
-                ),
-          ),
-          const SizedBox(height: 6),
-          InkWell(
-            onTap:        _pickDate,
-            borderRadius: const BorderRadius.all(Radius.circular(12)),
-            child: InputDecorator(
-              decoration: InputDecoration(
-                filled:    true,
-                fillColor: cs.surfaceContainerHighest,
-                border:    const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(12)),
-                  borderSide:   BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.base,
-                  vertical:   AppSpacing.md,
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today_outlined,
-                      size: 18, color: AppColors.mutedGreen),
-                  const SizedBox(width: 8),
-                  Text(_date.toBrDate),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.base),
-
-          AppTextField(
-            label:           'Observação',
-            controller:      _notesController,
-            prefixIcon:      Icons.edit_note_rounded,
-            textInputAction: TextInputAction.done,
-          ),
-          const SizedBox(height: AppSpacing.x2l),
-
-          AppButton(
-            label:     'Salvar pesagem',
-            icon:      Icons.check_rounded,
-            onPressed: _submit,
-            isLoading: isSubmitting,
-          ),
-          const SizedBox(height: AppSpacing.sm),
         ],
       ),
+      if (widget.currentWeight != null) ...[
+        const SizedBox(height: 4),
+        Text(
+          'Peso atual: ${widget.currentWeight!.toStringAsFixed(0)} kg',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: context.palette.muted,
+              ),
+        ),
+      ],
+      const SizedBox(height: AppSpacing.xl),
+
+      AppTextField(
+        label:           'Peso (kg) *',
+        controller:      _weightController,
+        prefixIcon:      Icons.scale_outlined,
+        keyboardType:
+            const TextInputType.numberWithOptions(decimal: true),
+        textInputAction: TextInputAction.next,
+      ),
+      const SizedBox(height: AppSpacing.base),
+
+      Text(
+        'Data da pesagem *',
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color:      context.palette.muted,
+            ),
+      ),
+      const SizedBox(height: 6),
+      InkWell(
+        onTap:        _pickDate,
+        borderRadius: const BorderRadius.all(Radius.circular(12)),
+        child: InputDecorator(
+          decoration: InputDecoration(
+            filled:    true,
+            fillColor: cs.surfaceContainerHighest,
+            border:    const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
+              borderSide:   BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.base,
+              vertical:   AppSpacing.md,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.calendar_today_outlined,
+                  size: 18, color: context.palette.muted),
+              const SizedBox(width: 8),
+              Text(_date.toBrDate),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(height: AppSpacing.base),
+
+      AppTextField(
+        label:           'Observação',
+        controller:      _notesController,
+        prefixIcon:      Icons.edit_note_rounded,
+        textInputAction: TextInputAction.done,
+      ),
+      const SizedBox(height: AppSpacing.x2l),
+
+      AppButton(
+        label:     'Salvar pesagem',
+        icon:      Icons.check_rounded,
+        onPressed: _submit,
+        isLoading: isSubmitting,
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      ],
     );
   }
 }

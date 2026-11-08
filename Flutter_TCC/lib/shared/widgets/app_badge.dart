@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_radius.dart';
+import '../../core/theme/app_palette.dart';
 
 enum BadgeType { success, danger, warning, info, neutral }
 
@@ -13,7 +13,7 @@ class AppBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (bg, fg) = _colors;
+    final (bg, fg) = _colors(context.palette);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(color: bg, borderRadius: AppRadius.fullAll),
@@ -21,11 +21,12 @@ class AppBadge extends StatelessWidget {
     );
   }
 
-  (Color, Color) get _colors => switch (type) {
-    BadgeType.success => (AppColors.successLight, AppColors.success),
-    BadgeType.danger  => (AppColors.dangerLight,  AppColors.danger),
-    BadgeType.warning => (AppColors.amberLight,   AppColors.amber),
-    BadgeType.info    => (AppColors.infoLight,    AppColors.info),
-    BadgeType.neutral => (AppColors.brandPale,    AppColors.mutedGreen),
+  /// Fundo suave + texto forte do mesmo tom, adaptados ao tema.
+  (Color, Color) _colors(AppPalette p) => switch (type) {
+    BadgeType.success => (p.brandTintStrong, p.brand),
+    BadgeType.danger  => (p.dangerTint,      p.danger),
+    BadgeType.warning => (p.amberTint,       p.amber),
+    BadgeType.info    => (p.infoTint,        p.info),
+    BadgeType.neutral => (p.brandTint,       p.muted),
   };
 }

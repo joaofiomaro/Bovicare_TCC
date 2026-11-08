@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+
 import '../../core/constants/app_spacing.dart';
+import '../../core/theme/app_palette.dart';
 import 'app_button.dart';
 
 /// Estado vazio de listas e seções — ícone + texto + ação opcional.
@@ -30,14 +31,14 @@ class AppEmptyState extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(AppSpacing.xl),
-              decoration: const BoxDecoration(color: AppColors.brandPale, shape: BoxShape.circle),
-              child: Icon(icon, size: 48, color: AppColors.brandGreen),
+              decoration: BoxDecoration(color: context.palette.brandTint, shape: BoxShape.circle),
+              child: Icon(icon, size: 48, color: context.palette.brand),
             ),
             const SizedBox(height: AppSpacing.base),
             Text(title, style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
             if (subtitle != null) ...[
               const SizedBox(height: AppSpacing.xs),
-              Text(subtitle!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.mutedGreen), textAlign: TextAlign.center),
+              Text(subtitle!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.palette.muted), textAlign: TextAlign.center),
             ],
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: AppSpacing.xl),

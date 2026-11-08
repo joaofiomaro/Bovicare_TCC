@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../domain/entities/service_call.dart';
 import '../extensions/service_call_visuals.dart';
@@ -24,7 +25,7 @@ class ServiceCallTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
-      color:        isDark ? AppColors.darkSurface : AppColors.white,
+      color:        isDark ? AppColors.darkSurface : context.palette.card,
       borderRadius: const BorderRadius.all(Radius.circular(12)),
       child: InkWell(
         onTap:        onTap,
@@ -34,7 +35,7 @@ class ServiceCallTile extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: const BorderRadius.all(Radius.circular(12)),
             border: Border.all(
-              color: isDark ? AppColors.darkBorder : AppColors.ghostGreen,
+              color: isDark ? AppColors.darkBorder : context.palette.border,
             ),
           ),
           child: Column(
@@ -65,16 +66,16 @@ class ServiceCallTile extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.mutedGreen,
+                      color: context.palette.muted,
                     ),
               ),
               const SizedBox(height: AppSpacing.sm),
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.location_on_outlined,
                     size:  13,
-                    color: AppColors.mutedGreen,
+                    color: context.palette.muted,
                   ),
                   const SizedBox(width: 3),
                   Expanded(
@@ -83,7 +84,7 @@ class ServiceCallTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.mutedGreen,
+                            color: context.palette.muted,
                           ),
                     ),
                   ),
@@ -98,7 +99,7 @@ class ServiceCallTile extends StatelessWidget {
                 Text(
                   call.createdAt.toRelative,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color:    AppColors.mutedGreen,
+                        color:    context.palette.muted,
                         fontSize: 11,
                       ),
                 ),

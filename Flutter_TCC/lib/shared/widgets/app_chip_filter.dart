@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_radius.dart';
+import '../../core/theme/app_palette.dart';
 
 /// Chips de filtro animados com suporte a seleção única ou múltipla.
 class AppChipFilter<T> extends StatelessWidget {
@@ -57,7 +58,7 @@ class _AnimatedChip<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -69,14 +70,10 @@ class _AnimatedChip<T> extends StatelessWidget {
           curve: Curves.easeOut,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected
-                ? AppColors.brandGreen
-                : (isDark ? AppColors.darkSurface2 : AppColors.brandPale),
+            color: isSelected ? AppColors.brandGreen : palette.brandTint,
             borderRadius: AppRadius.fullAll,
             border: Border.all(
-              color: isSelected
-                  ? AppColors.brandGreen
-                  : (isDark ? AppColors.darkBorder : AppColors.ghostGreen),
+              color: isSelected ? AppColors.brandGreen : palette.border,
             ),
           ),
           child: Row(
@@ -86,7 +83,7 @@ class _AnimatedChip<T> extends StatelessWidget {
                 Icon(
                   option.icon,
                   size: 14,
-                  color: isSelected ? AppColors.white : AppColors.mutedGreen,
+                  color: isSelected ? AppColors.white : palette.muted,
                 ),
                 const SizedBox(width: 4),
               ],
@@ -95,9 +92,7 @@ class _AnimatedChip<T> extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isSelected
-                      ? AppColors.white
-                      : (isDark ? AppColors.darkTextMuted : AppColors.mutedGreen),
+                  color: isSelected ? AppColors.white : palette.muted,
                 ),
               ),
             ],

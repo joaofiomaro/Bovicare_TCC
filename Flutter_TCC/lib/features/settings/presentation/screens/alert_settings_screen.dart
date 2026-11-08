@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_chip_filter.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_toast.dart';
@@ -34,10 +36,10 @@ class AlertSettingsScreen extends ConsumerWidget {
           ),
           Expanded(
             child: state.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.brandGreen),
+              loading: () => Center(
+                child: CircularProgressIndicator(color: context.palette.brand),
               ),
-              error: (e, _) => Center(child: Text(e.toString())),
+              error: (e, _) => Center(child: Text(friendlyError(e), textAlign: TextAlign.center)),
               data: (settings) => ListView(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.base),
                 children: [
@@ -80,12 +82,12 @@ class AlertSettingsScreen extends ConsumerWidget {
                     secondary: const Icon(Icons.block_rounded),
                     activeThumbColor: AppColors.brandGreen,
                   ),
-                  const Padding(
-                    padding: EdgeInsets.all(AppSpacing.base),
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpacing.base),
                     child: Text(
                       'Os alertas aparecem no início e na central de alertas. '
                       'As preferências ficam salvas na sua conta.',
-                      style: TextStyle(color: AppColors.mutedGreen, fontSize: 12),
+                      style: TextStyle(color: context.palette.muted, fontSize: 12),
                     ),
                   ),
                 ],

@@ -43,3 +43,12 @@ final class ProfileSetupRequiredFailure extends Failure {
 final class UnknownFailure extends Failure {
   const UnknownFailure([super.message = 'Ocorreu um erro inesperado.']);
 }
+
+/// Mensagem segura para exibir ao usuário a partir de qualquer erro.
+///
+/// [Failure] já traz texto amigável em PT-BR. Qualquer outro erro (exceção
+/// de plugin, timeout, bug) vira uma mensagem genérica: o texto técnico
+/// ("Exception: …", códigos, caminhos) nunca chega à tela.
+String friendlyError(Object error) => error is Failure
+    ? error.message
+    : 'Não foi possível carregar. Verifique sua conexão e tente novamente.';

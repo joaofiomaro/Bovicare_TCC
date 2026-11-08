@@ -88,6 +88,10 @@ flutter:
     - assets/images/
     - assets/animations/
     - assets/icons/
+    # Plus Jakarta Sans empacotada (licença OFL): o google_fonts usa estes
+    # arquivos em vez de baixar a fonte — texto certo offline e 1ª abertura
+    # mais rápida.
+    - assets/google_fonts/
     - .env
 
 # Ícone do app (gera ícones nativos a partir da marca).

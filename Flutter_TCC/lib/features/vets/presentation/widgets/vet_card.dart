@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../domain/entities/vet_entity.dart';
 
@@ -27,10 +28,10 @@ class VetCard extends StatelessWidget {
       child: Container(
         padding:    const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color:        isDark ? AppColors.darkSurface : AppColors.white,
+          color:        isDark ? AppColors.darkSurface : context.palette.card,
           borderRadius: const BorderRadius.all(Radius.circular(12)),
           border:       Border.all(
-            color: isDark ? AppColors.darkBorder : AppColors.ghostGreen,
+            color: isDark ? AppColors.darkBorder : context.palette.border,
           ),
         ),
         child: Row(
@@ -53,7 +54,7 @@ class VetCard extends StatelessWidget {
                   Text(
                     vet.specialties.join(' · '),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.mutedGreen,
+                          color: context.palette.muted,
                         ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -61,17 +62,17 @@ class VetCard extends StatelessWidget {
                   const SizedBox(height: 3),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.location_on_outlined,
                         size:  11,
-                        color: AppColors.mutedGreen,
+                        color: context.palette.muted,
                       ),
                       const SizedBox(width: 2),
                       Flexible(
                         child: Text(
                           _distanceLabel,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.mutedGreen,
+                                color: context.palette.muted,
                                 fontSize: 11,
                               ),
                           maxLines: 1,
@@ -121,7 +122,7 @@ class _VetAvatar extends StatelessWidget {
       width:  48,
       height: 48,
       decoration: BoxDecoration(
-        color:  isAvailable ? AppColors.brandLight : AppColors.amberLight,
+        color:  isAvailable ? context.palette.brandTintStrong : context.palette.amberTint,
         shape: BoxShape.circle,
         border: Border.all(
           color: isAvailable
@@ -132,7 +133,7 @@ class _VetAvatar extends StatelessWidget {
       ),
       child: Icon(
         Icons.medical_services_outlined,
-        color: isAvailable ? AppColors.brandGreen : AppColors.amber,
+        color: isAvailable ? context.palette.brand : context.palette.amber,
         size:  22,
       ),
     );

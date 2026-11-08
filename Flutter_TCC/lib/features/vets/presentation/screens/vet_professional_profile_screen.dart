@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_bottom_sheet.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_header.dart';
@@ -47,10 +49,10 @@ class VetProfessionalProfileScreen extends ConsumerWidget {
             ),
             Expanded(
               child: profile.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: AppColors.brandGreen),
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: context.palette.brand),
                 ),
-                error: (e, _) => Center(child: Text(e.toString())),
+                error: (e, _) => Center(child: Text(friendlyError(e), textAlign: TextAlign.center)),
                 data:  (current) => _ProfileForm(initial: current),
               ),
             ),
@@ -201,7 +203,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
       confirmLabel:   'Retirar',
       confirmVariant: AppButtonVariant.danger,
       icon:           Icons.visibility_off_outlined,
-      iconColor:      AppColors.danger,
+      iconColor:      context.palette.danger,
     );
     if (confirmed != true || !mounted) return;
     final uid = ref.read(authProvider).valueOrNull?.id;
@@ -235,7 +237,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
               FilterChip(
                 label:    Text(s),
                 selected: _specialties.contains(s),
-                selectedColor: AppColors.brandLight,
+                selectedColor: context.palette.brandTintStrong,
                 checkmarkColor: AppColors.brandGreen,
                 onSelected: (sel) => setState(
                   () => sel ? _specialties.add(s) : _specialties.remove(s),
@@ -313,10 +315,11 @@ class _StatusBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final (bg, fg, icon, text) = published
-        ? (AppColors.brandLight, AppColors.brandGreen, Icons.check_circle_outline,
+        ? (p.brandTintStrong, p.brand, Icons.check_circle_outline,
             'Seu perfil está publicado e aparece para os produtores.')
-        : (AppColors.amberLight, AppColors.amber, Icons.info_outline,
+        : (p.amberTint, p.amber, Icons.info_outline,
             'Seu perfil ainda não está publicado. Ao publicar, você consente '
             'que nome, CRMV, contatos e área de atendimento sejam exibidos aos '
             'produtores (LGPD). Pode retirar quando quiser.');

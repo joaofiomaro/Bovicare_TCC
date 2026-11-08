@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/extensions/datetime_ext.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../core/utils/parallel.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -86,7 +88,7 @@ class AnimalProfileScreen extends ConsumerWidget {
         body: AppEmptyState(
           icon:        Icons.error_outline_rounded,
           title:       'Animal não encontrado',
-          subtitle:    e.toString(),
+          subtitle:    friendlyError(e),
           actionLabel: 'Voltar',
           onAction:    () => Navigator.of(context).maybePop(),
         ),
@@ -224,7 +226,7 @@ class _AnimalHeader extends StatelessWidget {
               Text(
                 _infoLine(animal),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white70,
+                      color: AppColors.onBrandMuted,
                     ),
                 textAlign: TextAlign.center,
               ),
@@ -239,12 +241,12 @@ class _AnimalHeader extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.rss_feed_rounded, color: Colors.white70, size: 12),
+                      const Icon(Icons.rss_feed_rounded, color: Colors.white, size: 12),
                       const SizedBox(width: 4),
                       Text(
                         'RFID ${animal.rfid}',
                         style: const TextStyle(
-                          color:      Colors.white70,
+                          color:      Colors.white,
                           fontSize:   11,
                           fontWeight: FontWeight.w500,
                         ),
@@ -288,20 +290,20 @@ class _AnimalTabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     // Em telas estreitas (ou com fonte do sistema ampliada) os rótulos
     // encolhem para caber inteiros, em vez de serem cortados ("Reproduç").
-    return const TabBar(
-      tabs: [
+    return TabBar(
+      tabs: const [
         _FitTab('Resumo'),
         _FitTab('Sanitário'),
         _FitTab('Reprodução'),
         _FitTab('Histórico'),
       ],
-      labelPadding:       EdgeInsets.symmetric(horizontal: 4),
-      labelColor:         AppColors.brandGreen,
-      unselectedLabelColor: AppColors.mutedGreen,
+      labelPadding:       const EdgeInsets.symmetric(horizontal: 4),
+      labelColor:         context.palette.brand,
+      unselectedLabelColor: context.palette.muted,
       indicatorColor:     AppColors.brandGreen,
       indicatorWeight:    2.5,
-      labelStyle:           TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-      unselectedLabelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
+      labelStyle:           const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      unselectedLabelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
     );
   }
 }
@@ -398,7 +400,7 @@ class _PregnancyCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.base),
         decoration: BoxDecoration(
-          color:        AppColors.brandPale,
+          color:        context.palette.brandTint,
           borderRadius: const BorderRadius.all(Radius.circular(12)),
           border:       Border.all(color: AppColors.brandGreen.withValues(alpha: 0.2)),
         ),
@@ -406,12 +408,12 @@ class _PregnancyCard extends StatelessWidget {
           children: [
             Container(
               width: 40, height: 40,
-              decoration: const BoxDecoration(
-                color:        AppColors.brandLight,
-                borderRadius: BorderRadius.all(Radius.circular(10)),
+              decoration: BoxDecoration(
+                color:        context.palette.brandTintStrong,
+                borderRadius: const BorderRadius.all(Radius.circular(10)),
               ),
-              child: const Icon(Icons.favorite_rounded,
-                  color: AppColors.brandGreen, size: 20),
+              child: Icon(Icons.favorite_rounded,
+                  color: context.palette.brand, size: 20),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -422,20 +424,19 @@ class _PregnancyCard extends StatelessWidget {
                     'Prenha · $days dias',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: AppColors.brandGreen,
+                          color: context.palette.brand,
                         ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'Parto previsto: $expectedStr',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.mutedGreen,
+                          color: context.palette.muted,
                         ),
                   ),
                   const SizedBox(height: 8),
                   AppProgressBar(
-                    value:      progress,
-                    color:      AppColors.brandGreen,
+                    value:       progress,
                     showPercent: true,
                     height:     6,
                   ),
@@ -500,10 +501,10 @@ class _ActionItem extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color:        isDark ? AppColors.darkSurface : AppColors.white,
+          color:        isDark ? AppColors.darkSurface : context.palette.card,
           borderRadius: const BorderRadius.all(Radius.circular(12)),
           border:       Border.all(
-            color: isDark ? AppColors.darkBorder : AppColors.ghostGreen,
+            color: isDark ? AppColors.darkBorder : context.palette.border,
           ),
         ),
         padding: const EdgeInsets.all(4),
@@ -514,14 +515,14 @@ class _ActionItem extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: AppColors.brandGreen, size: 22),
+              Icon(icon, color: context.palette.brand, size: 22),
               const SizedBox(height: 6),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize:   11,
                   fontWeight: FontWeight.w500,
-                  color:      AppColors.mutedGreen,
+                  color:      context.palette.muted,
                 ),
                 maxLines:  1,
                 textAlign: TextAlign.center,
@@ -602,13 +603,13 @@ class _VaccinationTile extends StatelessWidget {
           Container(
             width:  36,
             height: 36,
-            decoration: const BoxDecoration(
-              color:        AppColors.brandLight,
-              borderRadius: BorderRadius.all(Radius.circular(8)),
+            decoration: BoxDecoration(
+              color:        context.palette.brandTintStrong,
+              borderRadius: const BorderRadius.all(Radius.circular(8)),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.vaccines_outlined,
-              color: AppColors.brandGreen,
+              color: context.palette.brand,
               size:  18,
             ),
           ),
@@ -631,23 +632,23 @@ class _VaccinationTile extends StatelessWidget {
                           ? ' · ${record.veterinarianName}'
                           : ''),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.mutedGreen,
+                        color: context.palette.muted,
                       ),
                 ),
                 if (quarantineEnd != null) ...[
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.block_rounded,
                         size:  12,
-                        color: AppColors.amber,
+                        color: context.palette.amber,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         'Carência até ${quarantineEnd.toBrDate}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color:      AppColors.amber,
+                              color:      context.palette.amber,
                               fontWeight: FontWeight.w600,
                             ),
                       ),
@@ -658,16 +659,16 @@ class _VaccinationTile extends StatelessWidget {
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.calendar_month_outlined,
                         size:  12,
-                        color: AppColors.info,
+                        color: context.palette.info,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         'Próxima dose: ${record.nextDoseDate!.toBrDate}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.info,
+                              color: context.palette.info,
                             ),
                       ),
                     ],
@@ -730,11 +731,11 @@ class _ReproducaoTab extends ConsumerWidget {
           const _SectionLabel('Histórico reprodutivo'),
           const SizedBox(height: AppSpacing.sm),
           if (reproEvents.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(AppSpacing.base),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.base),
               child: Text(
                 'Nenhum evento reprodutivo registrado.',
-                style: TextStyle(color: AppColors.mutedGreen),
+                style: TextStyle(color: context.palette.muted),
               ),
             )
           else
@@ -833,13 +834,13 @@ class _ArchivedBanner extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.base),
-        decoration: const BoxDecoration(
-          color:        AppColors.dangerLight,
-          borderRadius: BorderRadius.all(Radius.circular(12)),
+        decoration: BoxDecoration(
+          color:        context.palette.dangerTint,
+          borderRadius: const BorderRadius.all(Radius.circular(12)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.archive_outlined, color: AppColors.danger),
+            Icon(Icons.archive_outlined, color: context.palette.danger),
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
@@ -849,7 +850,7 @@ class _ArchivedBanner extends StatelessWidget {
                     '${animal.exitType.label} · $dateStr',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color:      AppColors.danger,
+                          color:      context.palette.danger,
                         ),
                   ),
                   if (detail != null && detail.isNotEmpty) ...[
@@ -857,7 +858,7 @@ class _ArchivedBanner extends StatelessWidget {
                     Text(
                       detail,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.danger,
+                            color: context.palette.danger,
                           ),
                     ),
                   ],
@@ -894,7 +895,11 @@ class _ProfileSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    // ListView (não Column): em tela pequena o esqueleto é cortado em vez de
+    // estourar a altura.
+    return ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       children: [
         Container(
           height: 220,

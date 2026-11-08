@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/theme/app_palette.dart';
+import '../../../../shared/widgets/app_adaptive_grid.dart';
 import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../alerts/presentation/providers/farm_alerts_provider.dart';
@@ -39,7 +42,7 @@ class DashboardScreen extends ConsumerWidget {
           error: (e, _) => AppEmptyState(
             icon:        Icons.error_outline_rounded,
             title:       'Erro ao carregar',
-            subtitle:    e.toString(),
+            subtitle:    friendlyError(e),
             actionLabel: 'Tentar novamente',
             onAction:    () => ref.invalidate(dashboardProvider),
           ),
@@ -131,7 +134,7 @@ class _DashboardHeader extends StatelessWidget {
                     Text(
                       _greeting,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.white70,
+                            color: AppColors.onBrandMuted,
                             fontWeight: FontWeight.w500,
                           ),
                     ),
@@ -149,14 +152,14 @@ class _DashboardHeader extends StatelessWidget {
                         children: [
                           const Icon(
                             Icons.location_on_outlined,
-                            color: Colors.white60,
+                            color: AppColors.onBrandMuted,
                             size: 12,
                           ),
                           const SizedBox(width: 3),
                           Text(
                             user!.farmName!,
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Colors.white60,
+                                  color: AppColors.onBrandMuted,
                                 ),
                           ),
                         ],
@@ -205,13 +208,13 @@ class _AlertBanner extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color:        AppColors.amberLight,
+        color:        context.palette.amberTint,
         borderRadius: const BorderRadius.all(Radius.circular(12)),
         border:       Border.all(color: AppColors.amber.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber_rounded, color: AppColors.amber, size: 20),
+          Icon(Icons.warning_amber_rounded, color: context.palette.amber, size: 20),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -221,7 +224,7 @@ class _AlertBanner extends StatelessWidget {
                   stats.alertMessage ?? '${stats.alertCount} alertas pendentes',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.amber,
+                        color: context.palette.amber,
                       ),
                 ),
                 if (stats.alertDetail != null) ...[
@@ -229,7 +232,7 @@ class _AlertBanner extends StatelessWidget {
                   Text(
                     stats.alertDetail!,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.amber,
+                          color: context.palette.amber,
                         ),
                   ),
                 ],
@@ -274,7 +277,7 @@ class _AlertsSection extends ConsumerWidget {
                 child: Text(
                   'Ver todos (${alerts.length})',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color:      AppColors.brandGreen,
+                        color:      context.palette.brand,
                         fontWeight: FontWeight.w600,
                       ),
                 ),
@@ -299,13 +302,7 @@ class _KpiGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
-      child: GridView.count(
-        shrinkWrap:  true,
-        physics:     const NeverScrollableScrollPhysics(),
-        crossAxisCount:   2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing:  12,
-        childAspectRatio: 1.25,
+      child: AppAdaptiveGrid(
         children: [
           KpiCard(
             label:    'Efetivo total',
@@ -326,7 +323,7 @@ class _KpiGrid extends StatelessWidget {
             label:      'Alertas',
             value:      stats.alertCount,
             sub:        'pendentes',
-            valueColor: AppColors.danger,
+            valueColor: context.palette.danger,
             delay:      const Duration(milliseconds: 160),
           ),
           KpiCard(
@@ -348,43 +345,44 @@ class _ModulesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final items = [
       _ModuleItem(
         icon:     Icons.pets_rounded,
-        color:    AppColors.brandGreen,
-        bg:       AppColors.brandLight,
+        color:    p.brand,
+        bg:       p.brandTintStrong,
         title:    'Rebanho',
         subtitle: 'Gestão de animais',
         onTap:    () => context.goNamed(AppRoutes.herd),
       ),
       _ModuleItem(
         icon:     Icons.settings_remote_rounded,
-        color:    AppColors.info,
-        bg:       AppColors.infoLight,
+        color:    p.info,
+        bg:       p.infoTint,
         title:    'Brete',
         subtitle: 'Controle IoT',
         onTap:    () => context.goNamed(AppRoutes.brete),
       ),
       _ModuleItem(
         icon:     Icons.medical_services_outlined,
-        color:    AppColors.amber,
-        bg:       AppColors.amberLight,
+        color:    p.amber,
+        bg:       p.amberTint,
         title:    'Veterinários',
         subtitle: 'Profissionais disponíveis',
         onTap:    () => context.goNamed(AppRoutes.vets),
       ),
       _ModuleItem(
         icon:     Icons.assignment_outlined,
-        color:    AppColors.info,
-        bg:       AppColors.infoLight,
+        color:    p.info,
+        bg:       p.infoTint,
         title:    'Meus chamados',
         subtitle: 'Solicitar e acompanhar atendimentos',
         onTap:    () => context.pushNamed(AppRoutes.myServiceCalls),
       ),
       _ModuleItem(
         icon:     Icons.bar_chart_rounded,
-        color:    AppColors.mutedGreen,
-        bg:       AppColors.brandPale,
+        color:    p.muted,
+        bg:       p.brandTint,
         title:    'Relatórios',
         subtitle: 'Sanitário · Reprodutivo',
         onTap:    () => context.goNamed(AppRoutes.reports),
@@ -428,7 +426,7 @@ class _ModuleItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
-      color:        isDark ? AppColors.darkSurface : AppColors.white,
+      color:        isDark ? AppColors.darkSurface : context.palette.card,
       borderRadius: const BorderRadius.all(Radius.circular(12)),
       child: InkWell(
         onTap:       onTap,
@@ -457,14 +455,14 @@ class _ModuleItem extends StatelessWidget {
                             )),
                     Text(subtitle,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.mutedGreen,
+                              color: context.palette.muted,
                             )),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: AppColors.ghostGreen,
+                color: context.palette.subtle,
                 size:  20,
               ),
             ],

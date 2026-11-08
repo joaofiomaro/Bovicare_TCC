@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_radius.dart';
+import '../../core/theme/app_palette.dart';
 
 /// Barra de progresso com label, percentual e cor customizável.
 class AppProgressBar extends StatelessWidget {
@@ -25,9 +26,9 @@ class AppProgressBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final barColor = color ?? AppColors.brandGreen;
+    final barColor = color ?? context.palette.brand;
     final bgColor = backgroundColor ??
-        (isDark ? AppColors.darkSurface2 : AppColors.brandPale);
+        (isDark ? AppColors.darkSurface2 : context.palette.brandTint);
     final percent = (value * 100).round();
 
     return Column(
@@ -46,7 +47,7 @@ class AppProgressBar extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: isDark ? AppColors.darkTextMuted : AppColors.mutedGreen,
+                      color: context.palette.muted,
                     ),
                   ),
                 if (showPercent)

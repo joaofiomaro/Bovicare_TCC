@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../domain/entities/activity_item.dart';
 
@@ -95,7 +97,7 @@ class _TimelineRow extends StatelessWidget {
                     [item.date.toTimelineLabel, if (item.subtitle != null) item.subtitle!]
                         .join(' · '),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.mutedGreen,
+                          color: context.palette.muted,
                         ),
                   ),
                 ],

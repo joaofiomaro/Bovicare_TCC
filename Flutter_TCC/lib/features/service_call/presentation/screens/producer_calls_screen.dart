@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/extensions/datetime_ext.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_bottom_sheet.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
@@ -34,7 +36,7 @@ class ProducerCallsScreen extends ConsumerWidget {
       confirmLabel:   'Cancelar chamado',
       cancelLabel:    'Voltar',
       icon:           Icons.cancel_outlined,
-      iconColor:      AppColors.danger,
+      iconColor:      context.palette.danger,
     );
     if (confirm != true || !context.mounted) return;
 
@@ -78,13 +80,13 @@ class ProducerCallsScreen extends ConsumerWidget {
               child: TutorialTarget(
                 id:    TutorialIds.callsList,
                 child: calls.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(color: AppColors.brandGreen),
+                  loading: () => Center(
+                    child: CircularProgressIndicator(color: context.palette.brand),
                   ),
                   error: (e, _) => AppEmptyState(
                     icon:        Icons.error_outline_rounded,
                     title:       'Erro ao carregar',
-                    subtitle:    e.toString(),
+                    subtitle:    friendlyError(e),
                     actionLabel: 'Tentar novamente',
                     onAction:    () => ref.invalidate(producerCallsProvider),
                   ),
@@ -140,7 +142,7 @@ class _ProducerCallFooter extends StatelessWidget {
           Text(
             'Veterinário: ${call.vetName}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.brandGreen,
+                  color: context.palette.brand,
                   fontWeight: FontWeight.w600,
                 ),
           ),
@@ -148,7 +150,7 @@ class _ProducerCallFooter extends StatelessWidget {
           Text(
             'Agendado: ${call.scheduledDate!.toBrDateTime}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.mutedGreen,
+                  color: context.palette.muted,
                 ),
           ),
         if (call.resolution != null) ...[
@@ -156,7 +158,7 @@ class _ProducerCallFooter extends StatelessWidget {
           Text(
             'Laudo: ${call.resolution}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.mutedGreen,
+                  color: context.palette.muted,
                 ),
           ),
         ],

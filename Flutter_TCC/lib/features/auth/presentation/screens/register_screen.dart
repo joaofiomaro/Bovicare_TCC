@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_header.dart';
@@ -145,7 +146,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       child: Text(
                         'Já tenho conta',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.brandGreen,
+                              color: context.palette.brand,
                               fontWeight: FontWeight.w600,
                             ),
                       ),
@@ -184,7 +185,7 @@ class _RoleChip extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: selected ? AppColors.brandLight : cs.surfaceContainerHighest,
+            color: selected ? context.palette.brandTintStrong : cs.surfaceContainerHighest,
             borderRadius: const BorderRadius.all(Radius.circular(12)),
             border: Border.all(
               color: selected ? AppColors.brandGreen : cs.outlineVariant,
@@ -193,12 +194,12 @@ class _RoleChip extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Icon(icon, color: selected ? AppColors.brandGreen : cs.outline, size: 28),
+              Icon(icon, color: selected ? context.palette.brand : context.palette.muted, size: 28),
               const SizedBox(height: 6),
               Text(
                 label,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: selected ? AppColors.brandGreen : cs.outline,
+                      color: selected ? context.palette.brand : context.palette.muted,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                     ),
                 textAlign: TextAlign.center,

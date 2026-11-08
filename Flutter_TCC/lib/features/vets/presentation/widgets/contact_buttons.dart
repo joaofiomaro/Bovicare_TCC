@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../domain/entities/vet_entity.dart';
 
@@ -93,7 +94,7 @@ class _ContactButton extends StatelessWidget {
               icon:       Icon(icon, size: 18),
               label:      Text(label),
               style:      OutlinedButton.styleFrom(
-                foregroundColor: AppColors.brandGreen,
+                foregroundColor: context.palette.brand,
                 minimumSize:     const Size.fromHeight(48),
                 shape:           const RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(12)),

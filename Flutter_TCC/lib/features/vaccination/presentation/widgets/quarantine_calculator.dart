@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../domain/entities/vaccine_info.dart';
 
 /// Card informativo que recalcula dinamicamente próxima dose e fim de carência
@@ -32,7 +33,7 @@ class QuarantineCalculator extends StatelessWidget {
     return Container(
       padding:    const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color:        AppColors.brandPale,
+        color:        context.palette.brandTint,
         borderRadius: const BorderRadius.all(Radius.circular(12)),
         border:       Border.all(
           color: AppColors.brandGreen.withValues(alpha: 0.25),
@@ -43,16 +44,16 @@ class QuarantineCalculator extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.calendar_month_rounded,
-                color: AppColors.brandGreen,
+                color: context.palette.brand,
                 size:  18,
               ),
               const SizedBox(width: AppSpacing.sm),
               Text(
                 'Cálculo automático',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color:      AppColors.brandGreen,
+                      color:      context.palette.brand,
                       fontWeight: FontWeight.w700,
                     ),
               ),
@@ -71,7 +72,7 @@ class QuarantineCalculator extends StatelessWidget {
               label: 'Carência até',
               value: '${quarantineEnd.toBrDate} ($quarantineDays dias)',
               icon:  Icons.block_rounded,
-              color: AppColors.amber,
+              color: context.palette.amber,
             ),
           ],
           if (quarantineEnd == null && nextDose == null)
@@ -92,16 +93,18 @@ class _InfoRow extends StatelessWidget {
     required this.label,
     required this.value,
     required this.icon,
-    this.color = AppColors.brandGreen,
+    this.color,
   });
 
   final String   label;
   final String   value;
   final IconData icon;
-  final Color    color;
+  /// Padrão: verde da marca do tema atual.
+  final Color?   color;
 
   @override
   Widget build(BuildContext context) {
+    final color = this.color ?? context.palette.brand;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -114,7 +117,7 @@ class _InfoRow extends StatelessWidget {
               children: [
                 TextSpan(
                   text: '$label: ',
-                  style: const TextStyle(color: AppColors.mutedGreen),
+                  style: TextStyle(color: context.palette.muted),
                 ),
                 TextSpan(
                   text: value,

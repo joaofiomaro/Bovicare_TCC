@@ -75,7 +75,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             Text(
               'Gestão inteligente do seu rebanho',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: AppColors.onBrandMuted,
                   ),
             ).animate().fadeIn(delay: 600.ms, duration: 500.ms),
             const SizedBox(height: 48),

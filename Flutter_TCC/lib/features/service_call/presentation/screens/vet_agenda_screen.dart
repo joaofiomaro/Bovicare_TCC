@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../tutorial/presentation/guides.dart';
@@ -33,13 +35,13 @@ class VetAgendaScreen extends ConsumerWidget {
             ),
             Expanded(
               child: calls.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: AppColors.brandGreen),
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: context.palette.brand),
                 ),
                 error: (e, _) => AppEmptyState(
                   icon:        Icons.error_outline_rounded,
                   title:       'Erro ao carregar',
-                  subtitle:    e.toString(),
+                  subtitle:    friendlyError(e),
                   actionLabel: 'Tentar novamente',
                   onAction:    () => ref.invalidate(vetCallsProvider),
                 ),
@@ -94,12 +96,12 @@ class _ScheduleLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(Icons.event, size: 14, color: AppColors.brandGreen),
+        Icon(Icons.event, size: 14, color: context.palette.brand),
         const SizedBox(width: 4),
         Text(
           date.toBrDate,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color:      AppColors.brandGreen,
+                color:      context.palette.brand,
                 fontWeight: FontWeight.w700,
               ),
         ),

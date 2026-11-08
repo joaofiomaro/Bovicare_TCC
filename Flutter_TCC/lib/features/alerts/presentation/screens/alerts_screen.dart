@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../health/presentation/providers/health_events_provider.dart';
@@ -57,13 +59,13 @@ class AlertsScreen extends ConsumerWidget {
               child: TutorialTarget(
                 id:    TutorialIds.alertsList,
                 child: alerts.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(color: AppColors.brandGreen),
+                  loading: () => Center(
+                    child: CircularProgressIndicator(color: context.palette.brand),
                   ),
                   error: (e, _) => AppEmptyState(
                     icon:        Icons.error_outline_rounded,
                     title:       'Erro ao carregar',
-                    subtitle:    e.toString(),
+                    subtitle:    friendlyError(e),
                     actionLabel: 'Tentar novamente',
                     onAction:    refresh,
                   ),

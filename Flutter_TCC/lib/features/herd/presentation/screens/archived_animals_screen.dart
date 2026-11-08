@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/extensions/datetime_ext.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../domain/entities/animal_entity.dart';
@@ -33,7 +34,7 @@ class ArchivedAnimalsScreen extends ConsumerWidget {
               error: (e, _) => AppEmptyState(
                 icon:     Icons.error_outline_rounded,
                 title:    'Erro ao carregar',
-                subtitle: e.toString(),
+                subtitle: friendlyError(e),
               ),
               data: (list) {
                 if (list.isEmpty) {
@@ -68,10 +69,10 @@ class _ArchivedTile extends StatelessWidget {
 
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: isSold ? AppColors.brandLight : AppColors.dangerLight,
+        backgroundColor: isSold ? context.palette.brandTintStrong : context.palette.dangerTint,
         child: Icon(
           isSold ? Icons.sell_outlined : Icons.heart_broken_outlined,
-          color: isSold ? AppColors.brandGreen : AppColors.danger,
+          color: isSold ? context.palette.brand : context.palette.danger,
           size:  20,
         ),
       ),

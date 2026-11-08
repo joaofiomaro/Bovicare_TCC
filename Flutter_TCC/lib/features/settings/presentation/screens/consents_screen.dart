@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../auth/domain/entities/user_entity.dart';
@@ -31,10 +33,10 @@ class ConsentsScreen extends ConsumerWidget {
           ),
           Expanded(
             child: consents.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.brandGreen),
+              loading: () => Center(
+                child: CircularProgressIndicator(color: context.palette.brand),
               ),
-              error: (e, _) => Center(child: Text(e.toString())),
+              error: (e, _) => Center(child: Text(friendlyError(e), textAlign: TextAlign.center)),
               data: (settings) => ListView(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.base),
                 children: [
@@ -93,12 +95,12 @@ class ConsentsScreen extends ConsumerWidget {
                         'compartilhados com veterinários enquanto o chamado está '
                         'aberto, e depois só com o veterinário que aceitou.',
                   ),
-                  const Padding(
-                    padding: EdgeInsets.all(AppSpacing.base),
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpacing.base),
                     child: Text(
                       'Você pode exportar seus dados ou excluir a conta a '
                       'qualquer momento pelo Perfil.',
-                      style: TextStyle(color: AppColors.mutedGreen, fontSize: 12),
+                      style: TextStyle(color: context.palette.muted, fontSize: 12),
                     ),
                   ),
                 ],
@@ -130,7 +132,7 @@ class _Section extends StatelessWidget {
           text,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                color:      AppColors.mutedGreen,
+                color:      context.palette.muted,
               ),
         ),
       );

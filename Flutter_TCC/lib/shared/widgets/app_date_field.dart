@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/extensions/datetime_ext.dart';
+import '../../core/theme/app_palette.dart';
 
 /// Abre o seletor de data no padrão do app (pt-BR, cor da marca).
 Future<DateTime?> pickAppDate(
@@ -24,8 +25,13 @@ Future<DateTime?> pickAppDate(
     locale:      const Locale('pt', 'BR'),
     builder: (ctx, child) => Theme(
       data: Theme.of(ctx).copyWith(
+        // Verde da marca no círculo do dia escolhido; no escuro, o verde
+        // claro da paleta mantém botões e cabeçalho legíveis.
         colorScheme: Theme.of(ctx).colorScheme.copyWith(
-              primary: AppColors.brandGreen,
+              primary:   ctx.palette.brand,
+              onPrimary: Theme.of(ctx).brightness == Brightness.dark
+                  ? AppColors.darkBackground
+                  : AppColors.white,
             ),
       ),
       child: child!,
@@ -60,7 +66,7 @@ class AppDateField extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
-                color:      AppColors.mutedGreen,
+                color:      context.palette.muted,
               ),
         ),
         const SizedBox(height: 6),
@@ -90,8 +96,8 @@ class AppDateField extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.calendar_today_outlined,
-                    size: 18, color: AppColors.mutedGreen),
+                Icon(Icons.calendar_today_outlined,
+                    size: 18, color: context.palette.muted),
                 const SizedBox(width: 8),
                 Text(date.toBrDate),
               ],

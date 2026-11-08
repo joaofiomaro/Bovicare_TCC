@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radius.dart';
+import '../../../../core/theme/app_palette.dart';
 
 /// Card de KPI com contador animado.
 /// [isAccent] usa fundo verde (card de destaque). [valueColor] sobrescreve a cor do número.
@@ -29,14 +30,12 @@ class KpiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark   = Theme.of(context).brightness == Brightness.dark;
-    final bgColor  = isAccent
-        ? AppColors.brandGreen
-        : (isDark ? AppColors.darkSurface : AppColors.white);
-    final labelCol = isAccent ? Colors.white70 : AppColors.mutedGreen;
+    final palette  = context.palette;
+    final bgColor  = isAccent ? AppColors.brandGreen : palette.card;
+    final labelCol = isAccent ? AppColors.onBrandMuted : palette.muted;
     final valueCol = valueColor ??
         (isAccent ? Colors.white : Theme.of(context).colorScheme.onSurface);
-    final subCol   = isAccent ? Colors.white60 : AppColors.mutedGreen;
+    final subCol   = isAccent ? AppColors.onBrandMuted : palette.muted;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -46,7 +45,7 @@ class KpiCard extends StatelessWidget {
         border: isAccent
             ? null
             : Border.all(
-                color: isDark ? AppColors.darkBorder : AppColors.ghostGreen,
+                color: palette.border,
               ),
         boxShadow: isAccent
             ? [
@@ -93,13 +92,13 @@ class KpiCard extends StatelessWidget {
               children: [
                 Icon(Icons.trending_up_rounded,
                     size: 12,
-                    color: isAccent ? Colors.white70 : AppColors.brandGreen),
+                    color: isAccent ? AppColors.onBrandMuted : palette.brand),
                 const SizedBox(width: 3),
                 Text(trend!,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
-                      color: isAccent ? Colors.white70 : AppColors.brandGreen,
+                      color: isAccent ? AppColors.onBrandMuted : palette.brand,
                     )),
               ],
             ),

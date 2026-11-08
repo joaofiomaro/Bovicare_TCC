@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../core/utils/file_share_service.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_chip_filter.dart';
@@ -171,11 +172,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     // Preview do relatório gerado
                     const SizedBox(height: AppSpacing.xl),
                     reportState.when(
-                      loading: () => const Center(
+                      loading: () => Center(
                         child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 32),
+                          padding: const EdgeInsets.symmetric(vertical: 32),
                           child: CircularProgressIndicator(
-                            color: AppColors.brandGreen,
+                            color: context.palette.brand,
                           ),
                         ),
                       ),
@@ -183,7 +184,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
                         child: Text(
                           'Erro ao gerar relatório: $e',
-                          style: const TextStyle(color: AppColors.danger),
+                          style: TextStyle(color: context.palette.danger),
                         ),
                       ),
                       data: (report) => report == null
@@ -308,18 +309,18 @@ class _DateField extends StatelessWidget {
         decoration: BoxDecoration(
           color:        isDark
               ? AppColors.darkSurface
-              : AppColors.surfaceLight,
+              : context.palette.field,
           borderRadius: const BorderRadius.all(Radius.circular(12)),
           border:       Border.all(
-            color: isDark ? AppColors.darkBorder : AppColors.ghostGreen,
+            color: isDark ? AppColors.darkBorder : context.palette.border,
           ),
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.calendar_today_outlined,
               size:  14,
-              color: AppColors.mutedGreen,
+              color: context.palette.muted,
             ),
             const SizedBox(width: 6),
             Expanded(
@@ -328,7 +329,7 @@ class _DateField extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: date != null
                           ? Theme.of(context).colorScheme.onSurface
-                          : AppColors.mutedGreen,
+                          : context.palette.muted,
                     ),
               ),
             ),

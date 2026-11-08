@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../domain/entities/weighing.dart';
 import '../providers/weighings_provider.dart';
 
@@ -53,7 +54,7 @@ class _Content extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.base),
             decoration: BoxDecoration(
-              color:        AppColors.brandPale,
+              color:        context.palette.brandTint,
               borderRadius: const BorderRadius.all(Radius.circular(12)),
               border: Border.all(
                 color: AppColors.brandGreen.withValues(alpha: 0.2),
@@ -137,7 +138,11 @@ class WeightChart extends StatelessWidget {
                 Expanded(
                   child: CustomPaint(
                     size:    Size.infinite,
-                    painter: _WeightChartPainter(sorted),
+                    painter: _WeightChartPainter(
+                      sorted,
+                      line: context.palette.brand,
+                      grid: context.palette.border,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -159,17 +164,21 @@ class WeightChart extends StatelessWidget {
   Widget _axisLabel(BuildContext context, String text) => Text(
         text,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color:    AppColors.mutedGreen,
+              color:    context.palette.muted,
               fontSize: 10,
             ),
       );
 }
 
 class _WeightChartPainter extends CustomPainter {
-  _WeightChartPainter(this.points);
+  _WeightChartPainter(this.points, {required this.line, required this.grid});
 
   /// Ordenados cronologicamente; pelo menos 2.
   final List<Weighing> points;
+
+  /// Cores do tema atual (no escuro, o verde fica claro para ser visível).
+  final Color line;
+  final Color grid;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -194,12 +203,12 @@ class _WeightChartPainter extends CustomPainter {
       for (var i = 0; i < points.length; i++) toOffset(points[i], i),
     ];
 
-    final grid = Paint()
-      ..color = AppColors.ghostGreen.withValues(alpha: 0.6)
+    final gridPaint = Paint()
+      ..color = grid.withValues(alpha: 0.6)
       ..strokeWidth = 1;
     canvas
-      ..drawLine(Offset.zero, Offset(size.width, 0), grid)
-      ..drawLine(Offset(0, size.height), Offset(size.width, size.height), grid);
+      ..drawLine(Offset.zero, Offset(size.width, 0), gridPaint)
+      ..drawLine(Offset(0, size.height), Offset(size.width, size.height), gridPaint);
 
     final path = Path()..moveTo(offsets.first.dx, offsets.first.dy);
     for (final o in offsets.skip(1)) {
@@ -213,18 +222,18 @@ class _WeightChartPainter extends CustomPainter {
     canvas
       ..drawPath(
         fill,
-        Paint()..color = AppColors.brandGreen.withValues(alpha: 0.12),
+        Paint()..color = line.withValues(alpha: 0.12),
       )
       ..drawPath(
         path,
         Paint()
-          ..color = AppColors.brandGreen
+          ..color = line
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2.5
           ..strokeJoin = StrokeJoin.round,
       );
 
-    final dot = Paint()..color = AppColors.brandGreen;
+    final dot = Paint()..color = line;
     for (final o in offsets) {
       canvas.drawCircle(o, 3.5, dot);
     }
@@ -232,7 +241,9 @@ class _WeightChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_WeightChartPainter oldDelegate) =>
-      oldDelegate.points != points;
+      oldDelegate.points != points ||
+      oldDelegate.line != line ||
+      oldDelegate.grid != grid;
 }
 
 class _Stat extends StatelessWidget {
@@ -249,14 +260,14 @@ class _Stat extends StatelessWidget {
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color:      AppColors.brandGreen,
+                  color:      context.palette.brand,
                 ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.mutedGreen,
+                  color: context.palette.muted,
                 ),
           ),
         ],
@@ -279,7 +290,7 @@ class _WeighingRow extends StatelessWidget {
           Text(
             weighing.date.toBrDate,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.mutedGreen,
+                  color: context.palette.muted,
                 ),
           ),
           Text(

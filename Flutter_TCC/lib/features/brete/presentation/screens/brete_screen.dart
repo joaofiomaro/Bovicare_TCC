@@ -8,6 +8,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_bottom_sheet.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -72,7 +73,7 @@ class _BreteScreenState extends ConsumerState<BreteScreen> {
       confirmLabel:   'Parar agora',
       confirmVariant: AppButtonVariant.danger,
       icon:           Icons.report_rounded,
-      iconColor:      AppColors.danger,
+      iconColor:      context.palette.danger,
     );
     if (ok ?? false) await _send(BreteCommand.emergencyStop);
   }
@@ -85,7 +86,7 @@ class _BreteScreenState extends ConsumerState<BreteScreen> {
           'o brete é refeita. Use quando algo travar ou não responder.',
       confirmLabel: 'Reiniciar',
       icon:         Icons.power_settings_new_rounded,
-      iconColor:    AppColors.brandGreen,
+      iconColor:    context.palette.brand,
     );
     if (!(ok ?? false) || !mounted) return;
     setState(() => _restarting = true);
@@ -274,7 +275,7 @@ class _BreteScreenState extends ConsumerState<BreteScreen> {
                     Text(
                       'Atualizado em ${status.lastUpdate!.toBrDateTime}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.mutedGreen,
+                            color: context.palette.muted,
                           ),
                     ),
                   ],
@@ -329,20 +330,21 @@ class _DoorPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final (label, sub, color, icon) = switch (door) {
       DoorState.open    => ('Aberta', 'Animal pode passar',
-          AppColors.brandGreen, Icons.door_front_door_outlined),
+          p.brand, Icons.door_front_door_outlined),
       DoorState.closed  => ('Fechada', 'Passagem bloqueada',
-          AppColors.info, Icons.door_front_door_rounded),
+          p.info, Icons.door_front_door_rounded),
       DoorState.moving  => ('Em movimento…', 'Aguarde o fim do curso',
-          AppColors.amber, Icons.sync_rounded),
+          p.amber, Icons.sync_rounded),
       DoorState.stopped => ('Parada no meio', 'Abra ou feche para continuar',
-          AppColors.amber, Icons.pause_circle_outline_rounded),
+          p.amber, Icons.pause_circle_outline_rounded),
       DoorState.fault   => ('Em falha',
           'Porta ${BreteBleProtocol.faultLabel(fault ?? '')}. Use Reiniciar sistema',
-          AppColors.danger, Icons.error_outline_rounded),
+          p.danger, Icons.error_outline_rounded),
       DoorState.unknown => ('Desconhecido', 'Aguardando o dispositivo',
-          AppColors.mutedGreen, Icons.help_outline_rounded),
+          p.muted, Icons.help_outline_rounded),
     };
     final textTheme = Theme.of(context).textTheme;
     return Container(
@@ -427,7 +429,7 @@ class _EmergencyBanner extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.report_rounded, size: 36, color: AppColors.danger),
+            Icon(Icons.report_rounded, size: 36, color: context.palette.danger),
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
@@ -437,7 +439,7 @@ class _EmergencyBanner extends StatelessWidget {
                     'Parada de emergência',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color:      AppColors.danger,
+                          color:      context.palette.danger,
                         ),
                   ),
                   const SizedBox(height: 2),
@@ -480,7 +482,7 @@ class _RfidCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.rss_feed_rounded, color: AppColors.brandGreen),
+                Icon(Icons.rss_feed_rounded, color: context.palette.brand),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
@@ -504,7 +506,7 @@ class _RfidCard extends StatelessWidget {
                     ? '${animal!.displayName} · ${animal!.breed}'
                     : 'Tag não cadastrada no rebanho.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: animal != null ? AppColors.brandGreen : AppColors.amber,
+                      color: animal != null ? context.palette.brand : context.palette.amber,
                     ),
               ),
             ],
@@ -568,7 +570,7 @@ class _SensorsCard extends StatelessWidget {
                 height: 10,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: active ? AppColors.amber : AppColors.brandGreen,
+                  color: active ? context.palette.amber : context.palette.brand,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -615,16 +617,16 @@ class _ErrorCard extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: AppSpacing.base),
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: const BoxDecoration(
-            color:        AppColors.dangerLight,
-            borderRadius: BorderRadius.all(Radius.circular(12)),
+          decoration: BoxDecoration(
+            color:        context.palette.dangerTint,
+            borderRadius: const BorderRadius.all(Radius.circular(12)),
           ),
           child: Row(
             children: [
-              const Icon(Icons.link_off_rounded, color: AppColors.danger),
+              Icon(Icons.link_off_rounded, color: context.palette.danger),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: Text(message, style: const TextStyle(color: AppColors.danger)),
+                child: Text(message, style: TextStyle(color: context.palette.danger)),
               ),
               TextButton(onPressed: onRetry, child: const Text('Reconectar')),
             ],

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/app_colors.dart';
 import '../../core/router/app_routes.dart';
 import '../../features/auth/domain/entities/user_entity.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
@@ -82,7 +81,7 @@ class AppShell extends ConsumerWidget {
             for (final tab in tabs)
               NavigationDestination(
                 icon: Icon(tab.icon),
-                selectedIcon: Icon(tab.activeIcon, color: AppColors.brandGreen),
+                selectedIcon: Icon(tab.activeIcon),
                 label: tab.label,
               ),
           ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_radius.dart';
 import '../../core/constants/app_shadows.dart';
+import '../../core/theme/app_palette.dart';
 
 enum AppCardVariant { elevated, outlined }
 
@@ -28,15 +29,15 @@ class AppCard extends StatelessWidget {
 
     final decoration = switch (variant) {
       AppCardVariant.elevated => BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.white,
+          color: isDark ? AppColors.darkSurface : context.palette.card,
           borderRadius: AppRadius.lgAll,
           boxShadow: AppShadows.md,
         ),
       AppCardVariant.outlined => BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.white,
+          color: isDark ? AppColors.darkSurface : context.palette.card,
           borderRadius: AppRadius.lgAll,
           border: Border.all(
-            color: isDark ? AppColors.darkBorder : AppColors.ghostGreen,
+            color: isDark ? AppColors.darkBorder : context.palette.border,
           ),
         ),
     };

@@ -81,7 +81,7 @@ class _BottomSheetContent extends StatelessWidget {
           ],
           Text(title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: AppSpacing.sm),
-          Text(message, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.outline), textAlign: TextAlign.center),
+          Text(message, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant), textAlign: TextAlign.center),
           const SizedBox(height: AppSpacing.x2l),
           AppButton(label: confirmLabel, onPressed: () => Navigator.pop(context, true), variant: confirmVariant),
           const SizedBox(height: AppSpacing.sm),

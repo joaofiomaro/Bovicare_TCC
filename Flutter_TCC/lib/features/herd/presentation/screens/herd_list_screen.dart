@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_chip_filter.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
@@ -173,7 +174,7 @@ class _HerdListScreenState extends ConsumerState<HerdListScreen> {
                   error: (e, _) => AppEmptyState(
                     icon:        Icons.error_outline_rounded,
                     title:       'Erro ao carregar',
-                    subtitle:    e.toString(),
+                    subtitle:    friendlyError(e),
                     actionLabel: 'Tentar novamente',
                     onAction:    () => ref.invalidate(animalsProvider),
                   ),

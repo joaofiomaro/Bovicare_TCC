@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_toast.dart';
 
 const _kLastSyncKey = 'last_sync_at';
@@ -90,10 +91,10 @@ class _SyncCardState extends State<SyncCard> {
       child: Container(
         padding:    const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color:        isDark ? AppColors.darkSurface : AppColors.white,
+          color:        isDark ? AppColors.darkSurface : context.palette.card,
           borderRadius: const BorderRadius.all(Radius.circular(12)),
           border:       Border.all(
-            color: isDark ? AppColors.darkBorder : AppColors.ghostGreen,
+            color: isDark ? AppColors.darkBorder : context.palette.border,
           ),
         ),
         child: Row(
@@ -103,15 +104,15 @@ class _SyncCardState extends State<SyncCard> {
               height: 40,
               decoration: BoxDecoration(
                 color: _pending ?? false
-                    ? AppColors.amberLight
-                    : AppColors.brandLight,
+                    ? context.palette.amberTint
+                    : context.palette.brandTintStrong,
                 borderRadius: const BorderRadius.all(Radius.circular(10)),
               ),
               child: Icon(
                 _pending ?? false
                     ? Icons.cloud_off_rounded
                     : Icons.cloud_done_outlined,
-                color: _pending ?? false ? AppColors.amber : AppColors.brandGreen,
+                color: _pending ?? false ? context.palette.amber : context.palette.brand,
                 size:  20,
               ),
             ),
@@ -129,7 +130,7 @@ class _SyncCardState extends State<SyncCard> {
                   Text(
                     _status,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.mutedGreen,
+                          color: context.palette.muted,
                         ),
                   ),
                 ],
@@ -140,20 +141,20 @@ class _SyncCardState extends State<SyncCard> {
               width:  56,
               height: 32,
               child: _syncing
-                  ? const Center(
+                  ? Center(
                       child: SizedBox(
                         width:  18,
                         height: 18,
                         child:  CircularProgressIndicator(
                           strokeWidth: 2,
-                          color:       AppColors.brandGreen,
+                          color:       context.palette.brand,
                         ),
                       ),
                     )
                   : OutlinedButton(
                       onPressed: _sync,
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.brandGreen,
+                        foregroundColor: context.palette.brand,
                         side:    const BorderSide(color: AppColors.brandGreen),
                         padding: EdgeInsets.zero,
                         shape: const RoundedRectangleBorder(

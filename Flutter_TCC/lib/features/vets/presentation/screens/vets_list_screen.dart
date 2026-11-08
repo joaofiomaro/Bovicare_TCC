@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_skeleton.dart';
@@ -221,13 +223,13 @@ class _VetsListScreenState extends ConsumerState<VetsListScreen> {
             TextButton(
               onPressed: () => setState(() => _mapExpanded = !_mapExpanded),
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.brandGreen,
+                foregroundColor: context.palette.brand,
                 visualDensity:   VisualDensity.compact,
               ),
               child: Text(
                 _mapExpanded ? 'Ocultar mapa' : 'Ver mapa',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color:      AppColors.brandGreen,
+                      color:      context.palette.brand,
                       fontWeight: FontWeight.w600,
                     ),
               ),
@@ -258,7 +260,7 @@ class _VetsListScreenState extends ConsumerState<VetsListScreen> {
           child: AppEmptyState(
             icon:        Icons.error_outline_rounded,
             title:       'Erro ao carregar',
-            subtitle:    e.toString(),
+            subtitle:    friendlyError(e),
             actionLabel: 'Tentar novamente',
             onAction:    _refresh,
           ),
@@ -331,13 +333,13 @@ class _LocationFallbackNotice extends StatelessWidget {
           vertical:   AppSpacing.sm,
         ),
         decoration: BoxDecoration(
-          color:        AppColors.amberLight,
+          color:        context.palette.amberTint,
           borderRadius: const BorderRadius.all(Radius.circular(10)),
           border:       Border.all(color: AppColors.amber.withValues(alpha: 0.4)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.location_off_outlined, size: 16, color: AppColors.amber),
+            Icon(Icons.location_off_outlined, size: 16, color: context.palette.amber),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
@@ -347,7 +349,7 @@ class _LocationFallbackNotice extends StatelessWidget {
                     : 'Localização indisponível — mostrando a região de '
                         'Rio Claro, SP. Ative o GPS e puxe a lista para atualizar.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.amber,
+                      color: context.palette.amber,
                     ),
               ),
             ),

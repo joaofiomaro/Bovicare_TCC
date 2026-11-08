@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_radius.dart';
+import '../../core/theme/app_palette.dart';
 
 enum AppButtonVariant { primary, outline, danger, ghost }
 
@@ -28,8 +29,8 @@ class AppButton extends StatelessWidget {
     // Cor do indicator deve contrastar com o fundo de cada variante.
     final loadingColor = switch (variant) {
       AppButtonVariant.primary || AppButtonVariant.danger => AppColors.white,
-      AppButtonVariant.outline                            => AppColors.brandGreen,
-      AppButtonVariant.ghost                             => AppColors.mutedGreen,
+      AppButtonVariant.outline                            => context.palette.brand,
+      AppButtonVariant.ghost                             => context.palette.muted,
     };
 
     final Widget child = isLoading
@@ -64,10 +65,10 @@ class AppButton extends StatelessWidget {
       AppButtonVariant.outline => OutlinedButton(
           onPressed: isLoading ? null : onPressed,
           style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.brandGreen,
+            foregroundColor: context.palette.brand,
             minimumSize: fullWidth ? const Size.fromHeight(52) : null,
             shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
-            side: const BorderSide(color: AppColors.brandGreen),
+            side: BorderSide(color: context.palette.brand),
           ),
           child: child,
         ),
@@ -85,7 +86,7 @@ class AppButton extends StatelessWidget {
       AppButtonVariant.ghost => TextButton(
           onPressed: isLoading ? null : onPressed,
           style: TextButton.styleFrom(
-            foregroundColor: AppColors.mutedGreen,
+            foregroundColor: context.palette.muted,
             minimumSize: fullWidth ? const Size.fromHeight(52) : null,
             shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
           ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../core/utils/id_generator.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_date_field.dart';
@@ -173,7 +174,7 @@ class _AnimalExitSheetState extends ConsumerState<AnimalExitSheet> {
             Text(
               'O animal sai do rebanho ativo, mas o histórico é preservado.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.mutedGreen,
+                    color: context.palette.muted,
                   ),
             ),
             const SizedBox(height: AppSpacing.xl),
@@ -252,7 +253,7 @@ class _AnimalExitSheetState extends ConsumerState<AnimalExitSheet> {
         Text(
           'Média por cabeça: R\$ ${perHead.toStringAsFixed(2)}',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color:      AppColors.brandGreen,
+                color:      context.palette.brand,
                 fontWeight: FontWeight.w600,
               ),
         ),
@@ -308,7 +309,7 @@ class _ModeChip extends StatelessWidget {
           padding:  const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: selected
-                ? AppColors.brandLight
+                ? context.palette.brandTintStrong
                 : Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: const BorderRadius.all(Radius.circular(12)),
             border: Border.all(
@@ -324,16 +325,16 @@ class _ModeChip extends StatelessWidget {
               Icon(icon,
                   size: 18,
                   color: selected
-                      ? AppColors.brandGreen
-                      : AppColors.mutedGreen),
+                      ? context.palette.brand
+                      : context.palette.muted),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: selected
-                      ? AppColors.brandGreen
-                      : AppColors.mutedGreen,
+                      ? context.palette.brand
+                      : context.palette.muted,
                 ),
               ),
             ],
@@ -359,7 +360,7 @@ class _DateField extends StatelessWidget {
           'Data da baixa *',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
-                color:      AppColors.mutedGreen,
+                color:      context.palette.muted,
               ),
         ),
         const SizedBox(height: 6),
@@ -381,8 +382,8 @@ class _DateField extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.calendar_today_outlined,
-                    size: 18, color: AppColors.mutedGreen),
+                Icon(Icons.calendar_today_outlined,
+                    size: 18, color: context.palette.muted),
                 const SizedBox(width: 8),
                 Text(date.toBrDate),
               ],

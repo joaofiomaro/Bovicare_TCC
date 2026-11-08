@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../../shared/widgets/app_adaptive_grid.dart';
 import '../../../../shared/widgets/app_skeleton.dart';
 
 /// Layout shimmer exibido enquanto os dados do dashboard são carregados.
@@ -42,16 +44,10 @@ class DashboardSkeleton extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           // KPI grid skeleton
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.3,
-              children: const [
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: AppAdaptiveGrid(
+              children: [
                 KpiCardSkeleton(),
                 KpiCardSkeleton(),
                 KpiCardSkeleton(),

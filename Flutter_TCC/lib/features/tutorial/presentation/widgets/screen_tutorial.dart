@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../domain/tutorial_step.dart';
@@ -133,8 +133,8 @@ class _TutorialInvite extends StatelessWidget {
           Container(
             width: 64,
             height: 64,
-            decoration: const BoxDecoration(color: AppColors.brandLight, shape: BoxShape.circle),
-            child: const Icon(Icons.lightbulb_outline_rounded, size: 32, color: AppColors.brandGreen),
+            decoration: BoxDecoration(color: context.palette.brandTintStrong, shape: BoxShape.circle),
+            child: Icon(Icons.lightbulb_outline_rounded, size: 32, color: context.palette.brand),
           ),
           const SizedBox(height: AppSpacing.base),
           Text(
@@ -146,7 +146,7 @@ class _TutorialInvite extends StatelessWidget {
           Text(
             'Mostro em $steps ${steps == 1 ? 'passo' : 'passos'} rápidos como esta '
             'tela funciona. Você pode rever quando quiser no botão ? do topo.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.outline),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.xl),

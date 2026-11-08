@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../core/utils/id_generator.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_date_field.dart';
@@ -296,15 +298,15 @@ class _AnimalFormScreenState extends ConsumerState<AnimalFormScreen> {
                             decoration: _inputDecoration(context),
                             child: Row(
                               children: [
-                                const Icon(Icons.calendar_today_outlined,
-                                    size: 18, color: AppColors.mutedGreen),
+                                Icon(Icons.calendar_today_outlined,
+                                    size: 18, color: context.palette.muted),
                                 const SizedBox(width: 8),
                                 Text(
                                   birthLabel,
                                   style: TextStyle(
                                     color: _birthDate != null
                                         ? Theme.of(context).colorScheme.onSurface
-                                        : AppColors.mutedGreen,
+                                        : context.palette.muted,
                                   ),
                                 ),
                               ],
@@ -386,7 +388,7 @@ class AnimalEditLoader extends ConsumerWidget {
         body: AppEmptyState(
           icon:        Icons.error_outline_rounded,
           title:       'Não foi possível carregar',
-          subtitle:    e.toString(),
+          subtitle:    friendlyError(e),
           actionLabel: 'Voltar',
           onAction:    () => Navigator.of(context).maybePop(),
         ),
@@ -427,12 +429,12 @@ class _RfidScanner extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding:  const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: rfid != null ? AppColors.brandPale : Colors.transparent,
+          color: rfid != null ? context.palette.brandTint : Colors.transparent,
           borderRadius: const BorderRadius.all(Radius.circular(12)),
           border: Border.all(
             color: rfid != null
                 ? AppColors.brandGreen.withValues(alpha: 0.4)
-                : AppColors.ghostGreen,
+                : context.palette.border,
             width: rfid != null ? 1.5 : 1,
           ),
         ),
@@ -440,20 +442,20 @@ class _RfidScanner extends StatelessWidget {
           children: [
             Container(
               width: 40, height: 40,
-              decoration: const BoxDecoration(
-                color:        AppColors.brandLight,
-                borderRadius: BorderRadius.all(Radius.circular(10)),
+              decoration: BoxDecoration(
+                color:        context.palette.brandTintStrong,
+                borderRadius: const BorderRadius.all(Radius.circular(10)),
               ),
               child: scanning
-                  ? const Padding(
-                      padding: EdgeInsets.all(10),
+                  ? Padding(
+                      padding: const EdgeInsets.all(10),
                       child: CircularProgressIndicator(
-                        color:       AppColors.brandGreen,
+                        color:       context.palette.brand,
                         strokeWidth: 2,
                       ),
                     )
-                  : const Icon(Icons.rss_feed_rounded,
-                      color: AppColors.brandGreen, size: 20),
+                  : Icon(Icons.rss_feed_rounded,
+                      color: context.palette.brand, size: 20),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -469,14 +471,14 @@ class _RfidScanner extends StatelessWidget {
                   Text(
                     rfid ?? 'Aproxime a tag ao leitor do brete',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.mutedGreen,
+                          color: context.palette.muted,
                         ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.qr_code_scanner_rounded,
-                color: AppColors.brandGreen, size: 20),
+            Icon(Icons.qr_code_scanner_rounded,
+                color: context.palette.brand, size: 20),
           ],
         ),
       ),
@@ -497,7 +499,7 @@ class _LabeledField extends StatelessWidget {
         Text(label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color:      AppColors.mutedGreen,
+                  color:      context.palette.muted,
                 )),
         const SizedBox(height: 6),
         child,
@@ -526,7 +528,7 @@ class _SexChip extends StatelessWidget {
           padding:  const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: selected
-                ? AppColors.brandLight
+                ? context.palette.brandTintStrong
                 : Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: const BorderRadius.all(Radius.circular(12)),
             border: Border.all(
@@ -541,7 +543,7 @@ class _SexChip extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: selected ? AppColors.brandGreen : AppColors.mutedGreen,
+              color: selected ? context.palette.brand : context.palette.muted,
             ),
           ),
         ),

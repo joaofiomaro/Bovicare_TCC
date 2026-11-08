@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 
 /// Avatar circular com imagem de rede e fallback de iniciais.
 class AppAvatar extends StatelessWidget {
@@ -23,7 +23,7 @@ class AppAvatar extends StatelessWidget {
     if (imageUrl != null && imageUrl!.isNotEmpty) {
       return CircleAvatar(
         radius: radius,
-        backgroundColor: AppColors.brandLight,
+        backgroundColor: context.palette.brandTintStrong,
         child: ClipOval(
           child: CachedNetworkImage(
             imageUrl: imageUrl!,
@@ -39,7 +39,7 @@ class AppAvatar extends StatelessWidget {
 
     return CircleAvatar(
       radius: radius,
-      backgroundColor: AppColors.brandLight,
+      backgroundColor: context.palette.brandTintStrong,
       child: _Initials(initials: initials, fontSize: fontSize),
     );
   }
@@ -63,7 +63,7 @@ class _Initials extends StatelessWidget {
     return Text(
       initials,
       style: TextStyle(
-        color: AppColors.brandGreen,
+        color: context.palette.brand,
         fontSize: fontSize,
         fontWeight: FontWeight.w700,
       ),

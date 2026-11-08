@@ -70,7 +70,7 @@ class _AppTextFieldState extends State<AppTextField> {
                 icon: Icon(
                   _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
                   size: 20,
-                  color: cs.outline,
+                  color: cs.onSurfaceVariant,
                 ),
               )
             : widget.suffixIcon,

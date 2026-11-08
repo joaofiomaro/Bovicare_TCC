@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_date_field.dart';
@@ -164,7 +164,7 @@ class _VetCallActionSheetState extends ConsumerState<_VetCallActionSheet> {
           Text(
             call.description,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.mutedGreen,
+                  color: context.palette.muted,
                 ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -172,7 +172,7 @@ class _VetCallActionSheetState extends ConsumerState<_VetCallActionSheet> {
             '${call.producerName} · ${call.city}/${call.state}'
             '${call.animalEarTag != null ? ' · Brinco #${call.animalEarTag}' : ''}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.mutedGreen,
+                  color: context.palette.muted,
                 ),
           ),
           if (call.lat != null && call.lng != null) ...[
@@ -217,7 +217,7 @@ class _VetCallActionSheetState extends ConsumerState<_VetCallActionSheet> {
               Text(
                 'Agendado para ${_scheduledDate!.toBrDate}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.brandGreen,
+                      color: context.palette.brand,
                     ),
               ),
               const SizedBox(height: AppSpacing.sm),

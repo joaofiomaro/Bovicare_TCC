@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../domain/entities/health_event.dart';
 
 /// Linha de um evento de manejo na ficha do animal.
@@ -37,11 +37,11 @@ class HealthEventTile extends StatelessWidget {
           Container(
             width:  36,
             height: 36,
-            decoration: const BoxDecoration(
-              color:        AppColors.brandLight,
-              borderRadius: BorderRadius.all(Radius.circular(8)),
+            decoration: BoxDecoration(
+              color:        context.palette.brandTintStrong,
+              borderRadius: const BorderRadius.all(Radius.circular(8)),
             ),
-            child: Icon(iconFor(event.type), color: AppColors.brandGreen, size: 18),
+            child: Icon(iconFor(event.type), color: context.palette.brand, size: 18),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -61,19 +61,19 @@ class HealthEventTile extends StatelessWidget {
                 Text(
                   meta,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.mutedGreen,
+                        color: context.palette.muted,
                       ),
                 ),
                 if (end != null) ...[
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.block_rounded, size: 12, color: AppColors.amber),
+                      Icon(Icons.block_rounded, size: 12, color: context.palette.amber),
                       const SizedBox(width: 4),
                       Text(
                         'Carência até ${end.toBrDate}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color:      AppColors.amber,
+                              color:      context.palette.amber,
                               fontWeight: FontWeight.w600,
                             ),
                       ),

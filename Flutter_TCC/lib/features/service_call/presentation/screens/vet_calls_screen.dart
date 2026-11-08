@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../tutorial/presentation/guides.dart';
@@ -34,13 +36,13 @@ class VetCallsScreen extends ConsumerWidget {
                 subtitle: 'Atendimentos veterinários',
                 actions:  [TutorialHelpButton()],
               ),
-              const TutorialTarget(
+              TutorialTarget(
                 id:    TutorialIds.vetCallsTabs,
                 child: TabBar(
-                  labelColor:       AppColors.brandGreen,
+                  labelColor:       context.palette.brand,
                   indicatorColor:   AppColors.brandGreen,
-                  unselectedLabelColor: AppColors.mutedGreen,
-                  tabs: [
+                  unselectedLabelColor: context.palette.muted,
+                  tabs: const [
                     Tab(text: 'Abertos'),
                     Tab(text: 'Meus ativos'),
                     Tab(text: 'Histórico'),
@@ -107,13 +109,13 @@ class _CallsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return state.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: AppColors.brandGreen),
+      loading: () => Center(
+        child: CircularProgressIndicator(color: context.palette.brand),
       ),
       error: (e, _) => AppEmptyState(
         icon:        Icons.error_outline_rounded,
         title:       'Erro ao carregar',
-        subtitle:    e.toString(),
+        subtitle:    friendlyError(e),
         actionLabel: 'Tentar novamente',
         onAction:    () => ref.invalidate(provider),
       ),

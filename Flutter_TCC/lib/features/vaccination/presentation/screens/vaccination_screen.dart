@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../core/utils/id_generator.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -91,7 +93,7 @@ class _VaccinationScreenState extends ConsumerState<VaccinationScreen> {
       child: Scaffold(
         body: animalAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error:   (e, _) => Center(child: Text('Erro: $e')),
+          error:   (e, _) => Center(child: Text(friendlyError(e), textAlign: TextAlign.center)),
           data:    (animal) => animal == null
               ? const Center(child: Text('Animal não encontrado.'))
               : _Form(
@@ -211,10 +213,10 @@ class _Form extends StatelessWidget {
                         decoration: _decoration(context, null),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.calendar_today_outlined,
                               size:  18,
-                              color: AppColors.mutedGreen,
+                              color: context.palette.muted,
                             ),
                             const SizedBox(width: 8),
                             Text(dateLabel),
@@ -291,7 +293,7 @@ class _AnimalCard extends StatelessWidget {
     return Container(
       padding:    const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color:        AppColors.brandPale,
+        color:        context.palette.brandTint,
         borderRadius: const BorderRadius.all(Radius.circular(12)),
         border: Border.all(color: AppColors.brandGreen.withValues(alpha: 0.2)),
       ),
@@ -300,13 +302,13 @@ class _AnimalCard extends StatelessWidget {
           Container(
             width:  40,
             height: 40,
-            decoration: const BoxDecoration(
-              color:        AppColors.brandLight,
-              borderRadius: BorderRadius.all(Radius.circular(10)),
+            decoration: BoxDecoration(
+              color:        context.palette.brandTintStrong,
+              borderRadius: const BorderRadius.all(Radius.circular(10)),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.pets_rounded,
-              color: AppColors.brandGreen,
+              color: context.palette.brand,
               size:  20,
             ),
           ),
@@ -326,7 +328,7 @@ class _AnimalCard extends StatelessWidget {
                   '${animal.sex == AnimalSex.female ? 'Fêmea' : 'Macho'}'
                   '${animal.weightKg != null ? ' · ${animal.weightKg!.toStringAsFixed(0)} kg' : ''}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.mutedGreen,
+                        color: context.palette.muted,
                       ),
                 ),
               ],
@@ -354,7 +356,7 @@ class _LabeledField extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
-                color:      AppColors.mutedGreen,
+                color:      context.palette.muted,
               ),
         ),
         const SizedBox(height: 6),

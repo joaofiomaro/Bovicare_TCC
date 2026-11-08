@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/errors/failures.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_empty_state.dart';
 import '../../../../shared/widgets/app_skeleton.dart';
@@ -27,7 +29,7 @@ class VetDetailScreen extends ConsumerWidget {
         body: AppEmptyState(
           icon:        Icons.error_outline_rounded,
           title:       'Veterinário não encontrado',
-          subtitle:    e.toString(),
+          subtitle:    friendlyError(e),
           actionLabel: 'Voltar',
           onAction:    () => Navigator.of(context).maybePop(),
         ),
@@ -119,16 +121,16 @@ class _VetHeader extends StatelessWidget {
             width:  72,
             height: 72,
             decoration: BoxDecoration(
-              color:  AppColors.brandLight,
+              color:  context.palette.brandTintStrong,
               shape:  BoxShape.circle,
               border: Border.all(
                 color: Colors.white.withValues(alpha: 0.4),
                 width: 2.5,
               ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.medical_services_outlined,
-              color: AppColors.brandGreen,
+              color: context.palette.brand,
               size:  32,
             ),
           ),
@@ -145,7 +147,7 @@ class _VetHeader extends StatelessWidget {
           Text(
             'Médico Veterinário · ${vet.crmv}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.white70,
+                  color: AppColors.onBrandMuted,
                 ),
             textAlign: TextAlign.center,
           ),
@@ -181,10 +183,10 @@ class _SpecialtiesCard extends StatelessWidget {
       width:   double.infinity,
       padding: const EdgeInsets.all(AppSpacing.base),
       decoration: BoxDecoration(
-        color:        isDark ? AppColors.darkSurface : AppColors.white,
+        color:        isDark ? AppColors.darkSurface : context.palette.card,
         borderRadius: const BorderRadius.all(Radius.circular(12)),
         border:       Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.ghostGreen,
+          color: isDark ? AppColors.darkBorder : context.palette.border,
         ),
       ),
       child: Column(
@@ -194,7 +196,7 @@ class _SpecialtiesCard extends StatelessWidget {
             'ESPECIALIDADES',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight:    FontWeight.w700,
-                  color:         AppColors.mutedGreen,
+                  color:         context.palette.muted,
                   letterSpacing: 0.8,
                   fontSize:      10,
                 ),
@@ -225,10 +227,10 @@ class _LocationCard extends StatelessWidget {
     return Container(
       padding:    const EdgeInsets.all(AppSpacing.base),
       decoration: BoxDecoration(
-        color:        isDark ? AppColors.darkSurface : AppColors.white,
+        color:        isDark ? AppColors.darkSurface : context.palette.card,
         borderRadius: const BorderRadius.all(Radius.circular(12)),
         border:       Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.ghostGreen,
+          color: isDark ? AppColors.darkBorder : context.palette.border,
         ),
       ),
       child: Column(
@@ -258,7 +260,7 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: AppColors.mutedGreen),
+        Icon(icon, size: 16, color: context.palette.muted),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Text(
@@ -278,7 +280,11 @@ class _DetailSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    // ListView (não Column): em tela pequena o esqueleto é cortado em vez de
+    // estourar a altura.
+    return ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       children: [
         Container(height: 200, color: AppColors.brandGreen),
         const SizedBox(height: 16),

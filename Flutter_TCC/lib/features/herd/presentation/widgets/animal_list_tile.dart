@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../domain/entities/animal_entity.dart';
 import '../extensions/animal_status_visuals.dart';
@@ -36,7 +37,7 @@ class AnimalListTile extends StatelessWidget {
       onLongPress: selectionMode ? null : onSelectToggle,
       child: ColoredBox(
         color: selected
-            ? AppColors.brandPale
+            ? context.palette.brandTint
             : Colors.transparent,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -61,7 +62,7 @@ class AnimalListTile extends StatelessWidget {
                     Text(
                       _subtitle(animal),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.mutedGreen,
+                            color: context.palette.muted,
                           ),
                     ),
                   ],
@@ -114,7 +115,7 @@ class AnimalListTile extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            style: TextButton.styleFrom(foregroundColor: context.palette.danger),
             child: const Text('Remover'),
           ),
         ],
@@ -138,11 +139,12 @@ class _StatusIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final (bg, color) = switch (status) {
-      AnimalStatus.healthy   => (AppColors.infoLight,    AppColors.info),
-      AnimalStatus.pregnant  => (AppColors.brandLight,   AppColors.brandGreen),
-      AnimalStatus.attention => (AppColors.amberLight,   AppColors.amber),
-      AnimalStatus.sick      => (AppColors.dangerLight,  AppColors.danger),
+      AnimalStatus.healthy   => (p.infoTint,        p.info),
+      AnimalStatus.pregnant  => (p.brandTintStrong, p.brand),
+      AnimalStatus.attention => (p.amberTint,       p.amber),
+      AnimalStatus.sick      => (p.dangerTint,      p.danger),
     };
     return Container(
       width:  44,
@@ -166,7 +168,7 @@ class _SelectIndicator extends StatelessWidget {
         color: selected ? AppColors.brandGreen : Colors.transparent,
         borderRadius: const BorderRadius.all(Radius.circular(12)),
         border: Border.all(
-          color: selected ? AppColors.brandGreen : AppColors.mutedGreen,
+          color: selected ? AppColors.brandGreen : context.palette.subtle,
           width: 2,
         ),
       ),
@@ -183,8 +185,8 @@ class _DeleteBackground extends StatelessWidget {
     return Container(
       alignment: Alignment.centerRight,
       padding: const EdgeInsets.only(right: 20),
-      color: AppColors.dangerLight,
-      child: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
+      color: context.palette.dangerTint,
+      child: Icon(Icons.delete_outline_rounded, color: context.palette.danger),
     );
   }
 }

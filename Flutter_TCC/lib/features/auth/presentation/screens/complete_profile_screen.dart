@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_header.dart';
 import '../../../../shared/widgets/app_text_field.dart';
@@ -82,7 +82,7 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
                 Text(
                   'Conectado como $email',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.mutedGreen,
+                        color: context.palette.muted,
                       ),
                 ),
                 const SizedBox(height: AppSpacing.base),
@@ -111,9 +111,9 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
                   onSelectionChanged: (s) => setState(() => _role = s.first),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                const Text(
+                Text(
                   'Atenção: o perfil não pode ser alterado depois.',
-                  style: TextStyle(color: AppColors.amber, fontSize: 12),
+                  style: TextStyle(color: context.palette.amber, fontSize: 12),
                 ),
                 const SizedBox(height: AppSpacing.x2l),
                 AppButton(

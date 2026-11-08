@@ -34,6 +34,10 @@ abstract final class AppColors {
   static const Color darkText        = Color(0xFFE0EDE5);
   static const Color darkTextMuted   = Color(0xFF8AAE98);
 
+  /// Texto secundário sobre o verde da marca (cabeçalhos, card de destaque):
+  /// branco a 85% — 5,2:1 sobre [brandGreen]. Não use opacidade menor.
+  static const Color onBrandMuted = Color(0xD9FFFFFF);
+
   // --- Transparências utilitárias ---
   static const Color overlayDark  = Color(0x80000000);
   static const Color overlayLight = Color(0x40FFFFFF);

@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/utils/file_share_service.dart';
 import '../../../../shared/widgets/app_avatar.dart';
@@ -80,24 +81,24 @@ class ProfileScreen extends ConsumerWidget {
                     const _SectionLabel('Privacidade — LGPD'),
                     _SettingsRow(
                       icon:      Icons.description_outlined,
-                      iconBg:    AppColors.infoLight,
-                      iconColor: AppColors.info,
+                      iconBg:    context.palette.infoTint,
+                      iconColor: context.palette.info,
                       title:     'Meus consentimentos',
                       subtitle:  'Visualizar e revogar por finalidade',
                       onTap:     () => context.pushNamed(AppRoutes.consents),
                     ),
                     _SettingsRow(
                       icon:      Icons.download_outlined,
-                      iconBg:    AppColors.infoLight,
-                      iconColor: AppColors.info,
+                      iconBg:    context.palette.infoTint,
+                      iconColor: context.palette.info,
                       title:     'Exportar meus dados',
                       subtitle:  'Portabilidade — arquivo JSON',
                       onTap:     () => _exportData(context),
                     ),
                     _SettingsRow(
                       icon:      Icons.delete_outline_rounded,
-                      iconBg:    AppColors.dangerLight,
-                      iconColor: AppColors.danger,
+                      iconBg:    context.palette.dangerTint,
+                      iconColor: context.palette.danger,
                       title:     'Excluir conta',
                       subtitle:  'Remove a conta e todos os seus dados',
                       onTap:     () => _deleteAccount(context, ref),
@@ -184,7 +185,7 @@ class ProfileScreen extends ConsumerWidget {
       confirmLabel:   'Sair',
       confirmVariant: AppButtonVariant.danger,
       icon:           Icons.logout_rounded,
-      iconColor:      AppColors.danger,
+      iconColor:      context.palette.danger,
     );
     if (confirmed != true || !context.mounted) return;
     await ref.read(authProvider.notifier).logout();
@@ -199,7 +200,7 @@ class ProfileScreen extends ConsumerWidget {
       confirmLabel:   'Excluir',
       confirmVariant: AppButtonVariant.danger,
       icon:           Icons.delete_forever_rounded,
-      iconColor:      AppColors.danger,
+      iconColor:      context.palette.danger,
     );
     if (confirmed != true || !context.mounted) return;
     final error = await ref.read(authProvider.notifier).deleteAccount();
@@ -251,7 +252,7 @@ class _ProfileHero extends StatelessWidget {
           Text(
             sub,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.mutedGreen,
+                  color: context.palette.muted,
                 ),
             textAlign: TextAlign.center,
           ),
@@ -275,7 +276,7 @@ class _SectionLabel extends StatelessWidget {
         title,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontWeight:    FontWeight.w700,
-              color:         AppColors.mutedGreen,
+              color:         context.palette.muted,
               letterSpacing: 0.5,
             ),
       ),
@@ -320,7 +321,7 @@ class _SettingsRow extends StatelessWidget {
                     (isDark ? AppColors.darkSurface2 : AppColors.brandPale),
                 borderRadius: const BorderRadius.all(Radius.circular(10)),
               ),
-              child: Icon(icon, size: 20, color: iconColor ?? AppColors.mutedGreen),
+              child: Icon(icon, size: 20, color: iconColor ?? context.palette.muted),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -333,14 +334,14 @@ class _SettingsRow extends StatelessWidget {
                           )),
                   Text(subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.mutedGreen,
+                            color: context.palette.muted,
                           )),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
-              color: AppColors.ghostGreen,
+              color: context.palette.subtle,
               size:  20,
             ),
           ],
@@ -380,10 +381,10 @@ class _SwitchRow extends StatelessWidget {
             width:  40,
             height: 40,
             decoration: BoxDecoration(
-              color: isDarkCtx ? AppColors.darkSurface2 : AppColors.brandPale,
+              color: isDarkCtx ? AppColors.darkSurface2 : context.palette.brandTint,
               borderRadius: const BorderRadius.all(Radius.circular(10)),
             ),
-            child: Icon(icon, size: 20, color: AppColors.mutedGreen),
+            child: Icon(icon, size: 20, color: context.palette.muted),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -396,7 +397,7 @@ class _SwitchRow extends StatelessWidget {
                         )),
                 Text(subtitle,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.mutedGreen,
+                          color: context.palette.muted,
                         )),
               ],
             ),

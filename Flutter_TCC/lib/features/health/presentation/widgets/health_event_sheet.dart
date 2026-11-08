@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/datetime_ext.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../../../core/utils/id_generator.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_date_field.dart';
@@ -114,11 +114,13 @@ class _HealthEventSheetState extends ConsumerState<HealthEventSheet> {
       children: [
         Row(
           children: [
-            Icon(_icon(widget.type), color: AppColors.brandGreen),
+            Icon(_icon(widget.type), color: context.palette.brand),
             const SizedBox(width: AppSpacing.sm),
-            Text(
-              'Registrar ${widget.type.label.toLowerCase()}',
-              style: Theme.of(context).textTheme.titleLarge,
+            Expanded(
+              child: Text(
+                'Registrar ${widget.type.label.toLowerCase()}',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
             ),
           ],
         ),
@@ -159,7 +161,7 @@ class _HealthEventSheetState extends ConsumerState<HealthEventSheet> {
             Text(
               'Carência até ${withdrawalEnd.toBrDate}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color:      AppColors.amber,
+                    color:      context.palette.amber,
                     fontWeight: FontWeight.w600,
                   ),
             ),

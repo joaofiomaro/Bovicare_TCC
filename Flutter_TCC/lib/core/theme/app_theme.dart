@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_radius.dart';
 import '../constants/app_typography.dart';
+import 'app_palette.dart';
 
 /// Configuração completa dos temas light e dark do BoviCare.
 /// Utiliza Material 3 com ColorScheme customizado.
@@ -35,6 +36,9 @@ abstract final class AppTheme {
     onErrorContainer: AppColors.danger,
     surface:          AppColors.white,
     onSurface:        AppColors.inkBlack,
+    // Texto/ícone secundário dos componentes Material (dicas de campo,
+    // ícones de prefixo, subtítulos de ListTile…) — igual a palette.muted.
+    onSurfaceVariant: Color(0xFF55695B),
     surfaceContainerHighest: AppColors.surfaceLight,
     outline:          AppColors.ghostGreen,
     outlineVariant:   AppColors.brandLight,
@@ -63,6 +67,7 @@ abstract final class AppTheme {
     onErrorContainer: Color(0xFFFFDAD6),
     surface:          AppColors.darkBackground,
     onSurface:        AppColors.darkText,
+    onSurfaceVariant: Color(0xFF9DBBA8),
     surfaceContainerHighest: AppColors.darkSurface,
     outline:          AppColors.darkBorder,
     outlineVariant:   AppColors.darkSurface2,
@@ -79,6 +84,7 @@ abstract final class AppTheme {
   }) {
     final isLight = brightness == Brightness.light;
     final textColor = isLight ? AppColors.inkBlack : AppColors.darkText;
+    final palette = isLight ? AppPalette.light : AppPalette.dark;
 
     return ThemeData(
       useMaterial3: true,
@@ -86,6 +92,7 @@ abstract final class AppTheme {
       colorScheme: colorScheme,
       textTheme: AppTypography.textTheme(textColor),
       scaffoldBackgroundColor: colorScheme.surface,
+      extensions: [palette],
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
@@ -123,6 +130,9 @@ abstract final class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: isLight ? AppColors.surfaceLight : AppColors.darkSurface,
+        prefixIconColor: palette.muted,
+        suffixIconColor: palette.muted,
+        hintStyle: TextStyle(color: palette.muted),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(borderRadius: AppRadius.mdAll, borderSide: BorderSide(color: colorScheme.outline)),
         enabledBorder: OutlineInputBorder(borderRadius: AppRadius.mdAll, borderSide: BorderSide(color: colorScheme.outline)),
@@ -130,17 +140,19 @@ abstract final class AppTheme {
         errorBorder: OutlineInputBorder(borderRadius: AppRadius.mdAll, borderSide: BorderSide(color: colorScheme.error)),
         focusedErrorBorder: OutlineInputBorder(borderRadius: AppRadius.mdAll, borderSide: BorderSide(color: colorScheme.error, width: 2)),
       ),
+      // Itens não selecionados com cor de texto secundário (antes usavam a
+      // cor de borda: 1,7:1, quase invisíveis nos dois temas).
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: colorScheme.surface,
-        indicatorColor: colorScheme.primaryContainer,
+        backgroundColor: palette.card,
+        indicatorColor: palette.brandTintStrong,
         iconTheme: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return IconThemeData(color: colorScheme.primary, size: 24);
-          return IconThemeData(color: colorScheme.outline, size: 24);
+          if (states.contains(WidgetState.selected)) return IconThemeData(color: palette.brand, size: 24);
+          return IconThemeData(color: palette.muted, size: 24);
         }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final style = AppTypography.textTheme(textColor).labelSmall!;
-          if (states.contains(WidgetState.selected)) return style.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w600);
-          return style.copyWith(color: colorScheme.outline);
+          if (states.contains(WidgetState.selected)) return style.copyWith(color: palette.brand, fontWeight: FontWeight.w700);
+          return style.copyWith(color: palette.muted);
         }),
       ),
       dividerTheme: DividerThemeData(color: colorScheme.outlineVariant, thickness: 1, space: 1),

@@ -272,9 +272,9 @@ class _TipsSwitch extends StatelessWidget {
             'Mostrar o passo a passo na primeira vez em cada tela',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
           ),
-          subtitle: Text(
+          subtitle: const Text(
             'Dá para mudar depois em Perfil.',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.75)),
+            style: TextStyle(color: AppColors.onBrandMuted),
           ),
         ),
       );
@@ -292,6 +292,7 @@ class _WhiteButton extends StatelessWidget {
         child: ElevatedButton(
           onPressed: onPressed,
           style: ElevatedButton.styleFrom(
+            // Botão sempre branco sobre o verde: texto verde fixo.
             backgroundColor: Colors.white,
             foregroundColor: AppColors.brandGreen,
             minimumSize: const Size.fromHeight(52),

@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_durations.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../../domain/tutorial_step.dart';
 import 'tutorial_target.dart';
 
@@ -245,11 +246,11 @@ class _StepCard extends StatelessWidget {
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: const BoxDecoration(
-                    color: AppColors.brandLight,
+                  decoration: BoxDecoration(
+                    color: context.palette.brandTintStrong,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(step.icon, color: AppColors.brandGreen, size: 22),
+                  child: Icon(step.icon, color: context.palette.brand, size: 22),
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
@@ -270,7 +271,7 @@ class _StepCard extends StatelessWidget {
                 if (!isLast)
                   TextButton(
                     onPressed: onSkip,
-                    style: TextButton.styleFrom(foregroundColor: AppColors.mutedGreen),
+                    style: TextButton.styleFrom(foregroundColor: context.palette.muted),
                     child: const Text('Pular'),
                   ),
                 if (onBack != null)
@@ -278,7 +279,7 @@ class _StepCard extends StatelessWidget {
                     onPressed: onBack,
                     tooltip:   'Voltar',
                     icon:      const Icon(Icons.arrow_back_rounded),
-                    color:     AppColors.brandGreen,
+                    color:     context.palette.brand,
                   ),
                 const SizedBox(width: AppSpacing.xs),
                 ElevatedButton(
