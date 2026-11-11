@@ -12,6 +12,7 @@ import {
   collection,
   doc,
   deleteDoc,
+  deleteField,
   getDoc,
   getDocs,
   query,
@@ -575,6 +576,98 @@ describe('Chamados — aceitar / evoluir / cancelar', () => {
 
   test('🔒 nenhum chamado pode ser deletado', async () => {
     await assertFails(deleteDoc(doc(asProd1(), 'serviceCalls/call1')));
+  });
+});
+
+// LGPD: na exclusão da conta, os chamados ficam sem os dados de quem saiu.
+const ANON_PROD = {
+  producerId: 'removido',
+  producerName: 'Usuário removido',
+  city: 'Removido',
+  title: 'Pedido de usuário removido',
+  description: 'Conteúdo removido na exclusão da conta.',
+};
+
+describe('Chamados — anonimização na exclusão de conta', () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), 'serviceCalls/full1'),
+        callDoc({
+          status: 'completed', vetId: 'vet1', vetName: 'Dra. Ana',
+          resolution: 'Tratado', completedAtIso: '2026-06-08T10:00:00.000Z',
+          farmName: 'Fazenda Esperança', lat: -20.4, lng: -49.9, animalEarTag: '031',
+        }),
+      );
+    });
+  });
+
+  test('produtor anonimiza chamado concluído, mantendo o status', async () => {
+    await assertSucceeds(updateDoc(doc(asProd1(), 'serviceCalls/full1'), {
+      ...ANON_PROD,
+      farmName: deleteField(), lat: deleteField(), lng: deleteField(), animalEarTag: deleteField(),
+    }));
+  });
+
+  test('produtor anonimiza chamado aberto e o cancela', async () => {
+    await assertSucceeds(updateDoc(doc(asProd1(), 'serviceCalls/call1'), {
+      ...ANON_PROD, status: 'cancelled',
+    }));
+  });
+
+  test('🔒 chamado aberto anonimizado NÃO fica no pool', async () => {
+    await assertFails(updateDoc(doc(asProd1(), 'serviceCalls/call1'), ANON_PROD));
+  });
+
+  test('🔒 anonimização NÃO pode manter a localização', async () => {
+    await assertFails(updateDoc(doc(asProd1(), 'serviceCalls/full1'), {
+      ...ANON_PROD, farmName: deleteField(), animalEarTag: deleteField(),
+    }));
+  });
+
+  test('🔒 anonimização NÃO pode trocar o nome por outro texto', async () => {
+    await assertFails(updateDoc(doc(asProd1(), 'serviceCalls/done1'), {
+      ...ANON_PROD, producerName: 'Outro Nome',
+    }));
+  });
+
+  test('🔒 anonimização NÃO pode reabrir nem mexer no laudo', async () => {
+    await assertFails(updateDoc(doc(asProd1(), 'serviceCalls/done1'), {
+      ...ANON_PROD, resolution: 'Apagado',
+    }));
+    await assertFails(updateDoc(doc(asProd1(), 'serviceCalls/done1'), {
+      ...ANON_PROD, status: 'open',
+    }));
+  });
+
+  test('🔒 outro produtor NÃO anonimiza chamado alheio', async () => {
+    await assertFails(updateDoc(doc(asProd2(), 'serviceCalls/done1'), ANON_PROD));
+  });
+
+  test('vet atribuído tira o próprio nome de chamado concluído', async () => {
+    await assertSucceeds(updateDoc(doc(asVet1(), 'serviceCalls/done1'), {
+      vetName: 'Veterinário removido',
+    }));
+  });
+
+  test('vet atribuído que sai cancela o atendimento em andamento', async () => {
+    await assertSucceeds(updateDoc(doc(asVet1(), 'serviceCalls/inprogress1'), {
+      vetName: 'Veterinário removido', status: 'cancelled',
+    }));
+  });
+
+  test('🔒 vet de fora NÃO anonimiza chamado de terceiro', async () => {
+    await assertFails(updateDoc(doc(asVet2(), 'serviceCalls/done1'), {
+      vetName: 'Veterinário removido',
+    }));
+  });
+
+  test('vet atribuído ainda lê o chamado anonimizado', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await updateDoc(doc(ctx.firestore(), 'serviceCalls/done1'), ANON_PROD);
+    });
+    await assertSucceeds(getDoc(doc(asVet1(), 'serviceCalls/done1')));
+    await assertFails(getDoc(doc(asProd1(), 'serviceCalls/done1')));
   });
 });
 

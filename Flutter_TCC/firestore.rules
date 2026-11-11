@@ -153,6 +153,34 @@ service cloud.firestore {
         && resource.data.vetId == request.auth.uid;
     }
 
+    // Valores fixos da anonymização (iguais aos de
+    // lib/features/service_call/data/service_call_anonymization.dart).
+    function isProducerAnonymization() {
+      let d = request.resource.data;
+      return d.producerId == 'removido'
+        && d.producerName == 'Usuário removido'
+        && d.city == 'Removido'
+        && d.title == 'Pedido de usuário removido'
+        && d.description == 'Conteúdo removido na exclusão da conta.'
+        && !('farmName' in d) && !('lat' in d) && !('lng' in d)
+        && !('animalEarTag' in d)
+        && ((resource.data.status == 'open' && d.status == 'cancelled')
+            || (resource.data.status != 'open' && d.status == resource.data.status))
+        && changedKeys().hasOnly([
+             'producerId', 'producerName', 'city', 'title', 'description',
+             'farmName', 'lat', 'lng', 'animalEarTag', 'status',
+           ]);
+    }
+
+    function isVetAnonymization() {
+      let d = request.resource.data;
+      return d.vetName == 'Veterinário removido'
+        && ((resource.data.status in ['accepted', 'inProgress'] && d.status == 'cancelled')
+            || (!(resource.data.status in ['accepted', 'inProgress'])
+                && d.status == resource.data.status))
+        && changedKeys().hasOnly(['vetName', 'status']);
+    }
+
     match /serviceCalls/{callId} {
       // Produtor cria o próprio chamado, sempre aberto, sem vet pré-atribuído
       // e sem campos que só existem depois do atendimento.
@@ -193,6 +221,14 @@ service cloud.firestore {
            && changedKeys().hasOnly([
                 'status', 'scheduledDateIso', 'resolution', 'completedAtIso',
               ]))
+        // LGPD (art. 16 e art. 5.º, III): ao excluir a conta, o produtor
+        // anonimiza os próprios chamados. O registro do atendimento fica, sem
+        // nome, propriedade, cidade, localização, brinco nem texto livre.
+        // Chamado ainda aberto sai do pool (cancelado); os demais mantêm o status.
+        || (isOwner(resource.data.producerId) && isProducerAnonymization())
+        // O vet que exclui a conta tira o próprio nome dos chamados; os que
+        // ainda estavam em andamento são cancelados.
+        || (isAssignedVet() && isVetAnonymization())
       );
 
       // Nunca deletar — histórico/auditoria.

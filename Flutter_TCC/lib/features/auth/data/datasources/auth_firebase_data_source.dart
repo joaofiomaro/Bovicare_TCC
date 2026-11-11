@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../../core/errors/failures.dart';
+import '../../../service_call/data/service_call_anonymization.dart';
 import '../../../settings/data/settings_firestore_data_source.dart';
 import '../models/user_model.dart';
 
@@ -166,6 +167,9 @@ class AuthFirebaseDataSource {
     }
 
     try {
+      // Antes de apagar o perfil: os chamados ficam para a outra parte,
+      // mas sem os dados de quem saiu (LGPD, art. 16).
+      await _anonymizeServiceCalls(user.uid);
       final userDoc = _userDoc(user.uid);
       for (final name in _privateCollections) {
         await _deleteCollection(userDoc.collection(name));
@@ -251,6 +255,29 @@ class AuthFirebaseDataSource {
       // quais e-mails estão cadastrados (enumeração de contas).
       if (e.code == 'user-not-found') return;
       throw AuthFailure(_mapFirebaseError(e.code));
+    }
+  }
+
+  /// Anonimiza os chamados em que o usuário é o produtor ou o veterinário
+  /// atribuído. As consultas por `producerId` e `vetId` são as mesmas que as
+  /// regras permitem para o dono e para o vet atribuído.
+  Future<void> _anonymizeServiceCalls(String uid) async {
+    final calls = _firestore.collection('serviceCalls');
+    final asProducer = await calls.where('producerId', isEqualTo: uid).get();
+    final asVet = await calls.where('vetId', isEqualTo: uid).get();
+    final updates = <(DocumentReference<Map<String, dynamic>>, Map<String, Object>)>[
+      for (final d in asProducer.docs)
+        (d.reference, ServiceCallAnonymization.producerUpdate(d.data()['status'] as String?)),
+      for (final d in asVet.docs)
+        (d.reference, ServiceCallAnonymization.vetUpdate(d.data()['status'] as String?)),
+    ];
+    // Lotes abaixo do limite de 500 operações do Firestore.
+    for (var i = 0; i < updates.length; i += 400) {
+      final batch = _firestore.batch();
+      for (final (ref, data) in updates.skip(i).take(400)) {
+        batch.update(ref, data);
+      }
+      await batch.commit();
     }
   }
 
