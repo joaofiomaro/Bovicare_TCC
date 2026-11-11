@@ -174,11 +174,11 @@ service cloud.firestore {
 
     function isVetAnonymization() {
       let d = request.resource.data;
-      return d.vetName == 'Veterinário removido'
+      return d.vetId == 'removido' && d.vetName == 'Veterinário removido'
         && ((resource.data.status in ['accepted', 'inProgress'] && d.status == 'cancelled')
             || (!(resource.data.status in ['accepted', 'inProgress'])
                 && d.status == resource.data.status))
-        && changedKeys().hasOnly(['vetName', 'status']);
+        && changedKeys().hasOnly(['vetId', 'vetName', 'status']);
     }
 
     match /serviceCalls/{callId} {

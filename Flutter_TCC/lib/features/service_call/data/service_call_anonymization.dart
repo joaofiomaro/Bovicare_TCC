@@ -16,6 +16,7 @@ abstract final class ServiceCallAnonymization {
   static const String removedTitle = 'Pedido de usuário removido';
   static const String removedDescription =
       'Conteúdo removido na exclusão da conta.';
+  static const String removedVetId = 'removido';
   static const String removedVetName = 'Veterinário removido';
 
   /// Campos opcionais que identificam o produtor e são apagados.
@@ -38,9 +39,11 @@ abstract final class ServiceCallAnonymization {
         if (status == 'open') 'status': 'cancelled',
       };
 
-  /// Alterações para um chamado do veterinário que exclui a conta. Atendimento
+  /// Alterações para um chamado do veterinário que exclui a conta: o id e o
+  /// nome dele saem do chamado, e o laudo fica com o produtor. Atendimento
   /// ainda em andamento é cancelado, para o produtor poder pedir outro.
   static Map<String, Object> vetUpdate(String? status) => {
+        'vetId': removedVetId,
         'vetName': removedVetName,
         if (status == 'accepted' || status == 'inProgress') 'status': 'cancelled',
       };

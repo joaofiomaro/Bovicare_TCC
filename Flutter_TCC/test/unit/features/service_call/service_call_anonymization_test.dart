@@ -40,10 +40,10 @@ void main() {
   });
 
   group('ServiceCallAnonymization.vetUpdate', () {
-    test('tira o nome do veterinário', () {
+    test('tira o id e o nome do veterinário', () {
       expect(
         ServiceCallAnonymization.vetUpdate('completed'),
-        {'vetName': 'Veterinário removido'},
+        {'vetId': 'removido', 'vetName': 'Veterinário removido'},
       );
     });
 

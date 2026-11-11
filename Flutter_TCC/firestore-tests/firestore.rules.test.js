@@ -588,6 +588,8 @@ const ANON_PROD = {
   description: 'Conteúdo removido na exclusão da conta.',
 };
 
+const ANON_VET = { vetId: 'removido', vetName: 'Veterinário removido' };
+
 describe('Chamados — anonimização na exclusão de conta', () => {
   beforeEach(async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
@@ -644,22 +646,24 @@ describe('Chamados — anonimização na exclusão de conta', () => {
     await assertFails(updateDoc(doc(asProd2(), 'serviceCalls/done1'), ANON_PROD));
   });
 
-  test('vet atribuído tira o próprio nome de chamado concluído', async () => {
-    await assertSucceeds(updateDoc(doc(asVet1(), 'serviceCalls/done1'), {
+  test('vet atribuído tira o próprio id e nome de chamado concluído', async () => {
+    await assertSucceeds(updateDoc(doc(asVet1(), 'serviceCalls/done1'), ANON_VET));
+  });
+
+  test('🔒 vet NÃO pode deixar o próprio id no chamado', async () => {
+    await assertFails(updateDoc(doc(asVet1(), 'serviceCalls/done1'), {
       vetName: 'Veterinário removido',
     }));
   });
 
   test('vet atribuído que sai cancela o atendimento em andamento', async () => {
     await assertSucceeds(updateDoc(doc(asVet1(), 'serviceCalls/inprogress1'), {
-      vetName: 'Veterinário removido', status: 'cancelled',
+      ...ANON_VET, status: 'cancelled',
     }));
   });
 
   test('🔒 vet de fora NÃO anonimiza chamado de terceiro', async () => {
-    await assertFails(updateDoc(doc(asVet2(), 'serviceCalls/done1'), {
-      vetName: 'Veterinário removido',
-    }));
+    await assertFails(updateDoc(doc(asVet2(), 'serviceCalls/done1'), ANON_VET));
   });
 
   test('vet atribuído ainda lê o chamado anonimizado', async () => {
