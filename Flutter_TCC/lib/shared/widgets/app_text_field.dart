@@ -16,6 +16,7 @@ class AppTextField extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
     this.enabled = true,
+    this.readOnly = false,
     this.maxLines = 1,
     super.key,
   });
@@ -32,6 +33,10 @@ class AppTextField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final bool enabled;
+
+  /// Mostra o valor sem permitir edição, mantendo o contraste normal
+  /// (ao contrário de [enabled] = false, que esmaece o campo).
+  final bool readOnly;
   final int maxLines;
 
   @override
@@ -58,6 +63,7 @@ class _AppTextFieldState extends State<AppTextField> {
       onChanged: widget.onChanged,
       onSubmitted: widget.onSubmitted,
       enabled: widget.enabled,
+      readOnly: widget.readOnly,
       maxLines: _obscure ? 1 : widget.maxLines,
       decoration: InputDecoration(
         labelText: widget.label,

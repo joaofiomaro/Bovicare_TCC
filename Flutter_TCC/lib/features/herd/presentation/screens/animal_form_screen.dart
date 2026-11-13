@@ -124,7 +124,7 @@ class _AnimalFormScreenState extends ConsumerState<AnimalFormScreen> {
       return false;
     }
     final weightText = _weightController.text.trim();
-    if (weightText.isNotEmpty) {
+    if (!widget.isEditing && weightText.isNotEmpty) {
       final weight = _parseWeight(weightText);
       if (weight == null || weight < 0) {
         AppToast.error(context, 'Peso inválido.');
@@ -153,7 +153,11 @@ class _AnimalFormScreenState extends ConsumerState<AnimalFormScreen> {
       // (status, prenhez e, sobretudo, a baixa — não "ressuscita" arquivados).
       status:        base?.status ?? AnimalStatus.healthy,
       pregnancyDate: base?.pregnancyDate,
-      weightKg:      _parseWeight(_weightController.text),
+      // Peso só é informado no cadastro; depois disso muda apenas via
+      // "Pesar" (lançamento de pesagem), então a edição preserva o atual.
+      weightKg:      widget.isEditing
+          ? base?.weightKg
+          : _parseWeight(_weightController.text),
       rfid:          _rfid,
       exitType:      base?.exitType ?? AnimalExitType.active,
       exitDate:      base?.exitDate,
@@ -318,8 +322,11 @@ class _AnimalFormScreenState extends ConsumerState<AnimalFormScreen> {
                     const SizedBox(height: AppSpacing.base),
 
                     AppTextField(
-                      label:        'Peso atual (kg)',
+                      label:        widget.isEditing
+                          ? 'Peso atual (kg) — altere em "Pesar"'
+                          : 'Peso atual (kg)',
                       controller:   _weightController,
+                      readOnly:     widget.isEditing,
                       prefixIcon:   Icons.monitor_weight_outlined,
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
