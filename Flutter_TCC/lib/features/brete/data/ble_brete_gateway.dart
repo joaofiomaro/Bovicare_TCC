@@ -8,7 +8,7 @@ import '../domain/brete_ble_protocol.dart';
 import '../domain/brete_gateway.dart';
 import '../domain/brete_models.dart';
 
-/// Brete real via Bluetooth Low Energy (firmware `BoviCare_Brete_Final.ino`).
+/// Brete real via Bluetooth Low Energy (firmware 1.5.1 `BoviCare_Brete_Final.ino`).
 /// O estado exibido vem SEMPRE do ESP32 (characteristic de estado, com
 /// notificação); comandos apenas pedem a ação e aguardam a resposta `RESP`.
 class BleBreteGateway implements BreteGateway {

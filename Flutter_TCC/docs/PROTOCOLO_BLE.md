@@ -1,6 +1,6 @@
 # Protocolo BLE do Brete (ESP32 ↔ BoviCare)
 
-Contrato entre o firmware `BoviCare_Brete_Final` v1.3.0 (ESP32-D0WD-V3) e o app. No app, o
+Contrato entre o firmware `BoviCare_Brete_Final` v1.5.1 (ESP32-D0WD-V3) e o app. No app, o
 protocolo está em `lib/features/brete/domain/brete_ble_protocol.dart` (funções
 puras, com testes) e a conexão em `lib/features/brete/data/ble_brete_gateway.dart`.
 
@@ -89,7 +89,7 @@ não derrubam o app.
 | `ev` | Uso no app |
 |---|---|
 | `RESP` | Resposta ao comando (`id`, `res`). Todo resultado diferente de `OK` vira aviso (tabela abaixo) |
-| `INICIO` | `ver` aparece no cabeçalho do painel ("firmware 1.3.0") |
+| `INICIO` | `ver` aparece no cabeçalho do painel ("firmware 1.5.1") |
 | `OBSTACULO` | Aviso "Obstáculo na porta … — ela vai reabrir" |
 | `EMERGENCIA` | Com `on:1` e origem diferente de `APP` (ex.: botão físico), mostra um aviso |
 | `RFID` / `RFID_SAIU` | Tag chegou / saiu do leitor (`uid`). A tag aparece no painel e no cadastro do animal |
@@ -109,18 +109,20 @@ quando o comando veio do botão físico e `p` é 0 quando não é comando de por
 | `NAO_PERMITIDO` | "Comando não permitido agora." |
 | `PORTA_INVALIDA` / `INVALIDO` | "Erro interno do app" (e registrado no log) |
 
-## Firmware 1.3.0 (o que está na placa)
+## Firmware 1.5.1 (o que está na placa)
 
 O firmware completo está na pasta `BoviCare_Firmware/`, na raiz do projeto
 (`BoviCare_Brete_Final/BoviCare_Brete_Final.ino`, com a documentação dele em
-`BoviCare_Firmware/docs/`). O app trata as novidades em relação à 1.1:
+`BoviCare_Firmware/docs/`). O app trata as novidades em relação à 1.1 (a 1.5 só acrescentou comandos de
+diagnóstico pelo Monitor Serial — `CHAVE`, `CHAVES`, `VARRER`, `LIMITE`, `TESTE` —
+sem mudar nenhum evento ou resposta BLE):
 
 | Novidade | No app |
 |---|---|
 | Porta em `FALHA` (`f1`/`f2`: `TIMEOUT_ABRIR`, `TIMEOUT_FECHAR`, `FIM_DUPLO`, `FIM_PRESO`) | Card da porta em vermelho com o motivo; Abrir/Fechar desabilitados |
 | `res: FALHA` e evento `{"ev":"FALHA","p":2,"f":"..."}` | Aviso na tela |
 | `RESET` também limpa as falhas | "Reiniciar sistema" envia `RESET` com emergência **ou** falha |
-| Leitor RC522 automático: `{"ev":"RFID","uid":"04A1B2C3"}` e `RFID_SAIU` | "Ler tag" devolve a tag que está no brete ou espera a próxima (não envia `LER_RFID`, que a 1.3 não tem) |
+| Leitor RC522 automático: `{"ev":"RFID","uid":"04A1B2C3"}` e `RFID_SAIU` | "Ler tag" devolve a tag que está no brete ou espera a próxima (não envia `LER_RFID`, que o firmware não tem) |
 | `fa`/`ff` com as chaves de fim de curso | Ignorados pelo app |
 
 ## Reiniciar sistema (botão na tela do brete)

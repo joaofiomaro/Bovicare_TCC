@@ -49,7 +49,7 @@ class BreteBleEvent {
   final String? fault;
 }
 
-/// Protocolo BLE do firmware `docs/BoviCare_Brete_Final.ino` (detalhes em
+/// Protocolo BLE do firmware 1.5.1 `BoviCare_Firmware/BoviCare_Brete_Final` (detalhes em
 /// docs/PROTOCOLO_BLE.md). Funções puras — testáveis sem hardware.
 abstract final class BreteBleProtocol {
   static const deviceName  = 'BoviCare-Brete';

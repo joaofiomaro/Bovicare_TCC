@@ -12,7 +12,7 @@ não foi cadastrado.
 
 ## Pré-condições
 - Produtor logado com animais que tenham RFID (cadastrados lendo a tag).
-- **Com hardware:** ESP32 com `docs/BoviCare_Brete_Final.ino`, ligada e perto
+- **Com hardware:** ESP32 com o firmware 1.5.1 (`../BoviCare_Firmware/BoviCare_Brete_Final/BoviCare_Brete_Final.ino`), ligada e perto
   do celular (Bluetooth LE, `docs/PROTOCOLO_BLE.md`). **Sem hardware:** com
   `BRETE_CONEXAO=simulacao` (ou rodando na web/desktop), o painel abre em
   **modo simulação**. Declare isso no TCC.
