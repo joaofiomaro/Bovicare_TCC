@@ -12,6 +12,7 @@ import '../../../../shared/widgets/app_date_field.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../domain/entities/service_call.dart';
+import '../../domain/resolution_privacy.dart';
 import '../extensions/service_call_visuals.dart';
 import '../providers/service_calls_provider.dart';
 
@@ -107,6 +108,11 @@ class _VetCallActionSheetState extends ConsumerState<_VetCallActionSheet> {
   Future<void> _complete() async {
     if (_resolution.text.trim().isEmpty) {
       setState(() => _error = 'Informe o laudo para concluir.');
+      return;
+    }
+    final privacy = ResolutionPrivacy.message(_resolution.text, call);
+    if (privacy != null) {
+      setState(() => _error = privacy);
       return;
     }
     await _run(
@@ -239,6 +245,7 @@ class _VetCallActionSheetState extends ConsumerState<_VetCallActionSheet> {
         ServiceStatus.inProgress => [
             AppTextField(
               label:      'Laudo / observação final',
+              hint:       'Descreva o caso, sem nomes nem contatos',
               controller: _resolution,
               maxLines:   3,
             ),

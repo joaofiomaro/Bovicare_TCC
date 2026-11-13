@@ -143,6 +143,26 @@ void main() {
           )).called(1);
     });
 
+    test('recusa laudo com dado pessoal e não grava', () {
+      expect(
+        () => AdvanceCallUseCase(repo).call(
+          _call(status: ServiceStatus.inProgress, vetId: 'v1'),
+          to: ServiceStatus.completed,
+          resolution: 'Tratado. Falar com o João no 17 99123-4567.',
+        ),
+        throwsA(isA<ArgumentError>().having(
+          (e) => e.message,
+          'message',
+          contains('o nome "João" e um telefone'),
+        )),
+      );
+      verifyNever(() => repo.updateStatus(
+            callId: any(named: 'callId'),
+            status: any(named: 'status'),
+            resolution: any(named: 'resolution'),
+          ));
+    });
+
     test('rejeita evoluir chamado não-ativo', () {
       expect(
         () => AdvanceCallUseCase(repo).call(
