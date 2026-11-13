@@ -70,9 +70,10 @@ extension ConsentPurposeX on ConsentPurpose {
 
   String get description => switch (this) {
         ConsentPurpose.location =>
-          'Usada somente no aparelho para mostrar os veterinários mais '
-          'próximos e, se você escolher, marcar a fazenda num chamado. '
-          'Revogando, o app usa uma região de referência.',
+          'Usada no aparelho para mostrar os veterinários mais próximos. '
+          'Se você marcar a fazenda num chamado, a posição vai junto e fica '
+          'visível aos veterinários enquanto ele estiver aberto e, depois, '
+          'ao que o aceitar. Revogando, o app usa uma região de referência.',
       };
 }
 

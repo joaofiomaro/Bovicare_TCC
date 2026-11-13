@@ -195,8 +195,8 @@ class _OpenServiceCallScreenState
                             ? 'Obtendo localização…'
                             : _shareLocation
                                 ? 'Posição atual anexada — o veterinário poderá abrir a rota.'
-                                : 'Use estando na fazenda. Compartilhada só com o '
-                                    'veterinário que atender.',
+                                : 'Use estando na fazenda. Fica visível aos '
+                                    'veterinários enquanto o chamado estiver aberto.',
                       ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
