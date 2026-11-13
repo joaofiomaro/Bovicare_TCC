@@ -12,8 +12,12 @@
 //    - SEGURA a porta aberta (ou parada no meio) contra o próprio peso e, se
 //      ela escorregar e soltar a chave de cima, sobe de novo sozinha;
 //    - detecta falhas das chaves (FIM_DUPLO, FIM_PRESO, TIMEOUT_ABRIR,
-//      TIMEOUT_FECHAR): a porta fica em FALHA até o RESET;
-//    - guarda os ajustes da serial (TEMPO, SEGURAR, INVERTER) na memória;
+//      TIMEOUT_FECHAR): a porta fica em FALHA até o RESET (ou botões 1 e 2
+//      juntos por 2 s); TIMEOUT sai também com um novo ABRIR/FECHAR;
+//    - cada chave pode ser DESLIGADA pela serial (CHAVE 2 CIMA DESLIGA): a
+//      porta passa a usar o tempo de curso naquele lado (chave com defeito);
+//    - CHAVES mostra ao vivo o nível de cada fio das chaves (achar mau contato);
+//    - guarda os ajustes da serial (TEMPO, SEGURAR, INVERTER, CHAVE) na memória;
 //    - parada automática pelos sensores IR: obstáculo no fechamento -> freia e reabre;
 //    - botões 1 e 2 alternam a porta (abre / fecha / para);
 //    - botão de parada (contato NC) -> emergência, com rearme;
@@ -46,7 +50,7 @@
   #define LEDC_V3 0
 #endif
 
-#define FIRMWARE_VERSAO "1.3.0"
+#define FIRMWARE_VERSAO "1.5.1"
 
 // =====================================================================
 //  CONFIGURAÇÃO (ajuste aqui)
@@ -78,8 +82,10 @@ const uint32_t REARME_MS          = 3000;   // segurar a parada para rearmar
 const uint16_t IR_OBSTACULO_MV    = 700;    // abaixo: obstáculo
 const uint16_t IR_LIVRE_MV        = 1100;   // acima: livre
 const uint32_t ESTADO_PERIODO_MS  = 2000;   // ESTADO enviado ao app a cada 2 s
-const uint32_t FIM_PRESO_MS       = 1500;   // a chave de partida tem de soltar nesse tempo
-const uint32_t LIMITE_EXTRA_MS    = 1000;   // limite do curso = 2 x tempo + 1 s
+const uint32_t FIM_PRESO_MS       = 4000;   // a chave de partida tem de soltar nesse tempo
+const uint8_t  LIMITE_PADRAO_S    = 0;      // limite de segurança do curso (0 = sem limite: o motor
+                                            // só para ao tocar a chave). Ajuste: LIMITE <s>
+const uint32_t RESET_BOTOES_MS     = 2000;   // botões 1 e 2 juntos = RESET
 const uint32_t CORRECAO_ESPERA_MS = 500;    // pausa mínima entre duas correções da porta aberta
 const uint32_t RFID_PERIODO_MS    = 80;     // intervalo entre leituras do RC522
 const uint32_t RFID_AUSENCIA_MS   = 1500;   // sem leitura por esse tempo = tag saiu
@@ -101,7 +107,8 @@ const uint8_t PINO_INB[2]       = {27, 25};   // IN2, IN4
 const uint8_t PINO_IR[2]        = {34, 35};   // sensores IR (analógico)
 const uint8_t PINO_BOTAO[2]     = {36, 39};   // botão 1 (SP), botão 2 (SN) - contato NO
 const uint8_t PINO_PARADA       = 5;          // botão de parada - contato NC
-const uint8_t PINO_FIM_ABERTA[2]  = {16, 4};  // chaves (opcional)
+// Chave de CIMA da porta 2 no G4 (o fio esteve no G12 por um tempo, em teste).
+const uint8_t PINO_FIM_ABERTA[2]  = {16, 4};
 const uint8_t PINO_FIM_FECHADA[2] = {17, 32};
 const uint8_t PINO_LED          = 2;
 const uint8_t PINO_RFID_SS      = 21;         // RC522 SDA   (alimentar em 3,3 V!)
@@ -118,6 +125,9 @@ const char* NOME_ESTADO[] = {"FECHADA", "ABRINDO", "ABERTA", "FECHANDO", "PARADA
 
 enum Origem : uint8_t { ORIG_APP, ORIG_SERIAL, ORIG_BOTAO, ORIG_SISTEMA };
 const char* NOME_ORIGEM[] = {"APP", "SERIAL", "BOTAO", "SISTEMA"};
+
+// Declarado aqui (e não junto do RFID) para os protótipos automáticos da IDE.
+enum TipoRfid : uint8_t { TR_CHEGOU, TR_SAIU, TR_LEITOR_OK, TR_LEITOR_ERRO };
 
 struct Motor {
   int8_t dir = 0;          // +1 sobe (abre), -1 desce (fecha), 0 parado
@@ -162,9 +172,19 @@ bool emergencia = false;
 bool paradaSoltaDesdeEmergencia = false;
 bool contandoRearme = false;
 uint32_t inicioRearme = 0;
+uint32_t inicioDoisBotoes = 0;
+bool doisBotoesFeito = false;
 bool estadoMudou = true;
 uint32_t ultimoEstado = 0;
 bool monitorIr = false;
+bool monitorChaves = false;
+uint8_t limiteCursoS = LIMITE_PADRAO_S;
+// (macro, e não função: os protótipos automáticos da IDE entram antes da 1ª função)
+#define PASSOU_LIMITE(agora, inicio) (limiteCursoS && (uint32_t)((agora) - (inicio)) > (uint32_t)limiteCursoS * 1000UL)
+uint32_t ultimoMonitorChaves = 0;
+// [porta][0 = chave de cima (aberta), 1 = chave de baixo (fechada)]
+bool chaveLigada[2][2] = {{true, true}, {true, true}};
+const uint8_t PINOS_LIVRES[] = {12, 15};          // varridos pelo comando CHAVES
 uint32_t ultimoMonitor = 0;
 
 // Ajustes salvos na memória (NVS)
@@ -174,6 +194,11 @@ void salvarAjustes() {
   memoria.putUChar("segurar", pwmSegurar);
   memoria.putBool("inv1", inverterMotor[0]);
   memoria.putBool("inv2", inverterMotor[1]);
+  memoria.putBool("ca1", chaveLigada[0][0]);
+  memoria.putBool("cf1", chaveLigada[0][1]);
+  memoria.putBool("ca2", chaveLigada[1][0]);
+  memoria.putBool("cf2", chaveLigada[1][1]);
+  memoria.putUChar("limite", limiteCursoS);
 }
 
 void carregarAjustes() {
@@ -185,6 +210,11 @@ void carregarAjustes() {
   pwmSegurar = memoria.getUChar("segurar", SEGURAR_PADRAO);
   inverterMotor[0] = memoria.getBool("inv1", INVERTER_PADRAO[0]);
   inverterMotor[1] = memoria.getBool("inv2", INVERTER_PADRAO[1]);
+  chaveLigada[0][0] = memoria.getBool("ca1", true);
+  chaveLigada[0][1] = memoria.getBool("cf1", true);
+  chaveLigada[1][0] = memoria.getBool("ca2", true);
+  chaveLigada[1][1] = memoria.getBool("cf2", true);
+  limiteCursoS = memoria.getUChar("limite", LIMITE_PADRAO_S);
 }
 
 // =====================================================================
@@ -268,11 +298,11 @@ void bleManter() {
 //  por uma fila e nunca espera o RFID.
 // =====================================================================
 const uint8_t UID_MAX = 21;                      // até 10 bytes = 20 caracteres hex
-enum TipoRfid : uint8_t { TR_CHEGOU, TR_SAIU, TR_LEITOR_OK, TR_LEITOR_ERRO };
 struct LeituraRfid { TipoRfid tipo; char uid[UID_MAX]; };
 
 MFRC522 leitorRfid(PINO_RFID_SS, PINO_RFID_RST);
 QueueHandle_t filaRfid = nullptr;
+TaskHandle_t  tarefaRfid = nullptr;
 volatile uint8_t  rfidVersao = 0;
 volatile uint32_t rfidTotalLeituras = 0;
 volatile uint32_t rfidReinicios = 0;
@@ -383,7 +413,7 @@ void rfidTarefa(void*) {
 
 void rfidIniciar() {
   filaRfid = xQueueCreate(8, sizeof(LeituraRfid));
-  xTaskCreatePinnedToCore(rfidTarefa, "rfid", 4096, nullptr, 1, nullptr, 0);   // núcleo 0, prioridade baixa
+  xTaskCreatePinnedToCore(rfidTarefa, "rfid", 4096, nullptr, 1, &tarefaRfid, 0);   // núcleo 0, prioridade baixa
 }
 
 // =====================================================================
@@ -481,8 +511,11 @@ void processarRfid() {
   }
 }
 
-bool fimAbertaAtivo(uint8_t i)  { return USAR_FINS_DE_CURSO && dbFimA[i].estavel; }
-bool fimFechadaAtivo(uint8_t i) { return USAR_FINS_DE_CURSO && dbFimF[i].estavel; }
+// A porta usa a chave de cima / de baixo? (DESLIGADA = aquele lado vai por tempo)
+bool usaFimA(uint8_t i) { return USAR_FINS_DE_CURSO && chaveLigada[i][0]; }
+bool usaFimF(uint8_t i) { return USAR_FINS_DE_CURSO && chaveLigada[i][1]; }
+bool fimAbertaAtivo(uint8_t i)  { return usaFimA(i) && dbFimA[i].estavel; }
+bool fimFechadaAtivo(uint8_t i) { return usaFimF(i) && dbFimF[i].estavel; }
 
 size_t montarEstado(char* b, size_t tam) {
   int n = snprintf(b, tam,
@@ -571,10 +604,13 @@ void mudarEstado(uint8_t i, Estado e) {
 // Estado da porta pelo que as chaves mostram (sem chaves: pela posição estimada)
 Estado estadoPelasChaves(uint8_t i) {
   if (USAR_FINS_DE_CURSO) {
-    bool a = dbFimA[i].estavel, f = dbFimF[i].estavel;
+    bool a = fimAbertaAtivo(i), f = fimFechadaAtivo(i);
     if (a && f) return FALHA;
     if (f) { porta[i].pos = 0.0f; return FECHADA; }
     if (a) { porta[i].pos = 1.0f; return ABERTA; }
+    // lado com a chave DESLIGADA: vale a posição estimada pelo tempo
+    if (!usaFimA(i) && porta[i].pos >= 1.0f) return ABERTA;
+    if (!usaFimF(i) && porta[i].pos <= 0.0f) return FECHADA;
     if (porta[i].pos <= 0.0f) porta[i].pos = 0.05f;      // sem chave nenhuma: está no meio
     if (porta[i].pos >= 1.0f) porta[i].pos = 0.95f;
     return PARADA;
@@ -618,8 +654,16 @@ void parar(uint8_t i, uint32_t agora) {
   else mudarEstado(i, n);
 }
 
+// TIMEOUT não é defeito de chave: um novo comando já tenta de novo.
+bool sairDeTimeout(uint8_t i, uint32_t agora) {
+  if (porta[i].estado != FALHA || strncmp(porta[i].falha, "TIMEOUT", 7) != 0) return false;
+  limparFalha(i, agora);
+  return porta[i].estado != FALHA;
+}
+
 const char* abrir(uint8_t i, uint32_t agora) {
   if (emergencia) return "EMERGENCIA";
+  sairDeTimeout(i, agora);
   if (porta[i].estado == FALHA) return "FALHA";
   if (porta[i].estado == AJUSTE) return "NAO_PERMITIDO";
   if (porta[i].estado == ABERTA) return "JA_ABERTA";
@@ -633,6 +677,7 @@ const char* abrir(uint8_t i, uint32_t agora) {
 
 const char* fechar(uint8_t i, uint32_t agora) {
   if (emergencia) return "EMERGENCIA";
+  sairDeTimeout(i, agora);
   if (porta[i].estado == FALHA) return "FALHA";
   if (porta[i].estado == AJUSTE) return "NAO_PERMITIDO";
   if (porta[i].estado == FECHADA) return "JA_FECHADA";
@@ -644,6 +689,7 @@ const char* fechar(uint8_t i, uint32_t agora) {
 }
 
 const char* alternar(uint8_t i, uint32_t agora) {
+  if (!emergencia) sairDeTimeout(i, agora);
   if (porta[i].estado == FALHA) return "FALHA";
   if (emMovimento(i) && porta[i].estado != AJUSTE) { parar(i, agora); return "OK"; }
   if (porta[i].estado == ABERTA) return fechar(i, agora);
@@ -684,11 +730,11 @@ void atualizarPorta(uint8_t i, uint32_t agora) {
       }
       p.pos += (float)(agora - p.ultimaConta) / (float)tempoAbrirMs;
       p.ultimaConta = agora;
-      // Com chaves: o tempo vira só um limite de segurança.
-      if (USAR_FINS_DE_CURSO) {
+      if (fimFechadaAtivo(i) && agora - p.inicioGiro > FIM_PRESO_MS) { entrarFalha(i, "FIM_PRESO", agora); break; }
+      // Com a chave de cima: o tempo vira só um limite de segurança.
+      if (usaFimA(i)) {
         if (p.pos > 0.99f) p.pos = 0.99f;
-        if (fimFechadaAtivo(i) && agora - p.inicioGiro > FIM_PRESO_MS) { entrarFalha(i, "FIM_PRESO", agora); break; }
-        if (agora - p.inicioMov > tempoAbrirMs * 2 + LIMITE_EXTRA_MS) entrarFalha(i, "TIMEOUT_ABRIR", agora);
+        if (PASSOU_LIMITE(agora, p.inicioMov)) entrarFalha(i, "TIMEOUT_ABRIR", agora);
       } else if (p.pos >= 1.0f) {
         chegouAberta(i, agora);
       }
@@ -708,10 +754,10 @@ void atualizarPorta(uint8_t i, uint32_t agora) {
       if (m.dir == 0) { ligarMotor(i, -1, PWM_FECHAR); p.ultimaConta = agora; p.inicioGiro = agora; break; }
       p.pos -= (float)(agora - p.ultimaConta) / (float)tempoFecharMs;
       p.ultimaConta = agora;
-      if (USAR_FINS_DE_CURSO) {
+      if (fimAbertaAtivo(i) && agora - p.inicioGiro > FIM_PRESO_MS) { entrarFalha(i, "FIM_PRESO", agora); break; }
+      if (usaFimF(i)) {
         if (p.pos < 0.01f) p.pos = 0.01f;
-        if (fimAbertaAtivo(i) && agora - p.inicioGiro > FIM_PRESO_MS) { entrarFalha(i, "FIM_PRESO", agora); break; }
-        if (agora - p.inicioMov > tempoFecharMs * 2 + LIMITE_EXTRA_MS) entrarFalha(i, "TIMEOUT_FECHAR", agora);
+        if (PASSOU_LIMITE(agora, p.inicioMov)) entrarFalha(i, "TIMEOUT_FECHAR", agora);
       } else if (p.pos <= 0.0f) {
         chegouFechada(i, agora);
       }
@@ -739,7 +785,7 @@ void atualizarPorta(uint8_t i, uint32_t agora) {
 
     case ABERTA:
       // Porta escorregou e soltou a chave de cima: sobe de novo até a chave.
-      if (USAR_FINS_DE_CURSO && !emergencia) {
+      if (usaFimA(i) && !emergencia) {
         if (!p.corrigindo && !fimAbertaAtivo(i) && !m.freando && agora - p.inicioPausa >= CORRECAO_ESPERA_MS) {
           p.corrigindo = true;
           p.inicioMov = agora;
@@ -748,7 +794,7 @@ void atualizarPorta(uint8_t i, uint32_t agora) {
           if (fimAbertaAtivo(i)) {
             p.corrigindo = false;
             p.inicioPausa = agora;
-          } else if (agora - p.inicioMov > tempoAbrirMs * 2 + LIMITE_EXTRA_MS) {
+          } else if (PASSOU_LIMITE(agora, p.inicioMov)) {
             entrarFalha(i, "TIMEOUT_ABRIR", agora);
             break;
           } else {
@@ -793,6 +839,13 @@ void rearmar(Origem o) {
   eventoRearme(o);
 }
 
+const char* executarReset(Origem o, uint32_t agora) {
+  if (USAR_BOTAO_PARADA && dbParada.estavel) return "EMERGENCIA";   // solte o botão de parada
+  if (emergencia) rearmar(o);
+  for (uint8_t i = 0; i < 2; i++) limparFalha(i, agora);
+  return "OK";
+}
+
 // =====================================================================
 //  ENTRADAS
 // =====================================================================
@@ -825,6 +878,17 @@ void lerEntradas(uint32_t agora) {
       if (ignorarBotao[i]) continue;
       eventoResp("ALTERNAR", i, 0, alternar(i, agora), ORIG_BOTAO);
     }
+  }
+  // Botões 1 e 2 apertados juntos por 2 s = RESET (limpa a FALHA das portas)
+  if (dbBotao[0].estavel && dbBotao[1].estavel) {
+    if (inicioDoisBotoes == 0) { inicioDoisBotoes = agora | 1; doisBotoesFeito = false; }
+    else if (!doisBotoesFeito && agora - inicioDoisBotoes >= RESET_BOTOES_MS) {
+      doisBotoesFeito = true;
+      ignorarBotao[0] = ignorarBotao[1] = true;
+      eventoResp("RESET", -1, 0, executarReset(ORIG_BOTAO, agora), ORIG_BOTAO);
+    }
+  } else {
+    inicioDoisBotoes = 0;
   }
   // Fins de curso (opcional): NF ao GND + pull-up -> acionado = ALTO
   if (USAR_FINS_DE_CURSO) {
@@ -869,15 +933,98 @@ void imprimirAjuda() {
   Serial.println("  TEMPO <abrir> <fechar>    tempos de curso em ms (ex.: TEMPO 3000 2200)");
   Serial.println("  SEGURAR <0-255>           forca para segurar a porta aberta");
   Serial.println("  INVERTER 1|2              inverte o sentido do motor");
-  Serial.println("  PADRAO                    volta TEMPO, SEGURAR e INVERTER ao valor do codigo");
-  Serial.println("(TEMPO, SEGURAR e INVERTER ficam salvos na memoria da placa)");
-  Serial.println("FALHA de uma porta: corrija a causa e envie RESET.");
+  Serial.println("  CHAVE 1|2 CIMA|BAIXO LIGA|DESLIGA   usa ou ignora uma chave de fim de curso");
+  Serial.println("                            (desligada: aquele lado da porta vai por tempo)");
+  Serial.println("  CHAVES                    nivel de cada fio das chaves a cada 0,3 s (0 = fechado ao GND)");
+  Serial.println("  TESTE                     o que esta ligado em cada pino das chaves (GND / aberto / 3,3 V)");
+  Serial.println("  VARRER [s]                procura em qual GPIO chega um fio (aperte a chave); reinicia no fim");
+  Serial.println("  PADRAO                    volta TEMPO, SEGURAR, INVERTER e CHAVE ao valor do codigo");
+  Serial.println("(TEMPO, SEGURAR, INVERTER e CHAVE ficam salvos na memoria da placa)");
+  Serial.println("FALHA de uma porta: corrija a causa e envie RESET (ou segure os botoes 1 e 2 juntos por 2 s).");
+  Serial.println("  LIMITE <s>                limite de seguranca do curso em s (0 = sem limite, padrao)");
+  Serial.println("TIMEOUT (passou do LIMITE sem tocar a chave): basta mandar ABRIR/FECHAR ou apertar o botao.");
   Serial.println("  MONITOR                   tensao dos sensores IR a cada 0,5 s");
   Serial.println("  DIAG                      estado legivel (portas, botoes, Bluetooth e RFID)");
   Serial.printf("Atual: abrir %lu ms, fechar %lu ms, segurar %u, parada %s, fins de curso %s, RFID %s\n\n",
                 (unsigned long)tempoAbrirMs, (unsigned long)tempoFecharMs, (unsigned)pwmSegurar,
                 USAR_BOTAO_PARADA ? "LIGADA" : "DESLIGADA", USAR_FINS_DE_CURSO ? "LIGADOS" : "desligados",
                 USAR_RFID ? "LIGADO" : "DESLIGADO");
+}
+
+// VARRER: procura em qual GPIO um fio chegou de verdade (etiqueta trocada,
+// mau contato). Para os motores e o RFID, põe os GPIO com pull-up interno em
+// entrada com pull-up e mostra cada mudança enquanto a pessoa aperta e solta
+// a chave. No fim reinicia a placa (tudo volta ao normal).
+void varrerPinos(uint32_t duracaoMs) {
+  const uint8_t P[] = {0, 2, 4, 5, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33};
+  const uint8_t N = sizeof(P);
+  uint8_t ant[N], mudou[N] = {0};
+  disableLoopWDT();
+  if (tarefaRfid) vTaskSuspend(tarefaRfid);
+  for (uint8_t i = 0; i < 2; i++) {                 // motores soltos (sem força)
+    digitalWrite(PINO_INA[i], LOW);
+    digitalWrite(PINO_INB[i], LOW);
+    pwmEscrever(i, 0);
+#if LEDC_V3
+    ledcDetach(PINO_EN[i]);
+#else
+    ledcDetachPin(PINO_EN[i]);
+#endif
+  }
+  delay(50);
+  for (uint8_t k = 0; k < N; k++) pinMode(P[k], INPUT_PULLUP);
+  delay(50);
+  Serial.printf("\n=== VARREDURA por %lu s: aperte e solte a chave varias vezes ===\n", (unsigned long)(duracaoMs / 1000));
+  Serial.print("Em BAIXO (ligados ao GND) agora:");
+  for (uint8_t k = 0; k < N; k++) { ant[k] = digitalRead(P[k]); if (!ant[k]) Serial.printf(" G%u", P[k]); }
+  Serial.println();
+  uint32_t ini = millis();
+  while (millis() - ini < duracaoMs) {
+    for (uint8_t k = 0; k < N; k++) {
+      uint8_t v = digitalRead(P[k]);
+      if (v != ant[k]) {
+        ant[k] = v;
+        if (mudou[k] < 255) mudou[k]++;
+        Serial.printf("  %6lu ms  G%u -> %s\n", (unsigned long)(millis() - ini), P[k], v ? "ALTO (aberto)" : "BAIXO (GND)");
+      }
+    }
+    delay(20);
+  }
+  Serial.print("=== RESULTADO: pinos que mudaram:");
+  bool algum = false;
+  for (uint8_t k = 0; k < N; k++) if (mudou[k]) { Serial.printf(" G%u(%ux)", P[k], mudou[k]); algum = true; }
+  Serial.println(algum ? "" : " nenhum");
+  Serial.println("Reiniciando a placa...\n");
+  Serial.flush();
+  delay(200);
+  ESP.restart();
+}
+
+// TESTE: diz o que está ligado em cada pino das chaves, lendo com pull-up e
+// depois com pull-down internos:
+//   0 e 0 -> ligado ao GND (contato NF fechado)
+//   1 e 0 -> FLUTUANDO: nada ligado de verdade (fio aberto/solto ou chave aberta)
+//   1 e 1 -> ligado ao 3,3 V (fio no lugar errado!)
+const char* testarPino(uint8_t pino) {
+  pinMode(pino, INPUT_PULLUP);   delayMicroseconds(500); int up = digitalRead(pino);
+  pinMode(pino, INPUT_PULLDOWN); delayMicroseconds(500); int dn = digitalRead(pino);
+  pinMode(pino, INPUT_PULLUP);   delayMicroseconds(200);
+  if (!up && !dn) return "GND   (0/0) - circuito fechado ate o GND";
+  if (up && !dn)  return "ABERTO(1/0) - nada ligado: fio solto/rompido ou chave aberta";
+  if (up && dn)   return "3V3   (1/1) - ligado ao 3,3 V: fio no lugar errado!";
+  return "??    (0/1) - instavel";
+}
+
+void testarChaves() {
+  const char* nome[2][2] = {{"Porta 1 CIMA ", "Porta 1 BAIXO"}, {"Porta 2 CIMA ", "Porta 2 BAIXO"}};
+  Serial.println("\nTESTE das chaves (pull-up / pull-down):");
+  for (uint8_t i = 0; i < 2; i++) {
+    Serial.printf("  %s G%-2u: %s\n", nome[i][0], PINO_FIM_ABERTA[i], testarPino(PINO_FIM_ABERTA[i]));
+    Serial.printf("  %s G%-2u: %s\n", nome[i][1], PINO_FIM_FECHADA[i], testarPino(PINO_FIM_FECHADA[i]));
+  }
+  for (uint8_t k = 0; k < sizeof(PINOS_LIVRES); k++)
+    Serial.printf("  (livre)       G%-2u: %s\n", PINOS_LIVRES[k], testarPino(PINOS_LIVRES[k]));
+  Serial.println();
 }
 
 void imprimirDiag() {
@@ -888,7 +1035,11 @@ void imprimirDiag() {
     Serial.printf("Porta %u: %-8s posicao %3d%%  motor %-7s  IR %4u mV %s", (unsigned)(i + 1),
                   NOME_ESTADO[porta[i].estado], (int)(porta[i].pos * 100.0f + 0.5f), m,
                   (unsigned)irMv[i], obstaculo[i] ? "OBSTACULO" : "livre");
-    if (USAR_FINS_DE_CURSO) Serial.printf("  fim A=%d F=%d", dbFimA[i].estavel ? 1 : 0, dbFimF[i].estavel ? 1 : 0);
+    if (USAR_FINS_DE_CURSO) {
+      Serial.printf("  fim A=%d F=%d", dbFimA[i].estavel ? 1 : 0, dbFimF[i].estavel ? 1 : 0);
+      if (!chaveLigada[i][0]) Serial.print(" (chave de CIMA desligada: abre por tempo)");
+      if (!chaveLigada[i][1]) Serial.print(" (chave de BAIXO desligada: fecha por tempo)");
+    }
     if (porta[i].estado == FALHA) Serial.printf("  FALHA: %s", porta[i].falha);
     Serial.println();
   }
@@ -937,10 +1088,7 @@ void executar(char* linha, Origem orig, uint32_t agora) {
     eventoResp(cmd, -1, id, "OK", orig);
   }
   else if (!strcmp(cmd, "RESET") || !strcmp(cmd, "REARMAR")) {
-    if (USAR_BOTAO_PARADA && dbParada.estavel) { eventoResp("RESET", -1, id, "EMERGENCIA", orig); return; }  // solte o botão
-    if (emergencia) rearmar(orig);
-    for (uint8_t i = 0; i < 2; i++) limparFalha(i, agora);
-    eventoResp("RESET", -1, id, "OK", orig);
+    eventoResp("RESET", -1, id, executarReset(orig, agora), orig);
   }
   else if (!strcmp(cmd, "STATUS") || !strcmp(cmd, "ESTADO")) {
     eventoResp("STATUS", -1, id, "OK", orig);
@@ -963,7 +1111,8 @@ void executar(char* linha, Origem orig, uint32_t agora) {
     eventoResp(cmd, p, id, "OK", orig);
   }
   else if (!serial && (!strcmp(cmd, "ZERAR") || !strcmp(cmd, "TEMPO") || !strcmp(cmd, "SEGURAR") ||
-                       !strcmp(cmd, "INVERTER") || !strcmp(cmd, "PADRAO") || !strcmp(cmd, "MONITOR") || !strcmp(cmd, "DIAG") || !strcmp(cmd, "AJUDA"))) {
+                       !strcmp(cmd, "INVERTER") || !strcmp(cmd, "PADRAO") || !strcmp(cmd, "MONITOR") ||
+                       !strcmp(cmd, "CHAVE") || !strcmp(cmd, "CHAVES") || !strcmp(cmd, "VARRER") || !strcmp(cmd, "LIMITE") || !strcmp(cmd, "TESTE") || !strcmp(cmd, "DIAG") || !strcmp(cmd, "AJUDA"))) {
     eventoResp(cmd, -1, id, "NAO_PERMITIDO", orig);
   }
   else if (!strcmp(cmd, "ZERAR")) {
@@ -1008,8 +1157,53 @@ void executar(char* linha, Origem orig, uint32_t agora) {
     memoria.clear();
     tempoAbrirMs = TEMPO_ABRIR_PADRAO; tempoFecharMs = TEMPO_FECHAR_PADRAO; pwmSegurar = SEGURAR_PADRAO;
     inverterMotor[0] = INVERTER_PADRAO[0]; inverterMotor[1] = INVERTER_PADRAO[1];
+    limiteCursoS = LIMITE_PADRAO_S;
+    for (uint8_t i = 0; i < 2; i++) { chaveLigada[i][0] = chaveLigada[i][1] = true; limparFalha(i, agora); }
     Serial.println("  ajustes de fabrica restaurados");
     imprimirAjuda();
+  }
+  else if (!strcmp(cmd, "CHAVE")) {
+    bool cima = a2 && (!strcmp(a2, "CIMA") || !strcmp(a2, "ABERTA") || !strcmp(a2, "A"));
+    bool baixo = a2 && (!strcmp(a2, "BAIXO") || !strcmp(a2, "FECHADA") || !strcmp(a2, "F"));
+    if (p < 0 || (!cima && !baixo)) { Serial.println("  use: CHAVE 1|2 CIMA|BAIXO LIGA|DESLIGA"); return; }
+    uint8_t k = cima ? 0 : 1;
+    if (a3) {
+      bool liga = !strcmp(a3, "LIGA") || !strcmp(a3, "ON") || !strcmp(a3, "1");
+      bool desliga = !strcmp(a3, "DESLIGA") || !strcmp(a3, "OFF") || !strcmp(a3, "0");
+      if (!liga && !desliga) { Serial.println("  use: CHAVE 1|2 CIMA|BAIXO LIGA|DESLIGA"); return; }
+      if (emMovimento(p)) { Serial.println("  recusado: porta em movimento"); return; }
+      if (!liga && !chaveLigada[p][1 - k]) { Serial.println("  recusado: a outra chave desta porta ja esta desligada"); return; }
+      chaveLigada[p][k] = liga;
+      salvarAjustes();
+      // FIM_DUPLO causado pela chave desligada: a porta volta pelo que a outra chave mostra
+      if (porta[p].estado == FALHA && !strcmp(porta[p].falha, "FIM_DUPLO")) limparFalha(p, agora);
+      estadoMudou = true;
+    }
+    Serial.printf("  porta %d, chave de %s: %s (salvo na memoria)  -> porta %s\n", p + 1, cima ? "CIMA" : "BAIXO",
+                  chaveLigada[p][k] ? "LIGADA" : "DESLIGADA (lado por tempo)", NOME_ESTADO[porta[p].estado]);
+  }
+  else if (!strcmp(cmd, "TESTE")) testarChaves();
+  else if (!strcmp(cmd, "LIMITE")) {
+    if (a1) {
+      long v = atol(a1);
+      if (v < 0 || v > 120) { Serial.println("  use: LIMITE <0-120 s>  (0 = sem limite)"); return; }
+      limiteCursoS = (uint8_t)v;
+      salvarAjustes();
+    }
+    if (limiteCursoS) Serial.printf("  limite do curso: %u s (salvo na memoria)\n", (unsigned)limiteCursoS);
+    else Serial.println("  limite do curso: SEM LIMITE - o motor so para ao tocar a chave (salvo na memoria)");
+  }
+  else if (!strcmp(cmd, "VARRER")) {
+    long sgs = a1 ? atol(a1) : 30;
+    if (sgs < 5) sgs = 5;
+    if (sgs > 120) sgs = 120;
+    for (uint8_t i = 0; i < 2; i++) parar(i, agora);
+    varrerPinos((uint32_t)sgs * 1000);
+  }
+  else if (!strcmp(cmd, "CHAVES")) {
+    monitorChaves = !monitorChaves;
+    if (monitorChaves) for (uint8_t k = 0; k < sizeof(PINOS_LIVRES); k++) pinMode(PINOS_LIVRES[k], INPUT_PULLUP);
+    Serial.printf("  monitor das chaves %s\n", monitorChaves ? "LIGADO (1 = aberto/acionada, 0 = fechado ao GND)" : "desligado");
   }
   else if (!strcmp(cmd, "MONITOR")) {
     monitorIr = !monitorIr;
@@ -1100,7 +1294,7 @@ void setup() {
     else porta[i].estado = e;
     if (USAR_FINS_DE_CURSO)
       Serial.printf(" Porta %u: %s%s\n", (unsigned)(i + 1), NOME_ESTADO[porta[i].estado],
-                    e == FALHA ? " (FIM_DUPLO: as duas chaves acionadas - confira a fiacao)" :
+                    e == FALHA ? " (FIM_DUPLO: as duas chaves acionadas - confira a fiacao ou use CHAVE)" :
                     (e == PARADA ? " (nenhuma chave acionada: porta no meio do curso)" : ""));
   }
   for (uint8_t k = 0; k < 5; k++) { lerSensoresIr(); delay(5); }
@@ -1151,6 +1345,14 @@ void loop() {
     ultimoMonitor = agora;
     Serial.printf("IR1 %4u mV %-9s | IR2 %4u mV %s\n", (unsigned)irMv[0], obstaculo[0] ? "OBSTACULO" : "livre",
                   (unsigned)irMv[1], obstaculo[1] ? "OBSTACULO" : "livre");
+  }
+  if (monitorChaves && agora - ultimoMonitorChaves >= 300) {
+    ultimoMonitorChaves = agora;
+    Serial.printf("P1: cima G%u=%d baixo G%u=%d | P2: cima G%u=%d baixo G%u=%d | livres:",
+                  PINO_FIM_ABERTA[0], digitalRead(PINO_FIM_ABERTA[0]), PINO_FIM_FECHADA[0], digitalRead(PINO_FIM_FECHADA[0]),
+                  PINO_FIM_ABERTA[1], digitalRead(PINO_FIM_ABERTA[1]), PINO_FIM_FECHADA[1], digitalRead(PINO_FIM_FECHADA[1]));
+    for (uint8_t k = 0; k < sizeof(PINOS_LIVRES); k++) Serial.printf(" G%u=%d", PINOS_LIVRES[k], digitalRead(PINOS_LIVRES[k]));
+    Serial.println();
   }
   atualizarLed(agora);
   delay(2);

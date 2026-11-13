@@ -55,7 +55,7 @@ Porta 1 = porta de **entrada** · Porta 2 = porta de **saída** (onde fica o lei
 | **35** | G35 | Sensor IR porta 2 | Entrada | Fio preto do IR 2 + divisor ao GND | Protoboard col. 31 |
 | **16** | G16 | Fim de curso porta 1 **ABERTA** | Entrada | NF da chave | Protoboard col. 41 |
 | **17** | G17 | Fim de curso porta 1 **FECHADA** | Entrada | NF da chave | Protoboard col. 43 |
-| **4** | G4 | Fim de curso porta 2 **ABERTA** | Entrada | NF da chave | Protoboard col. 45 |
+| **4** | G4 | Fim de curso porta 2 **ABERTA** (firmware 1.5.0+; esteve no G12 em teste) | Entrada | NF da chave | — |
 | **32** | G32 | Fim de curso porta 2 **FECHADA** | Entrada | NF da chave | Protoboard col. 47 |
 | **36** | SP | Botão 1 — alterna a porta 1 | Entrada | NO do botão 1 (+10 kΩ ao GND) | Protoboard col. 3 |
 | **39** | SN | Botão 2 — alterna a porta 2 | Entrada | NO do botão 2 (+10 kΩ ao GND) | Protoboard col. 5 |
@@ -558,7 +558,7 @@ Cores sugeridas: **vermelho** = +12 V · **laranja** = +5 V · **amarelo** = +3,
 | F45 | Protoboard col. 55 (baixo) | Terminal C das 4 chaves (em sequência) |
 | F46 | GPIO 16 (G16) | Protoboard col. 41 (fêmea-macho) |
 | F47 | GPIO 17 (G17) | Protoboard col. 43 (fêmea-macho) |
-| F48 | GPIO 4 (G4) | Protoboard col. 45 (fêmea-macho) |
+| F48 | GPIO 4 (G4) | fêmea-macho |
 | F49 | GPIO 32 (G32) | Protoboard col. 47 (fêmea-macho) |
 | F50 | Chave porta 1 ABERTA, NF | Protoboard col. 41 |
 | F51 | Chave porta 1 FECHADA, NF | Protoboard col. 43 |
