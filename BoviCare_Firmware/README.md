@@ -20,10 +20,10 @@ O firmware controla as **duas portas guilhotina**: cada uma tem um motor JGB37-3
 |---|---|
 | Compilação no core ESP32 **3.3.12** (Arduino) | OK, sem avisos — 1.134.662 bytes (36 %), RAM 43.052 bytes (13 %) |
 | Compilação no core ESP32 **2.0.17** (Arduino) | OK, sem avisos — 1.151.693 bytes (36 %), RAM 40.676 bytes (12 %) |
-| Testes da lógica no PC | **163** verificações OK |
-| Validação do JSON | **15** verificações OK |
-| Simulação física das portas | **33** verificações OK |
-| **Teste na placa e na maquete** | **Pendente — a ser feito pela equipe (seção 5)** |
+| Testes automáticos da **1.5.1** no PC (o próprio `.ino`, placa simulada e modelo físico das porteiras) | **182** verificações OK em 27 cenários, 0 falhas, 4 achados para a próxima versão (seção 8.1) |
+| Validação do JSON da 1.5.1 | **3.276** amostras OK (estado com no máximo 244 bytes) |
+| Testes da versão modular 1.0.3 (lógica, JSON e simulação) | 163 + 15 + 33 verificações OK (seção 8.2) |
+| Teste na placa e na maquete | Feito pela equipe por observação, sem medições (TCC, seção 5.6.3) |
 
 ---
 
@@ -212,7 +212,62 @@ cd testes_nativos
 bash rodar_testes.sh
 ```
 
-Exige `g++` (C++17) e `python3`. Os testes compilam com `-Wall -Wextra -Werror` e com os detectores de erro de memória (AddressSanitizer/UBSan). Eles cobrem:
+Exige `g++` (C++17) e `python3`. Os testes compilam com `-Wall -Wextra -Werror` e com os detectores de erro de memória (AddressSanitizer/UBSan).
+
+### 8.1 Firmware do brete (1.5.1)
+
+`testes_nativos/final/teste_final.cpp` compila o **próprio** `BoviCare_Brete_Final.ino`, sem nenhuma linha mudada, contra uma placa ESP32 simulada (`final/stubs/` e `final/placa_sim.cpp`: pinos, tempo, PWM, Serial, memória NVS, filas do FreeRTOS, Bluetooth e RC522). A tarefa do RFID roda numa thread, intercalada com o laço principal pelo relógio simulado. As saídas dos motores movem um **modelo físico** das duas porteiras (curso de 300 mm, sobe a 115 mm/s e desce a 140 mm/s com PWM 255, escorrega a 20 mm/s com o motor solto), que aciona as chaves de fim de curso; o teste põe e tira o animal embaixo de cada porta (sensor IR), aperta botões e a parada, e encosta tags no leitor.
+
+Cada um dos 27 cenários roda num processo separado, com a placa recém-ligada:
+
+| Grupo | O que é conferido |
+|---|---|
+| Partida | Nenhum motor se move ao ligar; estado inicial lido nas chaves (fechada, aberta, no meio); `FIM_DUPLO` na partida; botão apertado no boot ignorado até soltar; parada apertada (ou fio rompido) no boot entra em emergência |
+| Portas | Abrir e fechar pelo app, pelos botões e pela serial; freio antes de inverter; porta aberta ou parada no meio segurada sem cair; `JA_ABERTA`, `JA_FECHADA`, `PARAR`, `ALTERNAR`, `JOG` |
+| Segurança | Intertravamento (as duas porteiras nunca abertas juntas); animal embaixo: não começa a fechar e, fechando, o motor para em até 20 ms e a porta reabre; emergência pelo botão, pelo app e por fio rompido, com a porta segurada e os comandos recusados; rearme só depois de soltar e segurar 3 s |
+| Falhas | `FIM_PRESO` (corda partida) em 4 s; `FIM_DUPLO` no meio do curso; `LIMITE` de fábrica sem limite e, com `LIMITE 10`, `TIMEOUT_ABRIR` e `TIMEOUT_FECHAR` em 10 s, saindo com um novo comando; `RESET` pelo app e pelos botões 1 e 2 |
+| Ajustes | `TEMPO`, `SEGURAR`, `INVERTER`, `CHAVE`, `LIMITE` e `PADRAO` salvos na memória e relidos; valores fora da faixa recusados; comandos só da serial recusados pelo app; `TESTE` e `VARRER` |
+| RFID | Evento `RFID` uma vez por animal, `RFID_SAIU` 1,5 s depois de a tag sair, troca de animal, leitor sem resposta (`RFID_ERRO`, avisado uma vez) e de volta, chip reiniciado por ruído e reconfigurado sozinho, filtro do UID |
+| Bluetooth | Ao conectar, o app recebe `INICIO`, o animal que está no brete e o estado; estado a cada 2 s; volta a anunciar 0,5 s depois de desconectar |
+| Ciclos de manejo | 200 ciclos seguidos com tempos sorteados (entra, fecha, lê o brinco, abre a saída, sai, fecha), 20 deles com o animal voltando embaixo da porta: nenhuma falha, nenhum comando recusado, cada brinco lido uma vez, porteiras nunca abertas juntas |
+
+Todos os JSON emitidos nos cenários (eventos e estado) são gravados e conferidos por `validar_json.py`.
+
+Os números do modelo (velocidade da porta, escorregamento) são **suposições** para o teste, não medidas da maquete. Os testes conferem a lógica do firmware ligada a esse modelo; não substituem o teste na maquete.
+
+**Checagem dos próprios testes:** cópias do `.ino` com um defeito de propósito (sem intertravamento, sem parada por obstáculo, sensor IR invertido, `FIM_PRESO` de 40 s, rearme em 0,3 s) foram todas reprovadas, com 2 a 21 falhas cada.
+
+#### Achados para a próxima versão
+
+Os testes acharam quatro comportamentos da 1.5.1 que não aparecem com os ajustes de fábrica no uso normal, mas que vale corrigir. Eles aparecem como `ACHADO` em toda execução, sem reprovar a bateria:
+
+1. **Motor solto na pausa antes de reabrir.** Quando o sensor IR vê o animal e a porta para, o motor fica solto nos ~150 ms entre o fim do freio e a reabertura. No modelo, a porta escorrega cerca de 3 mm nesse intervalo.
+2. **`SEGURAR 0` com a porta escorregando.** Com a força de segurar em 0, depois de levantar a porta de volta até a chave o motor continua ligado em PWM máximo contra o topo. Com o valor de fábrica (`SEGURAR 100`) isso não acontece.
+3. **Comando desconhecido longo.** A resposta repete o comando, e um comando desconhecido de 60 a 64 caracteres (o máximo aceito) não cabe no buffer de 128 bytes: a resposta sai cortada e o JSON chega inválido ao app.
+4. **Comando com aspas.** O comando desconhecido é repetido sem escape, e uma aspa no texto quebra o JSON da resposta.
+
+Correção sugerida para os itens 1 e 2, conferida com os testes (os dois achados somem e nada mais quebra):
+
+```cpp
+    case RECUANDO:
+      if (!m.freando && agora - p.inicioPausa >= PAUSA_OBSTACULO_MS) {
+        p.inicioMov = agora;
+        mudarEstado(i, ABRINDO);
+      } else if (!m.freando && pwmSegurar && (m.dir != +1 || m.pwm != pwmSegurar)) {
+        ligarMotor(i, +1, pwmSegurar);   // segura a porta na pausa antes de reabrir
+      }
+      break;
+    ...
+    case PARADA:
+    case FALHA:
+      if (pwmSegurar == 0 && !m.freando && m.dir != 0 && !(p.estado == ABERTA && p.corrigindo)) { frearMotor(i, agora); break; }
+```
+
+Para os itens 3 e 4, basta repetir na resposta só letras, números e `_` do comando, até 16 caracteres.
+
+### 8.2 Versão modular anterior (1.0.3)
+
+`testes_nativos/teste_logica.cpp` e `simulacao.cpp` testam os módulos de lógica pura de `BoviCare_Brete/`. Eles cobrem:
 
 - todas as transições das portas, tempos-limite, chave presa, fim duplo e a virada do contador `millis()` (49 dias);
 - botões, intertravamento, emergência e rearme, a fila de eventos e o RFID;

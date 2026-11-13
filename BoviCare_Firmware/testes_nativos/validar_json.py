@@ -2,12 +2,14 @@
 """BoviCare - valida as amostras de JSON geradas pelo teste de lógica.
 
 Cada linha do arquivo deve ser um JSON válido. Confere também o tamanho
-máximo do estado (notificação BLE com MTU 185 -> 182 bytes úteis).
+máximo do estado numa notificação BLE: MTU 185 -> 182 bytes úteis na versão
+modular 1.0.3 (padrão) e MTU 247 -> 244 bytes na 1.5.1 (segundo argumento).
+Uso: validar_json.py amostras.txt [limite_em_bytes]
 """
 import json
 import sys
 
-LIMITE_ESTADO = 182
+LIMITE_ESTADO = int(sys.argv[2]) if len(sys.argv) > 2 else 182
 CHAVES_ESTADO = {"p1", "p2", "f1", "f2", "ir", "fa", "ff", "em", "bot", "rfid", "rok", "up"}
 
 arquivo = sys.argv[1] if len(sys.argv) > 1 else "amostras_json.txt"
@@ -30,7 +32,7 @@ with open(arquivo, encoding="utf-8") as f:
                 print(f"  FALHOU linha {n}: estado sem as chaves {sorted(faltando)}")
                 falhas += 1
             if len(linha.encode()) > LIMITE_ESTADO:
-                print(f"  FALHOU linha {n}: estado com {len(linha)} bytes (> {LIMITE_ESTADO})")
+                print(f"  FALHOU linha {n}: estado com {len(linha.encode())} bytes (> {LIMITE_ESTADO})")
                 falhas += 1
             else:
                 ok += 1
